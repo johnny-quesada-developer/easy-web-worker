@@ -329,5 +329,41 @@ describe('EasyWebWorker', () => {
       }, 3000);
     });
 
+    describe('dispose', () => {
+      it('should correctly dispose worker (remove worker and revokeObjectURL)', async () => {
+        expect.assertions(3);
+
+        const workerContent: EasyWebWorkerBody = (easyWorker) => {
+          const countTo100 = (message: IEasyWebWorkerMessage) => setTimeout(() => {
+            let count = 0;
+            const intervalId = setInterval(() => {
+              count += 1;
+              if (count === 100) {
+                clearInterval(intervalId);
+                message.resolve();
+              }
+            }, 10);
+          }, 500);
+
+          easyWorker.onMessage(countTo100);
+        };
+
+        const worker = createWorker(workerContent);
+        const callback1 = jest.fn();
+        const callback2 = jest.fn();
+        const callback3 = jest.fn();
+
+        createMockFunctionFromContent(workerBody)(workerSelf);
+
+        worker.send().then(callback1);
+        worker.send().then(callback2);
+        await worker.overrideAfterCurrent().then(callback3);
+
+        expect(callback1).toHaveBeenCalled();
+        expect(callback2).not.toHaveBeenCalled();
+        expect(callback3).toHaveBeenCalled();
+      }, 3000);
+    });
+
   });
 });

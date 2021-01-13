@@ -1,18 +1,19 @@
 import * as IEasyWebWorker from './EasyWebWorkerTypes';
-declare class EasyWebWorkerMessage<IResult = void> implements IEasyWebWorker.IEasyWebWorkerMessage<IResult> {
+declare class EasyWebWorkerMessage<IPayload = null, IResult = void> implements IEasyWebWorker.IEasyWebWorkerMessage<IPayload, IResult> {
+    payload: IPayload;
     messageId: string;
     wasCompleted: boolean;
     wasCanceled: boolean;
     promise: Promise<IResult>;
-    protected resolve: (...args: IResult extends void ? [null?] : [IResult]) => void;
-    protected reject: (reason: Error) => void;
-    constructor();
+    resolve: (...args: IResult extends void ? [null?] : [IResult]) => void;
+    reject: (reason: Error) => void;
+    reportProgress: IEasyWebWorker.OnProgressCallback;
+    constructor(payload: IPayload);
     protected createPromise(): {
         promise: Promise<IResult>;
         resolve: (...args: IResult extends void ? [null?] : [IResult]) => void;
         reject: (reason: Error) => void;
     };
-    executeCallback(payload: IResult extends void ? [null?] : [IResult], error: Error, onProgress: IEasyWebWorker.OnProgressCallback | null, progressPercentage: number, worker: Worker | null): void;
     cancel(): void;
 }
 export default EasyWebWorkerMessage;

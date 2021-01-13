@@ -170,7 +170,7 @@
         "@typescript-eslint/no-use-before-define": ["error"],
         "no-unused-vars": "off",
         "@typescript-eslint/no-unused-vars": ["warn"],
-        "import/no-unresolved": "off"
+        "import/no-unresolved": "off",
     },
     "overrides": [
         {
@@ -180,6 +180,14 @@
             "rules": {
                 "no-shadow": "off",
                 "no-unused-vars": "off"
+            }
+        },
+        {
+            "files": [
+                "*.test.ts"
+            ],
+            "rules": {
+                "@typescript-eslint/parser": "off"
             }
         }
     ],

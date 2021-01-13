@@ -1,1 +1,1 @@
-{"version":3,"file":"EasyWebWorkerFixtures.d.ts","sourceRoot":"","sources":["../src/EasyWebWorkerFixtures.ts"],"names":[],"mappings":"AAEA,eAAO,MAAM,WAAW,QAAO,MACd,CAAC;AAElB,eAAO,MAAM,cAAc,SAAU,GAAG,KAAG,IA8B1C,CAAC;AAEF,eAAe,WAAW,CAAC"}
+{"version":3,"file":"EasyWebWorkerFixtures.d.ts","sourceRoot":"","sources":["../src/EasyWebWorkerFixtures.ts"],"names":[],"mappings":"AAGA,eAAO,MAAM,WAAW,QAAO,MAA6E,CAAC;AAE7G,eAAO,MAAM,cAAc,SAAU,GAAG,KAAG,IA0C1C,CAAC;AAEF,eAAe,WAAW,CAAC"}

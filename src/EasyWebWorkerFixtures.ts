@@ -16,7 +16,7 @@ export const WorkerTemplate = (self: any): void => {
     };
 
     public onMessage = (callback: (
-      message: IEasyWebWorker.IEasyWebWorkerMessage<any>,
+      message: IEasyWebWorker.IEasyWebWorkerMessage<any, any>,
       event: MessageEvent<IEasyWebWorker.IMessageData<any>>
     ) => void): void => {
       this.onMessageCallback = callback;

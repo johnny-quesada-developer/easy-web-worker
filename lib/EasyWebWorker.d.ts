@@ -15,11 +15,12 @@ declare class EasyWebWorker<IPayload = null, IResult = void> implements IEasyWeb
     protected workerBody: IEasyWebWorker.EasyWebWorkerBody<IPayload, IResult> | IEasyWebWorker.EasyWebWorkerBody<IPayload, IResult>[];
     name: string;
     private worker;
-    private messages;
+    private messagesQueue;
     workerUrl: string;
     protected scripts: string[];
-    protected onProgress: IEasyWebWorker.OnProgressCallback | null;
-    constructor(workerBody: IEasyWebWorker.EasyWebWorkerBody<IPayload, IResult> | IEasyWebWorker.EasyWebWorkerBody<IPayload, IResult>[], { scripts, name, onProgress, }?: Partial<IEasyWebWorker.IWorkerConfig>);
+    constructor(workerBody: IEasyWebWorker.EasyWebWorkerBody<IPayload, IResult> | IEasyWebWorker.EasyWebWorkerBody<IPayload, IResult>[], { scripts, name, }?: Partial<IEasyWebWorker.IWorkerConfig>);
+    private RemoveMessageFromQueue;
+    private executeMessageCallback;
     protected createWorker(): Worker;
     /**
     * Disable the resolve of all current WebWorkers messages, no any of the current messages gonna call onProgress callback, neither promise.resolve
@@ -28,23 +29,23 @@ declare class EasyWebWorker<IPayload = null, IResult = void> implements IEasyWeb
     /**
     * Send a message to the worker queue
     * @param {IPayload} payload - whatever json data you want to send to the worker
-    * @returns {Promise} generated defer that will be resolved when the message completed
+    * @returns {IMessagePromise<IResult>} generated defer that will be resolved when the message completed
     */
-    send(...payload: IPayload extends null ? [null?] : [IPayload]): Promise<IResult>;
+    send(...payload: IPayload extends null ? [null?] : [IPayload]): IEasyWebWorker.IMessagePromise<IResult>;
     /**
     * Web Workers works as a QUEUE, sometimes a new message actually would be the only message that you'll want to resolve...
     * you could use OVERRIDE to that purpose.
     * @param {IPayload} payload - whatever json data you want to send to the worker
-    * @returns {Promise} generated defer that will be resolved when the message completed
+    * @returns {IMessagePromise<IResult>} generated defer that will be resolved when the message completed
     */
-    override(...payload: IPayload extends null ? [null?] : [IPayload]): Promise<IResult>;
+    override(...payload: IPayload extends null ? [null?] : [IPayload]): IEasyWebWorker.IMessagePromise<IResult>;
     /**
     * Web Workers works as a QUEUE, sometimes a new message actually would be the only message that you'll want to resolve...
     * you could use OVERRIDE to that purpose.
     * @param {IPayload} payload - whatever json data you want to send to the worker
-    * @returns {Promise} generated defer that will be resolved when the message completed
+    * @returns {IMessagePromise<IResult>} generated defer that will be resolved when the message completed
     */
-    overrideAfterCurrent(...payload: IPayload extends null ? [null?] : [IPayload]): Promise<IResult>;
+    overrideAfterCurrent(...payload: IPayload extends null ? [null?] : [IPayload]): IEasyWebWorker.IMessagePromise<IResult>;
     /**
     * This method will remove the WebWorker and the BlobUrl
     */

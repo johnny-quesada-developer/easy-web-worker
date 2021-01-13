@@ -8,10 +8,6 @@ export interface IWorkerConfig {
      **  Identifier of your worker, this is in case you want to add a name to your worker file, otherwize an unique generic Id will be added as a name
      */
     name: string;
-    /**
-     **  Callback that will be executed every time you use sendProgress from inside you worker.
-     */
-    onProgress: OnProgressCallback | null;
 }
 export interface IMessageData<IPayload = null> {
     payload: IPayload;
@@ -22,22 +18,17 @@ export interface IMessageData<IPayload = null> {
 export interface IEasyWorkerInstance<IPayload = null, IResult = void> {
     /**
     * Use this method to defined which will be the functionality of your worker when a message is send  to it
-    * @param {(payload: IPayload, event: MessageEvent<IMessageData<IPayload>>) => void} callback -
-    * If your defined a PAYLOAD, will be the first parameter of the message callback... (payload, event, self)
-    * otherwize you'll get just a null as first parameter
+    * @param {(message: IEasyWebWorkerMessage<IPayload, IResult>, event: MessageEvent<IMessageData<IPayload>>) => void} callback - current message
     // * @returns {void}
     * */
-    onMessage(callback: (payload: IPayload, event: MessageEvent<IMessageData<IPayload>>) => void): void;
-    reject(error: Error | string): void;
-    reportProgress(progressPercentage: number): void;
-    resolve(...payload: IResult extends void ? [null?] : [IResult]): void;
+    onMessage(callback: (message: IEasyWebWorkerMessage<IPayload, IResult>, event: MessageEvent<IMessageData<IPayload>>) => void): void;
 }
-export interface IEasyWebWorkerMessage<IResult = void> {
+export interface IEasyWebWorkerMessage<IPayload = null, IResult = void> {
     messageId: string;
-    wasCompleted: boolean;
-    wasCanceled: boolean;
-    promise: Promise<IResult>;
-    executeCallback(payload: IResult extends void ? [null?] : [IResult], error: Error, onProgress: OnProgressCallback | null, progressPercentage: number, worker: Worker | null): void;
+    payload: IPayload;
+    reject: (reason: Error) => void;
+    reportProgress(progressPercentage: number): void;
+    resolve: (...args: IResult extends void ? [null?] : [IResult]) => void;
 }
 /**
 * This type defined the structure that a WorkerBody should have.
@@ -46,6 +37,9 @@ export interface IEasyWebWorkerMessage<IResult = void> {
 * @param {IEasyWorkerInstance<IPayload, IResult>} easyWorker - ,
 */
 export declare type EasyWebWorkerBody<IPayload = null, IResult = void> = (easyWorker: IEasyWorkerInstance<IPayload, IResult>, context: any) => void;
+export interface IMessagePromise<IResult = void> extends Promise<IResult> {
+    onProgress: (callback: OnProgressCallback) => void;
+}
 /**
 * This is a class to create global-store objects
 * @template IPayload - Indicates if your WORKERS messages requires a parameter to be provided, NULL indicates they doesn't
@@ -72,22 +66,22 @@ export interface IEasyWebWorker<IPayload = null, IResult = void> {
     /**
     * Send a message to the worker queue
     * @param {IPayload} payload - whatever json data you want to send to the worker
-    * @returns {Promise} generated defer that will be resolved when the message completed
+    * @returns {IMessagePromise<IResult>} generated defer that will be resolved when the message completed
     */
-    send(...payload: IPayload extends null ? [null?] : [IPayload]): Promise<IResult>;
+    send(...payload: IPayload extends null ? [null?] : [IPayload]): IMessagePromise<IResult>;
     /**
     * Web Workers works as a QUEUE, sometimes a new message actually would be the only message that you'll want to resolve...
     * you could use OVERRIDE to that purpose.
     * @param {IPayload} payload - whatever json data you want to send to the worker
-    * @returns {Promise} generated defer that will be resolved when the message completed
+    * @returns {IMessagePromise<IResult>} generated defer that will be resolved when the message completed
     */
-    override(...payload: IPayload extends null ? [null?] : [IPayload]): Promise<IResult>;
+    override(...payload: IPayload extends null ? [null?] : [IPayload]): IMessagePromise<IResult>;
     /**
     * Web Workers works as a QUEUE, sometimes a new message actually would be the only message that you'll want to resolve...
     * you could use OVERRIDE to that purpose.
     * @param {IPayload} payload - whatever json data you want to send to the worker
-    * @returns {Promise} generated defer that will be resolved when the message completed
+    * @returns {IMessagePromise<IResult>} generated defer that will be resolved when the message completed
     */
-    overrideAfterCurrent(...payload: IPayload extends null ? [null?] : [IPayload]): Promise<IResult>;
+    overrideAfterCurrent(...payload: IPayload extends null ? [null?] : [IPayload]): IMessagePromise<IResult>;
 }
 //# sourceMappingURL=EasyWebWorkerTypes.d.ts.map
