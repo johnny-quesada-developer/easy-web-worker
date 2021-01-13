@@ -27,8 +27,12 @@ class EasyWebWorker <IPayload = null, IResult = void> implements IEasyWebWorker.
 
     protected scripts: string[] = [];
 
+    protected get isExternalWorkerFile (): boolean {
+      return typeof this.workerBody === 'string';
+    }
+
     constructor(
-      protected workerBody: IEasyWebWorker.EasyWebWorkerBody<IPayload, IResult> | IEasyWebWorker.EasyWebWorkerBody<IPayload, IResult>[],
+      protected workerBody: IEasyWebWorker.EasyWebWorkerBody<IPayload, IResult> | IEasyWebWorker.EasyWebWorkerBody<IPayload, IResult>[] | string,
       {
         scripts = [],
         name,
@@ -78,8 +82,18 @@ class EasyWebWorker <IPayload = null, IResult = void> implements IEasyWebWorker.
       }
     }
 
+    protected getWorkerUrl(): string {
+      if(this.isExternalWorkerFile) {
+        return this.workerBody as string
+      }
+
+      return EasyWebWorkerFactory
+          .blobWorker<IPayload, IResult>(this.workerBody as IEasyWebWorker.EasyWebWorkerBody<IPayload, IResult> | IEasyWebWorker.EasyWebWorkerBody<IPayload, IResult>[], this.scripts);
+    }
+
     protected createWorker(): Worker {
-      this.workerUrl = EasyWebWorkerFactory.blobWorker<IPayload, IResult>(this.workerBody, this.scripts);
+      this.workerUrl = this.getWorkerUrl();
+
       const worker = new Worker(this.workerUrl, {
         name: this.name,
       });

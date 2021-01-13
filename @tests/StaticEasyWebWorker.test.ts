@@ -2,7 +2,7 @@ import { IEasyWebWorkerMessage } from '../src/EasyWebWorkerTypes';
 import { StaticEasyWebWorker, WorkerMessage } from '../src/StaticEasyWebWorker';
 
 describe('StaticEasyWebWorker', () => {
-  let workerSelf;
+  let workerSelf: any;
 
   describe('constructor', () => {
     
@@ -14,7 +14,7 @@ describe('StaticEasyWebWorker', () => {
       
           const message = new WorkerMessage<any, any>(payload, messageId, messageTargetOrigin);
       
-          (this as StaticEasyWebWorker).onMessageCallback.call(this, message, event);
+          ((this as unknown) as StaticEasyWebWorker).onMessageCallback.call(this, message, event);
         };
       });
     });
