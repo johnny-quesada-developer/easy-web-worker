@@ -56,7 +56,7 @@ export interface IEasyWebWorkerMessage<IPayload = null, IResult = void> {
 export type EasyWebWorkerBody<IPayload = null, IResult = void> = (easyWorker: IEasyWorkerInstance<IPayload, IResult>, context: any) => void;
 
 export interface IMessagePromise<IResult = void> extends Promise<IResult> {
-  onProgress: (callback: OnProgressCallback) => void;
+  onProgress: (callback: OnProgressCallback) => Promise<IResult>;
 }
 
 /**

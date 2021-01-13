@@ -1,1 +1,9 @@
 node_modules
+lib
+./lib
+lib/EasyWebWorker.d.ts
+lib/EasyWebWorker.d.ts.map
+lib/EasyWebWorker.js
+lib/StaticEasyWebWorker.d.ts
+lib/StaticEasyWebWorker.d.ts.map
+lib/StaticEasyWebWorker.js

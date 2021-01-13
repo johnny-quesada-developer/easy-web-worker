@@ -12,15 +12,17 @@ import * as IEasyWebWorker from './EasyWebWorkerTypes';
 * consult IWorkerConfig description to have more information
 * */
 declare class EasyWebWorker<IPayload = null, IResult = void> implements IEasyWebWorker.IEasyWebWorker<IPayload, IResult> {
-    protected workerBody: IEasyWebWorker.EasyWebWorkerBody<IPayload, IResult> | IEasyWebWorker.EasyWebWorkerBody<IPayload, IResult>[];
+    protected workerBody: IEasyWebWorker.EasyWebWorkerBody<IPayload, IResult> | IEasyWebWorker.EasyWebWorkerBody<IPayload, IResult>[] | string;
     name: string;
     private worker;
     private messagesQueue;
     workerUrl: string;
     protected scripts: string[];
-    constructor(workerBody: IEasyWebWorker.EasyWebWorkerBody<IPayload, IResult> | IEasyWebWorker.EasyWebWorkerBody<IPayload, IResult>[], { scripts, name, }?: Partial<IEasyWebWorker.IWorkerConfig>);
+    protected get isExternalWorkerFile(): boolean;
+    constructor(workerBody: IEasyWebWorker.EasyWebWorkerBody<IPayload, IResult> | IEasyWebWorker.EasyWebWorkerBody<IPayload, IResult>[] | string, { scripts, name, }?: Partial<IEasyWebWorker.IWorkerConfig>);
     private RemoveMessageFromQueue;
     private executeMessageCallback;
+    protected getWorkerUrl(): string;
     protected createWorker(): Worker;
     /**
     * Disable the resolve of all current WebWorkers messages, no any of the current messages gonna call onProgress callback, neither promise.resolve
