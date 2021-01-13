@@ -109,3 +109,110 @@ await new EasyWebWorker((easyWorker, context) => {
 ```
 
 This is a very simple example, but you could import a whole library into your worker, as *JQUERY*, *Bluebird* for example
+
+## StaticEasyWebWorker
+
+If you want to create a *Worker* with a static .js file and don't want to lose the structure of messages and promises and the onProgress callback from the library... you could use *StaticEasyWebWorker<IPayload = null, IResult = void>* directly in your Worker.
+
+trust me, talking about performance it's going to be the same. but may if you are trying to create something very complex and huge into a *Worker*... OK, a static js file could be a good option.
+
+Workers are gonna work just as the javascript you have in your main thread, but into another thread, so, the user experience could improve!!
+
+let's see how to use it: 
+
+// worker.js
+// This is gonna be the content of your worker
+// onMessage Callback is gonna receive all *send* method calls.
+```
+const onMessageCallback = (message: IEasyWebWorkerMessage<null, number>) => {
+  setTimeout(() => {
+    message.resolve(200);
+  }, 5000);
+};
+
+//  this is gonna create the same message structure the runtime Workers
+new StaticEasyWebWorker<null, number>(onMessageCallback);
+```
+
+and in your main thread:
+```
+const worker = new EasyWebWorker<null,number>('http://localhost:3000/worker.js');
+await worker.send();
+```
+
+Super easy right? 
+
+## Want to see more? 
+
+Here is an example of how you could easily create data filter into a Worker, to avoid performing loops process into the main thread that could end affecting user experience.
+
+```
+interface FilterSource {
+  filter: string,
+  collection: any[],
+  reportProgress: boolean,
+}
+
+const worker = new EasyWebWorker<FilterSource, any[]>((easyWorker) => {
+  const containsValue = (item: any, filter: string): boolean => {
+    const itemKeys = Object.keys(item);
+
+    return itemKeys.some((key) => {
+      const prop = item[key] || null;
+
+      if (typeof prop !== 'string' && Object.keys(prop).length) return containsValue(prop, filter);
+      if (prop.toString().replace(/(\r\n|\n|\r)/gm, '').trim().toLowerCase()
+        .indexOf(filter) !== -1) return true;
+
+      return false;
+    });
+  };
+
+  easyWorker.onMessage((message: IEasyWebWorkerMessage<FilterSource, any[]>) => {
+    const { payload } = message;
+    const { collection, filter = '', reportProgress: countProgress } = payload;
+    const { length: collectionLength } = collection;
+    const result = filter === '' ? collection : [];
+    const progressPerItem = collectionLength ? 100 / collectionLength : 0;
+
+    let currentProgress = 0;
+
+    if (filter) {
+      for (let index = 0; index < collectionLength; index += 1) {
+        if (countProgress) {
+          currentProgress += progressPerItem;
+          message.reportProgress(currentProgress);
+        }
+
+        const item = collection[index];
+
+        if (containsValue(item, filter)) result.push(item);
+      }
+    }
+
+    message.resolve(result);
+  });
+});
+```
+
+And how to use this? 
+
+```
+worker.send({
+  collection: [{ name: 'julio perez' }, { name: 'carol starling' }, { name: 'goku' }, { name: { firstname: 'johnny' } }],
+  filter: 'johnny',
+  reportProgress: true,
+}).onProgress((progressPercentage) => console.log(progressPercentage))
+  .then((filtered: any[]) => console.log(filtered));
+```
+
+the output should be:
+=> 25
+=> 50
+=> 75
+=> 100
+=> [{ name: { firstname: 'johnny' } }]
+
+Of course this is a very tiny array, but is just to give you and idea, actually you also could make fetch requests into workers... give it a try.
+
+*Thanks for reading, hope this help someone*
