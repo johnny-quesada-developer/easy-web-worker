@@ -1,50 +1,41 @@
 // eslint-disable-next-line max-classes-per-file
-import * as IEasyWebWorker from './EasyWebWorkerTypes';
+import * as IEasyWebWorker from "./EasyWebWorkerTypes";
 
-export const generatedId = (): string => `${new Date().getTime()}${Math.random().toString(36).substr(2, 9)}`;
+export const generatedId = (): string =>
+  `${new Date().getTime()}${Math.random().toString(36).substr(2, 9)}`;
 
-export const WorkerTemplate = (self: any): void => {
-
-  const easyWorker = new (class implements IEasyWebWorker.IEasyWorkerInstance<any, any> {
-
-    public onMessageCallback: (
-      message: IEasyWebWorker.IEasyWebWorkerMessage<any>,
-      event: MessageEvent<IEasyWebWorker.IMessageData<any>>
-    ) => void = () => {
+export const WorkerTemplate = () => `
+// this code was auto-generated
+  const easyWorker = new (class {
+    onMessageCallback = () => {
       // eslint-disable-next-line no-throw-literal
-      throw 'you didnt defined a message-callback, please assign a callback by calling IEasyWorkerInstance.onMessage';
+      throw "you didnt defined a message-callback, please assign a callback by calling IEasyWorkerInstance.onMessage";
     };
 
-    public onMessage = (callback: (
-      message: IEasyWebWorker.IEasyWebWorkerMessage<any, any>,
-      event: MessageEvent<IEasyWebWorker.IMessageData<any>>
-    ) => void): void => {
+    onMessage = (callback) => {
       this.onMessageCallback = callback;
     };
-
   })();
 
-  // eslint-disable-next-line no-param-reassign
-  self.onmessage = (event: MessageEvent<any>) => {
+  self.onmessage = (event) => {
     const { messageId, payload } = event.data;
 
     // each message should have his own resolution methods
-    const message = new (class implements IEasyWebWorker.IEasyWebWorkerMessage<any, any> {
+    const message = new (class {
+      payload = payload;
 
-      payload: any = payload;
+      messageId = messageId;
 
-      messageId: string = messageId;
+      resolve = (...result) => self.postMessage({ messageId, payload: result });
 
-      public resolve = (...result: [null?] | [any]) => self.postMessage({ messageId, payload: result });
+      reject = (error) => this.resolve({ error });
 
-      public reject = (error: string | Error) => this.resolve({ error });
-
-      public reportProgress = (progressPercentage: number) => self.postMessage({ messageId, progressPercentage });
-
+      reportProgress = (progressPercentage) =>
+        self.postMessage({ messageId, progressPercentage });
     })();
 
     easyWorker.onMessageCallback(message, event);
   };
-};
+`;
 
 export default generatedId;

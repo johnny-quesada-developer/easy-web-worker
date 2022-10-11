@@ -1,4 +1,4 @@
-import * as IEasyWebWorker from './EasyWebWorkerTypes';
+import * as IEasyWebWorker from "./EasyWebWorkerTypes";
 export declare class EasyWebWorkerFactory {
     private getImportScriptsTemplate;
     blob(source: string, imports?: string[]): string;
