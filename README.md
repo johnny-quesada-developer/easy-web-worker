@@ -1,11 +1,12 @@
 # easy-web-worker
+
 This is a package to easily create and handle Workers, both run time and static .js workers files
 
 ## Creating a simple Web Worker
 
 Creating a new worker is as simple as
 
-```
+```TS
 const backgroundWorker = new EasyWebWorker<string, string>((easyWorker) => {
   easyWorker.onMessage((message) => {
     const { payload } = message;
@@ -17,15 +18,16 @@ const backgroundWorker = new EasyWebWorker<string, string>((easyWorker) => {
 const messsageResult = await backgroundWorker.send('hello!');
 ```
 
-### Important notes: 
+### Important notes:
 
 EasyWebWorker<IPayload, IResult> has two generic parameters... They will affect the typing of the send() and response() methods.
-* If IResult is null, the *resolve* method will not require parameters
-* If IPayload is null, the *send* method will not require parameters
 
-Take into consideration that the *workerBody* is a template to create a worker in run time, so you'll not be able to use anything outside of the Worker-Scope
+- If IResult is null, the _resolve_ method will not require parameters
+- If IPayload is null, the _send_ method will not require parameters
 
-```
+Take into consideration that the _workerBody_ is a template to create a worker in run time, so you'll not be able to use anything outside of the Worker-Scope
+
+```TS
 const message = 'Hello';
 
 await new EasyWebWorker<null, string>((easyWorker) => {
@@ -38,12 +40,14 @@ await new EasyWebWorker<null, string>((easyWorker) => {
 ```
 
 Take a look at Workers API if you don't know yet how they work: https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API,
-If you need t to send data to the worker, please define IPayload while creating a worker. *new EasyWebWorker<IPayload>(*
+If you need t to send data to the worker, please define IPayload while creating a worker. _new EasyWebWorker<IPayload>(_
 You are just allowed to send information to Workers by messages, and vice versa
 
 ## IEasyWebWorkerMessage<IPayload = null, IResult = void>
-When you defined an onMessage callback in your *Worker*, this will receive all messages from the *send* method: 
-```
+
+When you defined an onMessage callback in your _Worker_, this will receive all messages from the _send_ method:
+
+```TS
 easyWorker.onMessage((message) => {
   // the *message* will be strongly typed with TS
 
@@ -59,21 +63,22 @@ easyWorker.onMessage((message) => {
 ```
 
 ## onProgress
+
 Let say you are performing some heavy process in your worker, but you still wanted to implement some kind of progress bar in the main thread... you could add an onProgress callback.
 
-```
+```TS
 await worker.send().onProgress((progress: number) => {
   // change some progress bar percentage
 }).then(doSomething);
 ```
 
-onProgress Is gonna be executed every time you call  *message.reportProgress* inside the worker... the cool part here is that the *reportProgress* is not gonna finish the main promise returned by the *send* method.
+onProgress Is gonna be executed every time you call _message.reportProgress_ inside the worker... the cool part here is that the _reportProgress_ is not gonna finish the main promise returned by the _send_ method.
 
 ## Having multiple Worker-Templates
 
-As *WorkerBody* are just templates, you could reuse them on other *Workers*, or use them as plugins for your *Workers*. Let's see:
+As _WorkerBody_ are just templates, you could reuse them on other _Workers_, or use them as plugins for your _Workers_. Let's see:
 
-```
+```TS
 const WorkerPluggin: EasyWebWorkerBody = (_easyWorker, context) => {
   context.doSomething = () => Promise.resolve('This is a plugin example');
 };
@@ -89,17 +94,18 @@ const plugginMessage = await new EasyWebWorker([WorkerPluggin, (easyWorker, cont
 
 In this way, you could avoid having to create more than once the same template for your worker.
 
-## Importing scripts into your *Workers*
+## Importing scripts into your _Workers_
 
 Web Workers has this amazing method called importScripts, are you passed an array of strings in the EeasyWorker extra configuration, all those files are gonna be imported into your worker.
 
 // test.js
-```
+
+```TS
 self.message = 'Hello coders!';
 selft.doSomething = () => console.log(self.message);
 ```
 
-```
+```TS
 await new EasyWebWorker((easyWorker, context) => {
   easyWorker.onMessage((message) => context.doSomething());
 }, {
@@ -108,22 +114,23 @@ await new EasyWebWorker((easyWorker, context) => {
 
 ```
 
-This is a very simple example, but you could import a whole library into your worker, as *JQUERY*, *Bluebird* for example
+This is a very simple example, but you could import a whole library into your worker, as _JQUERY_, _Bluebird_ for example
 
 ## StaticEasyWebWorker
 
-If you want to create a *Worker* with a static .js file and don't want to lose the structure of messages and promises and the onProgress callback from the library... you could use *StaticEasyWebWorker<IPayload = null, IResult = void>* directly in your Worker.
+If you want to create a _Worker_ with a static .js file and don't want to lose the structure of messages and promises and the onProgress callback from the library... you could use _StaticEasyWebWorker<IPayload = null, IResult = void>_ directly in your Worker.
 
-trust me, talking about performance it's going to be the same. but may if you are trying to create something very complex and huge into a *Worker*... OK, a static js file could be a good option.
+trust me, talking about performance it's going to be the same. but may if you are trying to create something very complex and huge into a _Worker_... OK, a static js file could be a good option.
 
 Workers are gonna work just as the javascript you have in your main thread, but into another thread, so, the user experience could improve!!
 
-let's see how to use it: 
+let's see how to use it:
 
 // worker.js
 // This is gonna be the content of your worker
-// onMessage Callback is gonna receive all *send* method calls.
-```
+// onMessage Callback is gonna receive all _send_ method calls.
+
+```TS
 const onMessageCallback = (message: IEasyWebWorkerMessage<null, number>) => {
   setTimeout(() => {
     message.resolve(200);
@@ -135,18 +142,19 @@ new StaticEasyWebWorker<null, number>(onMessageCallback);
 ```
 
 and in your main thread:
-```
+
+```TS
 const worker = new EasyWebWorker<null,number>('http://localhost:3000/worker.js');
 await worker.send();
 ```
 
-Super easy right? 
+Super easy right?
 
-## Want to see more? 
+## Want to see more?
 
 Here is an example of how you could easily create data filter into a Worker, to avoid performing loops process into the main thread that could end affecting user experience.
 
-```
+```TS
 interface FilterSource {
   filter: string,
   collection: any[],
@@ -195,9 +203,9 @@ const worker = new EasyWebWorker<FilterSource, any[]>((easyWorker) => {
 });
 ```
 
-And how to use this? 
+And how to use this?
 
-```
+```TS
 worker.send({
   collection: [{ name: 'julio perez' }, { name: 'carol starling' }, { name: 'goku' }, { name: { firstname: 'johnny' } }],
   filter: 'johnny',
@@ -215,4 +223,4 @@ the output should be:
 
 Of course this is a very tiny array, but is just to give you and idea, actually you also could make fetch requests into workers... give it a try.
 
-*Thanks for reading, hope this help someone*
+_Thanks for reading, hope this help someone_
