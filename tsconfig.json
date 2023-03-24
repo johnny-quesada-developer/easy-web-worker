@@ -2,28 +2,26 @@
   "compilerOptions": {
     "jsx": "react",
     "target": "ES2016",
-    "module": "commonjs",
+    "module": "ESNext",
     "declaration": true,
     "outDir": "./lib",
-    "strict": true,
+    "strict": false,
     "isolatedModules": true,
-    "lib": ["dom","dom.iterable","es6"],
+    "lib": ["dom", "dom.iterable", "es6"],
     "declarationMap": true,
     "rootDir": "src",
     "importHelpers": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
     "strictFunctionTypes": true,
-    "strictPropertyInitialization": true,
+    "strictPropertyInitialization": false,
     "noImplicitThis": true,
     "alwaysStrict": true,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
     "moduleResolution": "node",
-    "typeRoots": [
-      "node_modules/@types",
-    ],
+    "typeRoots": ["node_modules/@types"],
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "allowUmdGlobalAccess": true,
@@ -36,6 +34,5 @@
     "pretty": true
   },
   "include": ["src"],
-  "exclude": ["node_modules",  "@tests"]
+  "exclude": ["node_modules", "@tests"]
 }
-  

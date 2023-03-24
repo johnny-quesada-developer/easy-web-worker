@@ -1,7 +1,5 @@
-/* eslint-disable max-nested-callbacks */
 import EasyWebWorker from '../src/EasyWebWorker';
 import {
-  IEasyWebWorker,
   IWorkerConfig,
   EasyWebWorkerBody,
   IEasyWebWorkerMessage,
@@ -9,7 +7,10 @@ import {
 import * as testFixtures from './testFixtures';
 
 const {
-  getMockBlobContent, WorkerMock, dummyUrl, CreateMockFunctionFromContent: createMockFunctionFromContent,
+  getMockBlobContent,
+  WorkerMock,
+  dummyUrl,
+  CreateMockFunctionFromContent: createMockFunctionFromContent,
 } = testFixtures;
 
 describe('EasyWebWorker', () => {
@@ -43,12 +44,22 @@ describe('EasyWebWorker', () => {
     it('simple worker BLOB content should be generated correctly', () => {
       expect.assertions(3);
 
-      blobSpy.mockImplementation((content: string[], config: { type: string }) => {
-        expect(config).toEqual({ type: 'application/javascript' });
-        expect(content.join('').replace(/ /g, '')
-          .trim()).toEqual(getMockBlobContent().replace(/ /g, '')
-          .trim());
-      });
+      blobSpy.mockImplementation(
+        (content: string[], config: { type: string }) => {
+          expect(config).toEqual({ type: 'application/javascript' });
+
+          const sanitizedContent = content
+            .join('')
+            .replace(/^\s*[\r\n]/gm, '')
+            .trim();
+
+          const sanitizedMock = getMockBlobContent()
+            .replace(/^\s*[\r\n]/gm, '')
+            .trim();
+
+          expect(sanitizedContent).toEqual(sanitizedMock);
+        }
+      );
 
       const worker = new EasyWebWorker(workerContent, {
         name: workerName,
@@ -65,7 +76,6 @@ describe('EasyWebWorker', () => {
         workerBody = `${content.join('')} return easyWorker;`;
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const worker = new EasyWebWorker(workerContent, {
         name: workerName,
         scripts,
@@ -82,7 +92,8 @@ describe('EasyWebWorker', () => {
         postMessage,
       };
 
-      const easyWorkerInstance = createMockFunctionFromContent(workerBody)(workerContext);
+      const easyWorkerInstance =
+        createMockFunctionFromContent(workerBody)(workerContext);
 
       expect(easyWorkerInstance.onMessageCallback).toBeDefined();
 
@@ -103,7 +114,6 @@ describe('EasyWebWorker', () => {
         context.testFunction = (increase: number) => increase + 1;
       };
 
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const worker = new EasyWebWorker([secondWorkerContent, workerContent], {
         name: workerName,
         scripts,
@@ -114,7 +124,8 @@ describe('EasyWebWorker', () => {
         testFunction: null,
       };
 
-      const easyWorkerInstance = createMockFunctionFromContent(workerBody)(workerContext);
+      const easyWorkerInstance =
+        createMockFunctionFromContent(workerBody)(workerContext);
 
       expect(easyWorkerInstance.onMessageCallback).toBeDefined();
       expect((workerContext as any).testFunction(2)).toEqual(3);
@@ -125,18 +136,20 @@ describe('EasyWebWorker', () => {
     let _worker: EasyWebWorker<any, any>;
     let workerBody: string;
     let workerSelf: {
-      importScripts: any,
-      onmessage: any,
-      postMessage: any,
+      importScripts: any;
+      onmessage: any;
+      postMessage: any;
     };
 
     let workerSelfImportScriptsSpy: jest.SpyInstance;
     let workerSelfPostMessageSpy: jest.SpyInstance;
 
     const createWorker = <IPayload = null, IResult = void>(
-      workerContent: EasyWebWorkerBody<IPayload, IResult> | EasyWebWorkerBody<IPayload, IResult>[],
-      config: Partial<IWorkerConfig> = {},
-    ): IEasyWebWorker<IPayload, IResult> => {
+      workerContent:
+        | EasyWebWorkerBody<IPayload, IResult>
+        | EasyWebWorkerBody<IPayload, IResult>[],
+      config: Partial<IWorkerConfig> = {}
+    ): EasyWebWorker<IPayload, IResult> => {
       _worker = new EasyWebWorker(workerContent, config);
       return _worker;
     };
@@ -147,17 +160,23 @@ describe('EasyWebWorker', () => {
       });
 
       workerSelfImportScriptsSpy = jest.fn();
-      workerSelfPostMessageSpy = jest.fn((event: Partial<{ messageId: string, progressPercentage: number, payload: any }>) => {
-        const {
-          messageId,
-          progressPercentage,
-          payload,
-        } = event;
+      workerSelfPostMessageSpy = jest.fn(
+        (
+          event: Partial<{
+            messageId: string;
+            progressPercentage: number;
+            payload: any;
+          }>
+        ) => {
+          const { messageId, progressPercentage, payload } = event;
 
-        setTimeout(() => {
-          (_worker as any).worker.onmessage({ data: { messageId, payload, progressPercentage } });
-        }, 1);
-      });
+          setTimeout(() => {
+            (_worker as any).worker.onmessage({
+              data: { messageId, payload, progressPercentage },
+            });
+          }, 1);
+        }
+      );
 
       workerSelf = {
         importScripts: workerSelfImportScriptsSpy,
@@ -165,20 +184,24 @@ describe('EasyWebWorker', () => {
         postMessage: workerSelfPostMessageSpy,
       };
 
-      jest.spyOn(WorkerMock.prototype, 'postMessage').mockImplementation((event) => {
-        const { messageId, payload } = event;
+      jest
+        .spyOn(WorkerMock.prototype, 'postMessage')
+        .mockImplementation((event) => {
+          const { messageId, payload } = event;
 
-        setTimeout(() => {
-          workerSelf.onmessage({ data: { messageId, payload } });
-        }, 1);
-      });
+          setTimeout(() => {
+            workerSelf.onmessage({ data: { messageId, payload } });
+          }, 1);
+        });
     });
 
     describe('send', () => {
       it('worker should run correctly messages', async () => {
         expect.assertions(3);
 
-        const workerContent: EasyWebWorkerBody<number, number> = (easyWorker) => {
+        const workerContent: EasyWebWorkerBody<number, number> = (
+          easyWorker
+        ) => {
           easyWorker.onMessage((message) => {
             const { payload } = message;
 
@@ -229,8 +252,13 @@ describe('EasyWebWorker', () => {
         expect.assertions(2);
 
         const onProgressSpy = jest.fn(() => {});
-        const workerContent1: EasyWebWorkerBody<null, number> = (_easyWorker, context) => {
-          context.countTo100 = (message: IEasyWebWorkerMessage<null, number>) => {
+        const workerContent1: EasyWebWorkerBody<null, number> = (
+          _easyWorker,
+          context
+        ) => {
+          context.countTo100 = (
+            message: IEasyWebWorkerMessage<null, number>
+          ) => {
             let progress = 0;
             const intervalId = setInterval(() => {
               progress += 1;
@@ -244,11 +272,17 @@ describe('EasyWebWorker', () => {
           };
         };
 
-        const workerContent2: EasyWebWorkerBody<null, number> = (easyWorker, context) => {
+        const workerContent2: EasyWebWorkerBody<null, number> = (
+          easyWorker,
+          context
+        ) => {
           easyWorker.onMessage(context.countTo100);
         };
 
-        const worker = createWorker<null, number>([workerContent1, workerContent2]);
+        const worker = createWorker<null, number>([
+          workerContent1,
+          workerContent2,
+        ]);
 
         createMockFunctionFromContent(workerBody)(workerSelf);
 
@@ -262,16 +296,17 @@ describe('EasyWebWorker', () => {
         expect.assertions(3);
 
         const workerContent: EasyWebWorkerBody<null> = (easyWorker) => {
-          const countTo100 = (message: IEasyWebWorkerMessage) => setTimeout(() => {
-            let count = 0;
-            const intervalId = setInterval(() => {
-              count += 1;
-              if (count === 100) {
-                clearInterval(intervalId);
-                message.resolve();
-              }
-            }, 10);
-          }, 500);
+          const countTo100 = (message: IEasyWebWorkerMessage) =>
+            setTimeout(() => {
+              let count = 0;
+              const intervalId = setInterval(() => {
+                count += 1;
+                if (count === 100) {
+                  clearInterval(intervalId);
+                  message.resolve();
+                }
+              }, 10);
+            }, 500);
 
           easyWorker.onMessage(countTo100);
         };
@@ -298,16 +333,17 @@ describe('EasyWebWorker', () => {
         expect.assertions(3);
 
         const workerContent: EasyWebWorkerBody = (easyWorker) => {
-          const countTo100 = (message: IEasyWebWorkerMessage) => setTimeout(() => {
-            let count = 0;
-            const intervalId = setInterval(() => {
-              count += 1;
-              if (count === 100) {
-                clearInterval(intervalId);
-                message.resolve();
-              }
-            }, 10);
-          }, 500);
+          const countTo100 = (message: IEasyWebWorkerMessage) =>
+            setTimeout(() => {
+              let count = 0;
+              const intervalId = setInterval(() => {
+                count += 1;
+                if (count === 100) {
+                  clearInterval(intervalId);
+                  message.resolve();
+                }
+              }, 10);
+            }, 500);
 
           easyWorker.onMessage(countTo100);
         };
@@ -334,16 +370,17 @@ describe('EasyWebWorker', () => {
         expect.assertions(3);
 
         const workerContent: EasyWebWorkerBody = (easyWorker) => {
-          const countTo100 = (message: IEasyWebWorkerMessage) => setTimeout(() => {
-            let count = 0;
-            const intervalId = setInterval(() => {
-              count += 1;
-              if (count === 100) {
-                clearInterval(intervalId);
-                message.resolve();
-              }
-            }, 10);
-          }, 500);
+          const countTo100 = (message: IEasyWebWorkerMessage) =>
+            setTimeout(() => {
+              let count = 0;
+              const intervalId = setInterval(() => {
+                count += 1;
+                if (count === 100) {
+                  clearInterval(intervalId);
+                  message.resolve();
+                }
+              }, 10);
+            }, 500);
 
           easyWorker.onMessage(countTo100);
         };
@@ -364,6 +401,5 @@ describe('EasyWebWorker', () => {
         expect(callback3).toHaveBeenCalled();
       }, 3000);
     });
-
   });
 });

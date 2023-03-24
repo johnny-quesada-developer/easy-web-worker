@@ -1,15 +1,15 @@
-// eslint-disable-next-line max-classes-per-file
-import * as IEasyWebWorker from "./EasyWebWorkerTypes";
-
 export const generatedId = (): string =>
   `${new Date().getTime()}${Math.random().toString(36).substr(2, 9)}`;
 
+/**
+ * This is the template of the worker, should be and string to avoid compilation issues
+ */
 export const WorkerTemplate = () => `
 // this code was auto-generated
   const easyWorker = new (class {
     onMessageCallback = () => {
       // eslint-disable-next-line no-throw-literal
-      throw "you didnt defined a message-callback, please assign a callback by calling IEasyWorkerInstance.onMessage";
+      throw "you didn't defined a message-callback, please assign a callback by calling IEasyWorkerInstance.onMessage";
     };
 
     onMessage = (callback) => {

@@ -1,9 +1,9 @@
-import { WorkerTemplate } from "./EasyWebWorkerFixtures";
-import * as IEasyWebWorker from "./EasyWebWorkerTypes";
+import { WorkerTemplate } from './EasyWebWorkerFixtures';
+import { EasyWebWorkerBody } from './EasyWebWorkerTypes';
 
 export class EasyWebWorkerFactory {
   private getImportScriptsTemplate(scripts: string[] = []) {
-    if (!scripts.length) return "";
+    if (!scripts.length) return '';
 
     return `self.importScripts(["${scripts.join('","')}"]);`;
   }
@@ -14,22 +14,20 @@ export class EasyWebWorkerFactory {
 
     return (window.URL || window.webkitURL).createObjectURL(
       new Blob([content], {
-        type: "application/javascript",
+        type: 'application/javascript',
       })
     );
   }
 
   public blobWorker<IPayload = null, IResult = void>(
     source:
-      | IEasyWebWorker.EasyWebWorkerBody<IPayload, IResult>
-      | IEasyWebWorker.EasyWebWorkerBody<IPayload, IResult>[],
+      | EasyWebWorkerBody<IPayload, IResult>
+      | EasyWebWorkerBody<IPayload, IResult>[],
     imports: string[] = []
   ) {
     const template = WorkerTemplate();
-    const contentCollection: IEasyWebWorker.EasyWebWorkerBody<
-      IPayload,
-      IResult
-    >[] = Array.isArray(source) ? source : [source];
+    const contentCollection: EasyWebWorkerBody<IPayload, IResult>[] =
+      Array.isArray(source) ? source : [source];
 
     return (window.URL || window.webkitURL).createObjectURL(
       new Blob(
@@ -41,9 +39,9 @@ export class EasyWebWorkerFactory {
           (content, index) =>
             `// content #${index}\n(${content.toString()})(easyWorker, self);`
         )
-        .join("\n\n")}`,
+        .join('\n\n')}`,
         ],
-        { type: "application/javascript" }
+        { type: 'application/javascript' }
       )
     );
   }

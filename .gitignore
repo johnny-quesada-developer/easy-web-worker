@@ -1,6 +1,8 @@
 node_modules
+
 lib
 ./lib
+
 lib/EasyWebWorker.d.ts
 lib/EasyWebWorker.d.ts.map
 lib/EasyWebWorker.js
