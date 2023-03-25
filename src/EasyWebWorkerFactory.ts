@@ -1,7 +1,7 @@
 import { WorkerTemplate } from './EasyWebWorkerFixtures';
 import { EasyWebWorkerBody } from './EasyWebWorkerTypes';
 
-export class EasyWebWorkerFactory {
+class EasyWebWorkerFactory {
   private getImportScriptsTemplate(scripts: string[] = []) {
     if (!scripts.length) return '';
 
@@ -26,6 +26,7 @@ export class EasyWebWorkerFactory {
     imports: string[] = []
   ) {
     const template = WorkerTemplate();
+
     const contentCollection: EasyWebWorkerBody<IPayload, IResult>[] =
       Array.isArray(source) ? source : [source];
 
@@ -33,13 +34,15 @@ export class EasyWebWorkerFactory {
       new Blob(
         [
           `${this.getImportScriptsTemplate(imports)}
-      ${template}
-      ${contentCollection
-        .map(
-          (content, index) =>
-            `// content #${index}\n(${content.toString()})(easyWorker, self);`
-        )
-        .join('\n\n')}`,
+      
+          ${template}
+      
+          ${contentCollection
+            .map(
+              (content, index) =>
+                `// content #${index}\n(${content.toString()})(easyWorker, self);`
+            )
+            .join('\n\n')}`,
         ],
         { type: 'application/javascript' }
       )
@@ -47,4 +50,4 @@ export class EasyWebWorkerFactory {
   }
 }
 
-export default new EasyWebWorkerFactory();
+export const easyWebWorkerFactory = new EasyWebWorkerFactory();

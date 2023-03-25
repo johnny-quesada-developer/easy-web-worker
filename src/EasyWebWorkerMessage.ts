@@ -1,13 +1,18 @@
+import {
+  createDecoupledPromise,
+  TDecoupledCancelablePromise,
+} from 'cancelable-promise-jq';
 import { generatedId } from './EasyWebWorkerFixtures';
 import {
   IEasyWebWorkerMessage,
+  IMessagePromise,
   OnProgressCallback,
 } from './EasyWebWorkerTypes';
 
 /**
  * This class represents a message that will be send to a worker
  */
-class EasyWebWorkerMessage<IPayload = null, IResult = void>
+export class EasyWebWorkerMessage<IPayload = null, IResult = void>
   implements IEasyWebWorkerMessage<IPayload, IResult>
 {
   /**
@@ -25,11 +30,18 @@ class EasyWebWorkerMessage<IPayload = null, IResult = void>
    */
   public wasCanceled = false;
 
-  public promise: Promise<IResult>;
+  /**
+   * Decoupled promise that will be resolved when the message is completed
+   */
+  public decoupledPromise: TDecoupledCancelablePromise<IResult> & {
+    promise: IMessagePromise<IResult>;
+  };
 
   public resolve: (...args: IResult extends void ? [null?] : [IResult]) => void;
 
   public reject: (reason: unknown) => void;
+
+  public cancel: () => void;
 
   public reportProgress: OnProgressCallback = () => {
     throw new Error(
@@ -40,39 +52,27 @@ class EasyWebWorkerMessage<IPayload = null, IResult = void>
   constructor(public payload: IPayload) {
     this.messageId = generatedId();
 
-    const { promise, resolve, reject } = this.createPromise();
+    this.decoupledPromise =
+      createDecoupledPromise<IResult>() as TDecoupledCancelablePromise<IResult> & {
+        promise: IMessagePromise<IResult>;
+      };
 
-    this.promise = promise;
-    this.resolve = resolve;
-    this.reject = reject;
-  }
-
-  protected createPromise(): {
-    promise: Promise<IResult>;
-    resolve: (...args: IResult extends void ? [null?] : [IResult]) => void;
-    reject: (reason: unknown) => void;
-  } {
-    let resolve: (
-      ...args: IResult extends void ? [null?] : [IResult]
-    ) => void = () => {};
-
-    let reject: (reason: unknown) => void = () => {};
-
-    const promise = new Promise<IResult>((_resolve, _reject) => {
-      resolve = _resolve as any;
-      reject = _reject;
+    this.decoupledPromise.onCancel(() => {
+      this.wasCanceled = true;
     });
 
-    return {
-      promise,
-      reject,
-      resolve,
+    this.resolve = (...args) => {
+      this.decoupledPromise.resolve(...args);
+    };
+    this.reject = this.decoupledPromise.reject;
+    this.cancel = this.decoupledPromise.cancel;
+
+    this.decoupledPromise.promise.onProgress = (
+      callback: OnProgressCallback
+    ) => {
+      this.reportProgress = callback;
+
+      return this.decoupledPromise.promise;
     };
   }
-
-  public cancel() {
-    this.wasCanceled = true;
-  }
 }
-
-export default EasyWebWorkerMessage;

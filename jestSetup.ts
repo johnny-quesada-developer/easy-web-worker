@@ -16,6 +16,10 @@ beforeEach(() => {
     createObjectURL,
   };
 
+  globalAny.window.webkitURL = {
+    createObjectURL,
+  };
+
   globalAny.Worker = WorkerMock;
 });
 
@@ -23,5 +27,3 @@ afterEach(() => {
   jest.restoreAllMocks();
   jest.clearAllMocks();
 });
-
-export {};

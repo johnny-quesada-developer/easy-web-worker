@@ -1,5 +1,5 @@
-import EasyWebWorkerMessage from './EasyWebWorkerMessage';
-import EasyWebWorkerFactory from './EasyWebWorkerFactory';
+import { EasyWebWorkerMessage } from './EasyWebWorkerMessage';
+import { easyWebWorkerFactory } from './EasyWebWorkerFactory';
 import { generatedId } from './EasyWebWorkerFixtures';
 import {
   EasyWebWorkerBody,
@@ -8,6 +8,7 @@ import {
   IWorkerConfig,
   OnProgressCallback,
 } from './EasyWebWorkerTypes';
+import { tryCatchPromise } from 'cancelable-promise-jq';
 
 /**
  * This is a class to create global-store objects
@@ -27,7 +28,7 @@ class EasyWebWorker<IPayload = null, IResult = void> {
   /**
    * @deprecated Directly modifying the worker may lead to unexpected behavior. Use it only if you know what you are doing.
    */
-  public worker: Worker | null;
+  public worker: Worker;
 
   /**
    * These where send to the worker but not yet resolved
@@ -109,7 +110,7 @@ class EasyWebWorker<IPayload = null, IResult = void> {
       return this.workerBody as string;
     }
 
-    return EasyWebWorkerFactory.blobWorker<IPayload, IResult>(
+    return easyWebWorkerFactory.blobWorker<IPayload, IResult>(
       this.workerBody as
         | EasyWebWorkerBody<IPayload, IResult>
         | EasyWebWorkerBody<IPayload, IResult>[],
@@ -124,11 +125,13 @@ class EasyWebWorker<IPayload = null, IResult = void> {
       name: this.name,
     });
 
-    worker.onmessage = (event: MessageEvent<IMessageData<IPayload>>) =>
+    worker.onmessage = (event: MessageEvent<IMessageData<IPayload>>) => {
       this.executeMessageCallback(event);
+    };
 
-    worker.onerror = (error) =>
+    worker.onerror = (error) => {
       this.executeMessageCallback({ data: { error } });
+    };
 
     return worker;
   }
@@ -167,14 +170,7 @@ class EasyWebWorker<IPayload = null, IResult = void> {
       payload: $payload,
     });
 
-    const result = message.promise as IMessagePromise<IResult>;
-
-    result.onProgress = (callback: OnProgressCallback) => {
-      message.reportProgress = callback;
-      return message.promise;
-    };
-
-    return result;
+    return message.decoupledPromise.promise;
   }
 
   /**
@@ -204,13 +200,16 @@ class EasyWebWorker<IPayload = null, IResult = void> {
       const [firstItem] = this.messagesQueue;
       const [, currentMessage] = firstItem;
 
+      this.messagesQueue.delete(currentMessage.messageId);
+
       this.cancelAll();
-      currentMessage.wasCanceled = false;
 
       this.messagesQueue.set(currentMessage.messageId, currentMessage);
     }
 
-    return this.send(...payload);
+    const newPromise = this.send(...payload);
+
+    return newPromise;
   }
 
   /**

@@ -6,6 +6,10 @@ import {
 } from '../src/EasyWebWorkerTypes';
 import * as testFixtures from './testFixtures';
 
+const replaceAll = (target: string, search: string, replacement: string) => {
+  return target.split(search).join(replacement);
+};
+
 const {
   getMockBlobContent,
   WorkerMock,
@@ -48,14 +52,17 @@ describe('EasyWebWorker', () => {
         (content: string[], config: { type: string }) => {
           expect(config).toEqual({ type: 'application/javascript' });
 
-          const sanitizedContent = content
-            .join('')
-            .replace(/^\s*[\r\n]/gm, '')
-            .trim();
+          const sanitizedContent = replaceAll(
+            content.join('').replace(/\s+/g, ''),
+            '"',
+            "'"
+          );
 
-          const sanitizedMock = getMockBlobContent()
-            .replace(/^\s*[\r\n]/gm, '')
-            .trim();
+          const sanitizedMock = replaceAll(
+            getMockBlobContent().replace(/\s+/g, ''),
+            '"',
+            "'"
+          );
 
           expect(sanitizedContent).toEqual(sanitizedMock);
         }
@@ -135,14 +142,12 @@ describe('EasyWebWorker', () => {
   describe('Methods', () => {
     let _worker: EasyWebWorker<any, any>;
     let workerBody: string;
+
     let workerSelf: {
       importScripts: any;
       onmessage: any;
       postMessage: any;
     };
-
-    let workerSelfImportScriptsSpy: jest.SpyInstance;
-    let workerSelfPostMessageSpy: jest.SpyInstance;
 
     const createWorker = <IPayload = null, IResult = void>(
       workerContent:
@@ -151,6 +156,7 @@ describe('EasyWebWorker', () => {
       config: Partial<IWorkerConfig> = {}
     ): EasyWebWorker<IPayload, IResult> => {
       _worker = new EasyWebWorker(workerContent, config);
+
       return _worker;
     };
 
@@ -159,9 +165,10 @@ describe('EasyWebWorker', () => {
         workerBody = `${content.join('')} return easyWorker;`;
       });
 
-      workerSelfImportScriptsSpy = jest.fn();
-      workerSelfPostMessageSpy = jest.fn(
-        (
+      workerSelf = {
+        importScripts: jest.fn(),
+        onmessage: null,
+        postMessage: (
           event: Partial<{
             messageId: string;
             progressPercentage: number;
@@ -171,17 +178,11 @@ describe('EasyWebWorker', () => {
           const { messageId, progressPercentage, payload } = event;
 
           setTimeout(() => {
-            (_worker as any).worker.onmessage({
+            _worker.worker.onmessage?.call(_worker.worker, {
               data: { messageId, payload, progressPercentage },
             });
           }, 1);
-        }
-      );
-
-      workerSelf = {
-        importScripts: workerSelfImportScriptsSpy,
-        onmessage: null,
-        postMessage: workerSelfPostMessageSpy,
+        },
       };
 
       jest
@@ -292,8 +293,8 @@ describe('EasyWebWorker', () => {
     });
 
     describe('override', () => {
-      it('Worker should correctly invalid previous messages', async () => {
-        expect.assertions(3);
+      it('Worker should correctly invalid previous messages', () => {
+        expect.assertions(4);
 
         const workerContent: EasyWebWorkerBody<null> = (easyWorker) => {
           const countTo100 = (message: IEasyWebWorkerMessage) =>
@@ -301,36 +302,44 @@ describe('EasyWebWorker', () => {
               let count = 0;
               const intervalId = setInterval(() => {
                 count += 1;
-                if (count === 100) {
-                  clearInterval(intervalId);
-                  message.resolve();
-                }
-              }, 10);
-            }, 500);
+                if (count !== 100) return;
+
+                clearInterval(intervalId);
+
+                message.resolve();
+              }, 1);
+            }, 1);
 
           easyWorker.onMessage(countTo100);
         };
 
         const worker = createWorker(workerContent);
+
         const callback1 = jest.fn();
         const callback2 = jest.fn();
         const callback3 = jest.fn();
+        const errorLogger = jest.fn();
 
         createMockFunctionFromContent(workerBody)(workerSelf);
 
-        worker.send().then(callback1);
-        worker.send().then(callback2);
-        await worker.override().then(callback3);
+        worker.send().then(callback1).catch(errorLogger);
+        worker.send().then(callback2).catch(errorLogger);
 
-        expect(callback1).not.toHaveBeenCalled();
-        expect(callback2).not.toHaveBeenCalled();
-        expect(callback3).toHaveBeenCalled();
-      }, 3000);
+        return worker
+          .override()
+          .then(callback3)
+          .then(() => {
+            expect(callback1).not.toHaveBeenCalled();
+            expect(callback2).not.toHaveBeenCalled();
+            expect(callback3).toHaveBeenCalled();
+            expect(errorLogger).toHaveBeenCalledTimes(2);
+          });
+      });
     });
 
     describe('overrideAfterCurrent', () => {
       it('Worker should correctly invalid previous messages after current execution', async () => {
-        expect.assertions(3);
+        expect.assertions(4);
 
         const workerContent: EasyWebWorkerBody = (easyWorker) => {
           const countTo100 = (message: IEasyWebWorkerMessage) =>
@@ -338,68 +347,82 @@ describe('EasyWebWorker', () => {
               let count = 0;
               const intervalId = setInterval(() => {
                 count += 1;
-                if (count === 100) {
-                  clearInterval(intervalId);
-                  message.resolve();
-                }
+                if (count !== 100) return;
+
+                clearInterval(intervalId);
+                message.resolve();
               }, 10);
-            }, 500);
+            }, 1);
 
           easyWorker.onMessage(countTo100);
         };
 
         const worker = createWorker(workerContent);
+
         const callback1 = jest.fn();
         const callback2 = jest.fn();
         const callback3 = jest.fn();
+        const errorLogger = jest.fn();
 
         createMockFunctionFromContent(workerBody)(workerSelf);
 
         worker.send().then(callback1);
-        worker.send().then(callback2);
+        worker.send().then(callback2).catch(errorLogger);
+
         await worker.overrideAfterCurrent().then(callback3);
 
         expect(callback1).toHaveBeenCalled();
         expect(callback2).not.toHaveBeenCalled();
         expect(callback3).toHaveBeenCalled();
-      }, 3000);
+        expect(errorLogger).toHaveBeenCalledTimes(1);
+      });
     });
 
     describe('dispose', () => {
-      it('should correctly dispose worker (remove worker and revokeObjectURL)', async () => {
-        expect.assertions(3);
+      it('should correctly dispose worker (remove worker and revokeObjectURL)', () => {
+        expect.assertions(4);
 
         const workerContent: EasyWebWorkerBody = (easyWorker) => {
           const countTo100 = (message: IEasyWebWorkerMessage) =>
             setTimeout(() => {
               let count = 0;
+
               const intervalId = setInterval(() => {
                 count += 1;
-                if (count === 100) {
-                  clearInterval(intervalId);
-                  message.resolve();
-                }
-              }, 10);
-            }, 500);
+
+                if (count !== 100) return;
+
+                clearInterval(intervalId);
+
+                message.resolve();
+              }, 1);
+            }, 1);
 
           easyWorker.onMessage(countTo100);
         };
 
         const worker = createWorker(workerContent);
+
         const callback1 = jest.fn();
         const callback2 = jest.fn();
         const callback3 = jest.fn();
+        const errorLogger = jest.fn();
 
         createMockFunctionFromContent(workerBody)(workerSelf);
 
         worker.send().then(callback1);
-        worker.send().then(callback2);
-        await worker.overrideAfterCurrent().then(callback3);
+        worker.send().then(callback2).catch(errorLogger);
 
-        expect(callback1).toHaveBeenCalled();
-        expect(callback2).not.toHaveBeenCalled();
-        expect(callback3).toHaveBeenCalled();
-      }, 3000);
+        return worker
+          .overrideAfterCurrent()
+          .then(callback3)
+          .then(() => {
+            expect(callback1).toHaveBeenCalled();
+            expect(callback2).not.toHaveBeenCalled();
+            expect(callback3).toHaveBeenCalled();
+            expect(errorLogger).toHaveBeenCalledTimes(1);
+          });
+      });
     });
   });
 });
