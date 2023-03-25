@@ -6,9 +6,7 @@ import {
   IMessageData,
   IMessagePromise,
   IWorkerConfig,
-  OnProgressCallback,
 } from './EasyWebWorkerTypes';
-import { tryCatchPromise } from 'cancelable-promise-jq';
 
 /**
  * This is a class to create global-store objects
@@ -22,7 +20,7 @@ import { tryCatchPromise } from 'cancelable-promise-jq';
  * @param {Partial<IWorkerConfig>} WorkerConfig - You could add extra configuration to your worker,
  * consult IWorkerConfig description to have more information
  * */
-class EasyWebWorker<IPayload = null, IResult = void> {
+export class EasyWebWorker<IPayload = null, IResult = void> {
   public name: string;
 
   /**
@@ -36,7 +34,10 @@ class EasyWebWorker<IPayload = null, IResult = void> {
   private messagesQueue: Map<string, EasyWebWorkerMessage<IPayload, IResult>> =
     new Map();
 
-  public workerUrl: string = '';
+  /**
+   * This is the URL of the worker file
+   */
+  public workerUrl: string;
 
   protected scripts: string[] = [];
 
@@ -45,10 +46,20 @@ class EasyWebWorker<IPayload = null, IResult = void> {
   }
 
   constructor(
+    /**
+     * this parameter should be a function or set of functions that will become the body of your Web-Worker
+     * IMPORTANT!! all WORKERS content is gonna be transpiled on run time, so you can not use any variable, method of resource that weren't included into the WORKER.
+     * the above the reason of why we are injecting all worker context into the MessageBody Callbacks, so,
+     * you could easily identify what is on the context of your Worker.
+     */
     protected workerBody:
       | EasyWebWorkerBody<IPayload, IResult>
       | EasyWebWorkerBody<IPayload, IResult>[]
       | string,
+
+    /**
+     * You could import scripts into your worker, this is useful if you want to use external libraries
+     */
     { scripts = [], name }: Partial<IWorkerConfig> = {}
   ) {
     this.name = name || generatedId();
@@ -174,9 +185,8 @@ class EasyWebWorker<IPayload = null, IResult = void> {
   }
 
   /**
-   * Web Workers works as a QUEUE, sometimes a new message actually would be the only message that you'll want to resolve...
-   * you could use OVERRIDE to that purpose.
-   * @param {IPayload} payload - whatever json data you want to send to the worker
+   * This method terminate all current messages and send a new one to the worker queue
+   * @param {IPayload} payload - whatever json data you want to send to the worker, should be serializable
    * @returns {IMessagePromise<IResult>} generated defer that will be resolved when the message completed
    */
   public override(
@@ -188,9 +198,8 @@ class EasyWebWorker<IPayload = null, IResult = void> {
   }
 
   /**
-   * Web Workers works as a QUEUE, sometimes a new message actually would be the only message that you'll want to resolve...
-   * you could use OVERRIDE to that purpose.
-   * @param {IPayload} payload - whatever json data you want to send to the worker
+   * This method will alow the current message to be completed and send a new one to the worker queue after it, all the messages after the current one will be canceled
+   * @param {IPayload} payload - whatever json data you want to send to the worker should be serializable
    * @returns {IMessagePromise<IResult>} generated defer that will be resolved when the message completed
    */
   public overrideAfterCurrent(
