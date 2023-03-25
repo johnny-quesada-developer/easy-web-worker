@@ -52,9 +52,15 @@ self.onmessage = (event) => {
     // each message should have his own resolution methods
     const message = new (class {
       payload = payload;
+
       messageId = messageId;
-      resolve = (...result) => self.postMessage({ messageId, payload: result });
-      reject = (error) => this.resolve({ error });
+      
+      resolve = (...payload) => self.postMessage({ messageId, payload });
+      
+      reject = (reason) => this.resolve({ reason });
+
+      cancel = (reason) => this.resolve({ reason, wasCanceled: true });
+      
       reportProgress = (progressPercentage) => self.postMessage({ messageId, progressPercentage });
     })();
 

@@ -424,5 +424,51 @@ describe('EasyWebWorker', () => {
           });
       });
     });
+
+    describe('cancel', () => {
+      it.skip('should correctly cancel worker', async () => {
+        expect.assertions(2);
+
+        const workerContent: EasyWebWorkerBody = (easyWorker) => {
+          const countTo100 = (message: IEasyWebWorkerMessage) =>
+            setTimeout(() => {
+              let count = 0;
+
+              const intervalId = setInterval(() => {
+                count += 1;
+
+                if (count !== 100) return;
+
+                clearInterval(intervalId);
+
+                message.resolve();
+              }, 1);
+            }, 1);
+
+          easyWorker.onMessage(countTo100);
+        };
+
+        const worker = createWorker(workerContent);
+
+        const callback1 = jest.fn();
+        const callback2 = jest.fn();
+        const callback3 = jest.fn();
+        const errorLogger = jest.fn();
+
+        createMockFunctionFromContent(workerBody)(workerSelf);
+
+        worker.send().then(callback1);
+        worker.send().then(callback2).catch(errorLogger);
+
+        //await worker.cancel();
+
+        worker.send().then(callback3);
+
+        expect(callback1).not.toHaveBeenCalled();
+        expect(callback2).not.toHaveBeenCalled();
+        expect(callback3).toHaveBeenCalled();
+        expect(errorLogger).toHaveBeenCalledTimes(2);
+      });
+    });
   });
 });

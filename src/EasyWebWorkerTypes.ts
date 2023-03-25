@@ -1,4 +1,4 @@
-import { CancelablePromise, TCancelablePromise } from 'cancelable-promise-jq';
+import { CancelablePromise } from 'cancelable-promise-jq';
 
 /**
  * This defines the structure of the onProgressCallback that you can use to receive the progress of the worker
@@ -32,7 +32,12 @@ export interface IMessageData<IPayload = null> {
   /**
    * The messages from the worker could include errors if something went wrong
    * */
-  error: unknown;
+  reason: unknown;
+
+  /**
+   * Indicates if the message was canceled
+   * */
+  wasCanceled: boolean;
 
   /**
    * The messages from the worker could include a progress percentage
@@ -79,7 +84,7 @@ export interface IEasyWebWorkerMessage<IPayload = null, IResult = void> {
   /**
    * This method is used to reject the message from inside the worker
    * */
-  reject: (reason: Error) => void;
+  reject: (reason?: unknown) => void;
 
   /**
    * This method is used to report the progress of the message from inside the worker
@@ -90,6 +95,11 @@ export interface IEasyWebWorkerMessage<IPayload = null, IResult = void> {
    * This method is used to resolve the message from inside the worker
    * */
   resolve: (...args: IResult extends void ? [null?] : [IResult]) => void;
+
+  /**
+   * This method is used to cancel the message from inside the worker
+   * */
+  cancel: (reason?: unknown) => void;
 }
 
 /**
@@ -119,5 +129,5 @@ export interface IMessagePromise<IResult = void>
   /**
    * This method allows to report the progress of the message from the main thread in the onProgress callback
    * */
-  onProgress: (callback: OnProgressCallback) => TCancelablePromise<IResult>;
+  onProgress: (callback: OnProgressCallback) => CancelablePromise<IResult>;
 }

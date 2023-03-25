@@ -24,26 +24,34 @@ export class WorkerMessage<IPayload = null, IResult = void>
   /**
    * This method is used to resolve the message from inside the worker
    */
-  public resolve(...result: [null?] | [any]) {
-    self.postMessage(
-      { messageId: this.messageId, payload: result },
-      this.messageTargetOrigin
-    );
+  public resolve(...payload: [null?] | [any]) {
+    const { messageId } = this;
+
+    self.postMessage({ messageId, payload }, this.messageTargetOrigin);
   }
 
   /**
    * This method is used to reject the message from inside the worker
    * */
-  public reject(error: string | Error) {
-    this.resolve({ error });
+  public reject(reason: unknown) {
+    this.resolve({ error: reason });
+  }
+
+  /**
+   * This method is used to cancel the message from inside the worker
+   */
+  public cancel(reason?: unknown) {
+    this.resolve({ cancelled: true, error: reason });
   }
 
   /**
    * This method is used to report the progress of the message from inside the worker
    * */
   public reportProgress(progressPercentage: number) {
+    const { messageId } = this;
+
     self.postMessage(
-      { messageId: this.messageId, progressPercentage },
+      { messageId, progressPercentage },
       this.messageTargetOrigin
     );
   }

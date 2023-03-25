@@ -25,9 +25,11 @@ export const WorkerTemplate = () => `
 
       messageId = messageId;
 
-      resolve = (...result) => self.postMessage({ messageId, payload: result });
+      resolve = (...payload) => self.postMessage({ messageId, payload });
 
-      reject = (error) => this.resolve({ error });
+      reject = (reason) => this.resolve({ reason });
+
+      cancel = (reason) => this.resolve({ reason, wasCanceled: true });
 
       reportProgress = (progressPercentage) =>
         self.postMessage({ messageId, progressPercentage });
