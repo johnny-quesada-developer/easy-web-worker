@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
-    "target": "ES5",
+    "target": "ES2016",
     "module": "commonjs",
-    "lib": ["es5", "es2015.promise", "es2015.iterable", "dom"],
+    "lib": ["es2016", "dom"],
     "declaration": true,
     "outDir": "./lib",
     "strict": true,
@@ -19,8 +19,17 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "pretty": true,
-    "downlevelIteration": true
+    "downlevelIteration": true,
+    "sourceMap": true,
+    "allowJs": true,
+    "declarationDir": "./lib",
+    "typeRoots": ["node_modules/@types", "./types"],
+    "moduleResolution": "node",
+    "baseUrl": ".",
+    "paths": {
+      "*": ["src/*"]
+    }
   },
-  "include": ["src"],
+  "include": ["src/**/*", "types/**/*"],
   "exclude": ["node_modules", "lib"]
 }

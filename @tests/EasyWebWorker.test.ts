@@ -1,3 +1,6 @@
+import { CancelablePromise } from 'cancelable-promise-jq';
+import * as Test from 'cancelable-promise-jq';
+
 import EasyWebWorker, {
   EasyWebWorkerBody,
   IEasyWebWorkerMessage,
@@ -210,7 +213,7 @@ describe('EasyWebWorker', () => {
         expect(await worker.send(-4)).toEqual(-2);
       });
 
-      it.only('should correctly report progress on children promises', async () => {
+      it('should correctly report progress on children promises', async () => {
         expect.assertions(1);
 
         const workerContent: EasyWebWorkerBody<number, number> = (
@@ -448,7 +451,7 @@ describe('EasyWebWorker', () => {
     });
 
     describe('cancel', () => {
-      it('should correctly cancel worker', async () => {
+      it.only('should correctly cancel worker', async () => {
         expect.assertions(2);
 
         const workerContent: EasyWebWorkerBody = (easyWorker) => {

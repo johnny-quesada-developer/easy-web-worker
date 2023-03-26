@@ -21,7 +21,7 @@ describe('StaticEasyWebWorker', () => {
 
             (this as unknown as StaticEasyWebWorker).onMessageCallback.call(
               this,
-              message,
+              message as IEasyWebWorkerMessage<null, void>,
               event
             );
           };

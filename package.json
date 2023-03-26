@@ -1,8 +1,9 @@
 {
   "name": "easy-web-worker",
-  "version": "1.0.13",
+  "version": "1.1.0",
   "description": "This is a library to easily handle and create web-workers, if you are a web developer and never tried this... do not wait any longer! Workers are an amazing option to improve user experience and make your webpages even greater",
   "main": "lib/index.js",
+  "types": "lib/index.d.ts",
   "files": [
     "lib"
   ],
@@ -10,7 +11,7 @@
     "test:debug": "node --inspect-brk node_modules/.bin/jest --watch --runInBand",
     "test:quick": "jest --maxWorkers=4 -c --no-watchman -u",
     "test:coverage": "jest --maxWorkers=4 -c --colors --no-watchman --verbose --coverage",
-    "build": "tsc",
+    "build": "webpack --config webpack.config.js",
     "prepare": "npm run build",
     "version": "npm run format && git add -A src",
     "postversion": "git push && git push --tags",
@@ -37,32 +38,28 @@
   },
   "homepage": "https://github.com/johnny-quesada-developer/easy-web-worker#readme",
   "devDependencies": {
-    "@types/jest": "^26.0.17",
-    "@types/jsdom": "^16.2.5",
-    "@typescript-eslint/eslint-plugin": "^4.9.1",
-    "@typescript-eslint/parser": "^4.9.1",
-    "cancelable-promise-jq": ">=1.0.11",
-    "eslint": "^7.15.0",
-    "eslint-config-airbnb": "^18.2.1",
-    "eslint-plugin-import": "^2.22.1",
-    "eslint-plugin-jsx-a11y": "^6.4.1",
-    "eslint-plugin-react": "^7.21.5",
-    "eslint-plugin-react-hooks": "^4.2.0",
-    "jest": "^29.5.0",
-    "jest-core": "^0.0.0",
+    "@babel/core": "^7.21.3",
+    "@babel/plugin-transform-modules-commonjs": "^7.21.2",
+    "@babel/preset-env": "^7.20.2",
+    "@babel/preset-typescript": "^7.21.0",
+    "@types/jest": "^29.2.4",
+    "babel-loader": "^9.1.2",
+    "cancelable-promise-jq": ">=1.1.0",
+    "jest": "^29.3.1",
     "jsdom": "^16.4.0",
-    "lite-server": "^2.6.1",
-    "ts-jest": "^29.0.5",
-    "tslib": "^2.5.0",
-    "typescript": "^4.4.4"
+    "ts-jest": "^29.0.3",
+    "ts-loader": "^9.4.2",
+    "tslib": "^2.4.1",
+    "typescript": "^4.9.4",
+    "webpack": "^5.76.3",
+    "webpack-cli": "^5.0.1"
   },
   "peerDependencies": {
-    "cancelable-promise-jq": ">=1.0.11"
+    "cancelable-promise-jq": ">=1.1.0"
   },
   "peerDependenciesMeta": {
     "cancelable-promise-jq": {
       "optional": false
     }
-  },
-  "dependencies": {}
+  }
 }
