@@ -1,9 +1,9 @@
-import EasyWebWorker from '../src/EasyWebWorker';
-import {
-  IWorkerConfig,
+import EasyWebWorker, {
   EasyWebWorkerBody,
   IEasyWebWorkerMessage,
-} from '../src/EasyWebWorkerTypes';
+  IWorkerConfig,
+} from '../src/EasyWebWorker';
+
 import * as testFixtures from './testFixtures';
 
 const replaceAll = (target: string, search: string, replacement: string) => {
@@ -27,7 +27,7 @@ describe('EasyWebWorker', () => {
   describe('constructor', () => {
     const scripts = ['fake.js'];
     const workerName = 'workerTest';
-    const workerContent: EasyWebWorkerBody<null> = (easyWorker, context) => {
+    const workerContent: EasyWebWorkerBody = (easyWorker, context) => {
       context.globalPropertyTest = 'globalPropertyTest';
       easyWorker.onMessage((message) => {
         message.resolve();
@@ -168,32 +168,23 @@ describe('EasyWebWorker', () => {
       workerSelf = {
         importScripts: jest.fn(),
         onmessage: null,
-        postMessage: (
-          event: Partial<{
-            messageId: string;
-            progressPercentage: number;
-            payload: any;
-          }>
-        ) => {
-          const { messageId, progressPercentage, payload } = event;
-
+        postMessage: (payload: unknown) => {
           setTimeout(() => {
-            _worker.worker.onmessage?.call(_worker.worker, {
-              data: { messageId, payload, progressPercentage },
+            // @ts-ignore
+            _worker.worker.onmessage({
+              data: payload,
             });
           }, 1);
         },
       };
 
-      jest
-        .spyOn(WorkerMock.prototype, 'postMessage')
-        .mockImplementation((event) => {
-          const { messageId, payload } = event;
-
-          setTimeout(() => {
-            workerSelf.onmessage({ data: { messageId, payload } });
-          }, 1);
-        });
+      (WorkerMock.prototype as any).postMessage = function (data: any) {
+        setTimeout(() => {
+          workerSelf.onmessage({
+            data,
+          });
+        }, 1);
+      };
     });
 
     describe('send', () => {
@@ -219,6 +210,37 @@ describe('EasyWebWorker', () => {
         expect(await worker.send(-4)).toEqual(-2);
       });
 
+      it.only('should correctly report progress on children promises', async () => {
+        expect.assertions(1);
+
+        const workerContent: EasyWebWorkerBody<number, number> = (
+          easyWorker
+        ) => {
+          easyWorker.onMessage((message) => {
+            message.reportProgress(1);
+
+            message.resolve(1);
+          });
+        };
+
+        const worker = createWorker(workerContent);
+
+        createMockFunctionFromContent(workerBody)(workerSelf);
+
+        const progressLogger = jest.fn();
+
+        return worker
+          .send(1)
+          .onProgress(progressLogger)
+          .then(() => {})
+          .onProgress(progressLogger)
+          .then(() => {})
+          .onProgress(progressLogger)
+          .then(() => {
+            expect(progressLogger).toHaveBeenCalledTimes(3);
+          });
+      });
+
       it('worker should correctly report progress', async () => {
         expect.assertions(2);
 
@@ -235,7 +257,7 @@ describe('EasyWebWorker', () => {
                 clearInterval(intervalId);
                 message.resolve(progress);
               }
-            }, 10);
+            }, 1);
           };
 
           easyWorker.onMessage(countTo100);
@@ -426,49 +448,53 @@ describe('EasyWebWorker', () => {
     });
 
     describe('cancel', () => {
-      it.skip('should correctly cancel worker', async () => {
+      it('should correctly cancel worker', async () => {
         expect.assertions(2);
 
         const workerContent: EasyWebWorkerBody = (easyWorker) => {
-          const countTo100 = (message: IEasyWebWorkerMessage) =>
+          easyWorker.onMessage((message) => {
             setTimeout(() => {
-              let count = 0;
-
-              const intervalId = setInterval(() => {
-                count += 1;
-
-                if (count !== 100) return;
-
-                clearInterval(intervalId);
-
-                message.resolve();
-              }, 1);
-            }, 1);
-
-          easyWorker.onMessage(countTo100);
+              message.resolve();
+            }, 1000);
+          });
         };
 
         const worker = createWorker(workerContent);
 
         const callback1 = jest.fn();
-        const callback2 = jest.fn();
-        const callback3 = jest.fn();
         const errorLogger = jest.fn();
 
         createMockFunctionFromContent(workerBody)(workerSelf);
 
-        worker.send().then(callback1);
-        worker.send().then(callback2).catch(errorLogger);
-
-        //await worker.cancel();
-
-        worker.send().then(callback3);
+        await worker.send().then(callback1).cancel('cancel').catch(errorLogger);
 
         expect(callback1).not.toHaveBeenCalled();
-        expect(callback2).not.toHaveBeenCalled();
-        expect(callback3).toHaveBeenCalled();
-        expect(errorLogger).toHaveBeenCalledTimes(2);
+        expect(errorLogger).toHaveBeenCalledWith('cancel');
       });
+    });
+
+    it('should cancel the message from inside the worker', async () => {
+      expect.assertions(2);
+
+      const workerContent: EasyWebWorkerBody = (easyWorker) => {
+        easyWorker.onMessage((message) => {
+          setTimeout(() => {
+            message.cancel('cancel-from-worker');
+          }, 1);
+        });
+      };
+
+      const worker = createWorker(workerContent);
+
+      const callback1 = jest.fn();
+      const errorLogger = jest.fn();
+
+      createMockFunctionFromContent(workerBody)(workerSelf);
+
+      await worker.send().then(callback1).catch(errorLogger);
+
+      expect(callback1).not.toHaveBeenCalled();
+      expect(errorLogger).toHaveBeenCalledWith('cancel-from-worker');
     });
   });
 });

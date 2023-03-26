@@ -1,8 +1,8 @@
 {
   "name": "easy-web-worker",
-  "version": "1.0.6",
+  "version": "1.0.13",
   "description": "This is a library to easily handle and create web-workers, if you are a web developer and never tried this... do not wait any longer! Workers are an amazing option to improve user experience and make your webpages even greater",
-  "main": "lib/EasyWebWorker.js",
+  "main": "lib/index.js",
   "files": [
     "lib"
   ],
@@ -41,7 +41,7 @@
     "@types/jsdom": "^16.2.5",
     "@typescript-eslint/eslint-plugin": "^4.9.1",
     "@typescript-eslint/parser": "^4.9.1",
-    "cancelable-promise-jq": ">=1.0.4",
+    "cancelable-promise-jq": ">=1.0.11",
     "eslint": "^7.15.0",
     "eslint-config-airbnb": "^18.2.1",
     "eslint-plugin-import": "^2.22.1",
@@ -54,10 +54,10 @@
     "lite-server": "^2.6.1",
     "ts-jest": "^29.0.5",
     "tslib": "^2.5.0",
-    "typescript": "^5.0.2"
+    "typescript": "^4.4.4"
   },
   "peerDependencies": {
-    "cancelable-promise-jq": ">=1.0.4"
+    "cancelable-promise-jq": ">=1.0.11"
   },
   "peerDependenciesMeta": {
     "cancelable-promise-jq": {

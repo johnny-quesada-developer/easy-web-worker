@@ -1,4 +1,4 @@
-import { IEasyWebWorkerMessage } from '../src/EasyWebWorkerTypes';
+import { IEasyWebWorkerMessage } from '../src/EasyWebWorker';
 import { StaticEasyWebWorker, WorkerMessage } from '../src/StaticEasyWebWorker';
 
 describe('StaticEasyWebWorker', () => {

@@ -1382,10 +1382,10 @@ camelcase@^6.2.0:
   resolved "https://registry.yarnpkg.com/camelcase/-/camelcase-6.3.0.tgz#5685b95eb209ac9c0c177467778c9c84df58ba9a"
   integrity sha512-Gmy6FhYlCY7uOElZUSbxo2UCDH8owEk996gkbrpsgGtrJLM3J7jGxl9Ic7Qwwj4ivOE5AWZWRMecDdF7hqGjFA==
 
-cancelable-promise-jq@>=1.0.4:
-  version "1.0.4"
-  resolved "https://registry.yarnpkg.com/cancelable-promise-jq/-/cancelable-promise-jq-1.0.4.tgz#dcd7dce8bcdf457505fd98d87d19f96f29684c4c"
-  integrity sha512-LFmd9Ix+QqKlUPIHFowI8qRPu7xB+fh8NJo6Nu74V5kqdH71F4rYhN3P4VZwxXVlFL5kAVomARlSQsOdiga3tw==
+cancelable-promise-jq@>=1.0.11:
+  version "1.0.11"
+  resolved "https://registry.yarnpkg.com/cancelable-promise-jq/-/cancelable-promise-jq-1.0.11.tgz#8e90d2f7971b345e13ceb32f7c138322d7e622f7"
+  integrity sha512-Pn911DLTOABYznUj+Q6Tz6RIqhdWPDt5hLvJ/RAz1DhXd3Ny8CPyWKbp/jsnZQh6PIuPCyaYBBKsyDmogszyNg==
 
 caniuse-lite@^1.0.30001449:
   version "1.0.30001469"
@@ -4947,10 +4947,10 @@ type-fest@^0.8.1:
   resolved "https://registry.yarnpkg.com/type-fest/-/type-fest-0.8.1.tgz#09e249ebde851d3b1e48d27c105444667f17b83d"
   integrity sha512-4dbzIzqvjtgiM5rw1k5rEHtBANKmdudhGyBEajN01fEyhaAIhsoKNy6y7+IN93IfpFtwY9iqi7kD+xwKhQsNJA==
 
-typescript@^5.0.2:
-  version "5.0.2"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-5.0.2.tgz#891e1a90c5189d8506af64b9ef929fca99ba1ee5"
-  integrity sha512-wVORMBGO/FAs/++blGNeAVdbNKtIh1rbBL2EyQ1+J9lClJ93KiiKe8PmFIVdXhHcyv44SL9oglmfeSsndo0jRw==
+typescript@^4.4.4:
+  version "4.9.5"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.9.5.tgz#095979f9bcc0d09da324d58d03ce8f8374cbe65a"
+  integrity sha512-1FXk9E2Hm+QzZQ7z+McJiHL4NW1F2EzMu9Nq9i3zAaGqibafqYwCVU6WyWAuyQRRzOlxou8xZSyXLEN8oKj24g==
 
 ua-parser-js@^0.7.18:
   version "0.7.23"

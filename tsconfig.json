@@ -1,16 +1,11 @@
 {
   "compilerOptions": {
-    "jsx": "react",
-    "target": "ES2016",
-    "module": "es6",
+    "target": "ES5",
+    "module": "commonjs",
+    "lib": ["es5", "es2015.promise", "es2015.iterable", "dom"],
     "declaration": true,
     "outDir": "./lib",
-    "strict": false,
-    "isolatedModules": true,
-    "lib": ["dom", "dom.iterable", "es6"],
-    "declarationMap": true,
-    "rootDir": "src",
-    "importHelpers": true,
+    "strict": true,
     "noImplicitAny": false,
     "strictNullChecks": false,
     "strictFunctionTypes": true,
@@ -20,19 +15,12 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
-    "moduleResolution": "node",
-    "typeRoots": ["node_modules/@types"],
-    "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-    "allowUmdGlobalAccess": true,
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
-    "resolveJsonModule": true,
-    "skipLibCheck": false,
+    "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "allowUnusedLabels": false,
-    "pretty": true
+    "pretty": true,
+    "downlevelIteration": true
   },
   "include": ["src"],
-  "exclude": ["node_modules", "@tests"]
+  "exclude": ["node_modules", "lib"]
 }

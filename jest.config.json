@@ -1,5 +1,4 @@
 {
-  "maxWorkers": 1,
   "testEnvironment": "node",
   "collectCoverageFrom": ["./src/*.ts", "./@tests/*.tsx", "./@tests/*.ts"],
   "coverageDirectory": "./coverage",

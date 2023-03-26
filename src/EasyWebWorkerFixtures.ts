@@ -25,18 +25,15 @@ export const WorkerTemplate = () => `
 
       messageId = messageId;
 
-      resolve = (...payload) => self.postMessage({ messageId, payload });
+      resolve = (...result) => self.postMessage({ messageId, payload: result });
 
-      reject = (reason) => this.resolve({ reason });
+      reject = (reason) => self.postMessage({ messageId, reason });
 
-      cancel = (reason) => this.resolve({ reason, wasCanceled: true });
+      cancel = (reason) => self.postMessage({  messageId, reason, wasCanceled: true });
 
-      reportProgress = (progressPercentage) =>
-        self.postMessage({ messageId, progressPercentage });
+      reportProgress = (progressPercentage) => self.postMessage({ messageId, progressPercentage });
     })();
 
     easyWorker.onMessageCallback(message, event);
   };
 `;
-
-export default generatedId;

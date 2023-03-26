@@ -1,20 +1,14 @@
 import {
-  createDecoupledPromise,
   TDecoupledCancelablePromise,
+  createDecoupledPromise,
+  TOnProgressCallback,
 } from 'cancelable-promise-jq';
 import { generatedId } from './EasyWebWorkerFixtures';
-import {
-  IEasyWebWorkerMessage,
-  IMessagePromise,
-  OnProgressCallback,
-} from './EasyWebWorkerTypes';
 
 /**
  * This class represents a message that will be send to a worker
  */
-export class EasyWebWorkerMessage<IPayload = null, IResult = void>
-  implements IEasyWebWorkerMessage<IPayload, IResult>
-{
+export class EasyWebWorkerMessage<TPayload = null, TResult = void> {
   /**
    * This is the message id, it's generated automatically
    */
@@ -39,14 +33,12 @@ export class EasyWebWorkerMessage<IPayload = null, IResult = void>
    * Decoupled promise that will be resolved when the message is completed
    * The decoupled promise is a promise that can be resolved, rejected or canceled from outside
    */
-  public decoupledPromise: TDecoupledCancelablePromise<IResult> & {
-    promise: IMessagePromise<IResult>;
-  };
+  public decoupledPromise: TDecoupledCancelablePromise<TResult>;
 
   /**
    * This method will resolve the decoupled promise
    */
-  public resolve: (...args: IResult extends void ? [null?] : [IResult]) => void;
+  public resolve: (...args: TResult extends void ? [null?] : [TResult]) => void;
 
   /**
    * This method will reject the decoupled promise
@@ -62,7 +54,7 @@ export class EasyWebWorkerMessage<IPayload = null, IResult = void>
    * This method will report the progress of the message
    * @param {number} progressPercentage - This is the progress percentage
    */
-  public reportProgress: OnProgressCallback = () => {
+  public reportProgress: TOnProgressCallback = () => {
     throw new Error(
       'Message should receive a progress-callback in order to be able to report... send(..).onProgressCallback'
     );
@@ -70,34 +62,23 @@ export class EasyWebWorkerMessage<IPayload = null, IResult = void>
 
   /**
    * This is the constructor of the class
-   * @param {IPayload} payload - This are the parameters included in the message
+   * @param {TPayload} payload - This are the parameters included in the message
    */
-  constructor(public payload: IPayload) {
+  constructor(public payload: TPayload) {
     this.messageId = generatedId();
 
-    this.decoupledPromise =
-      createDecoupledPromise<IResult>() as TDecoupledCancelablePromise<IResult> & {
-        promise: IMessagePromise<IResult>;
-      };
+    this.decoupledPromise = createDecoupledPromise<TResult>();
 
-    this.decoupledPromise.onCancel(() => {
-      this.wasCanceled = true;
-    });
-
-    this.resolve = (...args) => {
-      this.decoupledPromise.resolve(...args);
-    };
+    this.resolve = this.decoupledPromise.resolve;
 
     this.reject = this.decoupledPromise.reject;
 
     this.cancel = this.decoupledPromise.cancel;
 
-    this.decoupledPromise.promise.onProgress = (
-      callback: OnProgressCallback
-    ) => {
-      this.reportProgress = callback;
+    this.reportProgress = this.decoupledPromise.promise.reportProgress;
 
-      return this.decoupledPromise.promise;
-    };
+    this.decoupledPromise.onCancel(() => {
+      this.wasCanceled = true;
+    });
   }
 }

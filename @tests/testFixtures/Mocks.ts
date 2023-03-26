@@ -55,11 +55,11 @@ self.onmessage = (event) => {
 
       messageId = messageId;
       
-      resolve = (...payload) => self.postMessage({ messageId, payload });
-      
-      reject = (reason) => this.resolve({ reason });
+      resolve = (...result) => self.postMessage({ messageId, payload: result });
 
-      cancel = (reason) => this.resolve({ reason, wasCanceled: true });
+      reject = (reason) => self.postMessage({ messageId, reason });
+
+      cancel = (reason) => self.postMessage({  messageId, reason, wasCanceled: true });
       
       reportProgress = (progressPercentage) => self.postMessage({ messageId, progressPercentage });
     })();

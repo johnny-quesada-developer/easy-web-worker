@@ -2,21 +2,21 @@ import {
   IEasyWebWorkerMessage,
   IEasyWorkerInstance,
   IMessageData,
-} from './EasyWebWorkerTypes';
+} from './EasyWebWorker';
 
 /**
  * This message wrap the interaction with the worker to ensure that the message is correctly synchronized with the EasyWebWorker
  */
-export class WorkerMessage<IPayload = null, IResult = void>
-  implements IEasyWebWorkerMessage<IPayload, IResult>
+export class WorkerMessage<TPayload = null, TResult = void>
+  implements IEasyWebWorkerMessage<TPayload, TResult>
 {
   /**
-   * @param {IPayload} payload - This are the parameters included in the message
+   * @param {TPayload} payload - This are the parameters included in the message
    * @param {string} messageId - This is the message id
    * @param {string} messageTargetOrigin - This is the target origin of the message
    */
   constructor(
-    public payload: IPayload,
+    public payload: TPayload,
     public messageId: string,
     protected messageTargetOrigin: string = '*'
   ) {}
@@ -24,24 +24,24 @@ export class WorkerMessage<IPayload = null, IResult = void>
   /**
    * This method is used to resolve the message from inside the worker
    */
-  public resolve(...payload: [null?] | [any]) {
+  public resolve = ((...payload: unknown[]) => {
     const { messageId } = this;
 
     self.postMessage({ messageId, payload }, this.messageTargetOrigin);
-  }
+  }) as TResult extends void ? () => void : (payload: TResult) => void;
 
   /**
    * This method is used to reject the message from inside the worker
    * */
   public reject(reason: unknown) {
-    this.resolve({ error: reason });
+    self.postMessage({ reason }, this.messageTargetOrigin);
   }
 
   /**
    * This method is used to cancel the message from inside the worker
    */
   public cancel(reason?: unknown) {
-    this.resolve({ cancelled: true, error: reason });
+    self.postMessage({ wasCanceled: true, reason }, this.messageTargetOrigin);
   }
 
   /**
@@ -69,13 +69,13 @@ export class WorkerMessage<IPayload = null, IResult = void>
  * @param {MessageEvent} onMessageCallback.event - This is the event that was received
  * @param {string} messageTargetOrigin - This is the target origin of the message
  */
-export class StaticEasyWebWorker<IPayload = null, IResult = void>
-  implements IEasyWorkerInstance<IPayload, IResult>
+export class StaticEasyWebWorker<TPayload = null, TResult = void>
+  implements IEasyWorkerInstance<TPayload, TResult>
 {
   constructor(
     public onMessageCallback: (
-      message: IEasyWebWorkerMessage<IPayload, IResult>,
-      event: MessageEvent<IMessageData<IPayload>>
+      message: IEasyWebWorkerMessage<TPayload, TResult>,
+      event: MessageEvent<IMessageData<TPayload>>
     ) => void,
     messageTargetOrigin: string = '*'
   ) {
@@ -91,7 +91,7 @@ export class StaticEasyWebWorker<IPayload = null, IResult = void>
       const { messageId, payload } = event.data;
 
       // each message should have his own resolution methods
-      const message = new WorkerMessage<IPayload, IResult>(
+      const message = new WorkerMessage<TPayload, TResult>(
         payload,
         messageId,
         messageTargetOrigin
@@ -114,8 +114,8 @@ export class StaticEasyWebWorker<IPayload = null, IResult = void>
    */
   public onMessage(
     callback: (
-      message: IEasyWebWorkerMessage<IPayload, IResult>,
-      event: MessageEvent<IMessageData<IPayload>>
+      message: IEasyWebWorkerMessage<TPayload, TResult>,
+      event: MessageEvent<IMessageData<TPayload>>
     ) => void
   ): void {
     this.onMessageCallback = callback;
