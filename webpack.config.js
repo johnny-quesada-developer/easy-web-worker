@@ -12,6 +12,9 @@ module.exports = {
   },
   resolve: {
     extensions: ['.ts', '.js'],
+    alias: {
+      'easy-web-worker': require.resolve('easy-web-worker/package.json'),
+    },
   },
   module: {
     rules: [
