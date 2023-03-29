@@ -5,7 +5,7 @@ export const generatedId = (): string =>
  * This is the template of the worker, should be and string to avoid compilation issues
  */
 export const WorkerTemplate = () => `
-  //this-code-was auto-generated
+  /*this-code-was auto-generated*/
   const easyWorker = new (class {
     onMessageCallback = () => {
       throw "you didn't defined a message-callback, please assign a callback by calling IEasyWorkerInstance.onMessage";
@@ -37,3 +37,54 @@ export const WorkerTemplate = () => `
     easyWorker.onMessageCallback(message, event);
   };
 `;
+
+export const minifyJS = (code: string) => {
+  // Remove comments
+  let result = code.replace(/\/\/.*|\/\*[\s\S]*?\*\//g, '');
+
+  // Remove whitespace
+  result = result.replace(/\s+/g, ' ');
+
+  let output = '';
+  let insideString = false;
+  let buffer = '';
+
+  for (let i = 0; i < result.length; i++) {
+    const currentChar = result[i];
+    const nextChar = result[i + 1];
+
+    // Check if we're inside a string
+    if (currentChar === '"' && result[i - 1] !== '\\') {
+      insideString = !insideString;
+      buffer += currentChar;
+      continue;
+    }
+
+    // Skip whitespace
+    if (/\s/.test(currentChar)) {
+      continue;
+    }
+
+    // Remove unnecessary semicolons
+    if (currentChar === ';' && nextChar === '}') {
+      i++;
+      continue;
+    }
+
+    // Remove whitespace around operators
+    if (/[\+\-\*\/%=<>!&|^?:]/.test(currentChar)) {
+      output += buffer.trimRight() + currentChar;
+      buffer = '';
+    } else {
+      buffer += currentChar;
+      if (!insideString) {
+        output += buffer;
+        buffer = '';
+      }
+    }
+  }
+
+  output += buffer.trimRight();
+
+  return output;
+};

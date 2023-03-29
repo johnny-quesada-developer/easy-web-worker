@@ -2,10 +2,18 @@ const path = require('path');
 
 module.exports = {
   mode: 'production',
-  entry: './src/index.ts',
+  entry: {
+    bundle: './src/index.ts',
+  },
   output: {
     path: path.resolve(__dirname, 'lib'),
-    filename: 'bundle.js',
+    filename: ({ chunk: { name } }) => {
+      if (name.includes('worker')) {
+        return `${name}.worker.js`;
+      }
+
+      return `${name}.js`;
+    },
     libraryTarget: 'umd',
     library: 'easy-web-worker',
     globalObject: 'this',
@@ -13,7 +21,10 @@ module.exports = {
   resolve: {
     extensions: ['.ts', '.js'],
     alias: {
-      'easy-web-worker': require.resolve('easy-web-worker/package.json'),
+      'easy-web-worker': path.resolve(
+        __dirname,
+        'node_modules/easy-web-worker/package.json'
+      ),
     },
   },
   module: {

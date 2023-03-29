@@ -34,7 +34,7 @@ export const CreateMockFunctionFromContent = (content: string) =>
 export const getMockBlobContent = () => `
 self.importScripts(['fake.js']);
       
-//this-code-was auto-generated
+/*this-code-was auto-generated*/
 
 const easyWorker = new (class {
   onMessageCallback = () => {
