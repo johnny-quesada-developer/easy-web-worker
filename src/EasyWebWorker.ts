@@ -335,13 +335,10 @@ export class EasyWebWorker<IPayload = null, IResult = void> {
   }
 
   /**
-   * Terminates the worker and remove all messages from the queue
    * Execute the cancel callback of each message in the queue if provided
-   * @param {unknown} reason - reason why the worker was terminated
+   * @param {unknown} reason - reason messages where canceled
    */
   public cancelAll(reason?: unknown): void {
-    this.worker?.terminate();
-
     const messages = Array.from(this.messagesQueue.values());
 
     messages.forEach((message) => message.cancel(reason));
