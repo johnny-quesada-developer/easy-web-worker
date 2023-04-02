@@ -1,5 +1,7 @@
+/// <reference lib="webworker" />
+
 import { EasyWebWorkerMessage } from './EasyWebWorkerMessage';
-import { WorkerTemplate, generatedId } from './EasyWebWorkerFixtures';
+import { getWorkerTemplate, generatedId } from './EasyWebWorkerFixtures';
 import { CancelablePromise } from 'cancelable-promise-jq';
 
 /**
@@ -22,34 +24,58 @@ export interface IWorkerConfig {
   onWorkerError: (error: ErrorEvent) => void;
 }
 
+export interface IWorkerData<IPayload> {
+  /**
+   * This is the message id
+   * */
+  messageId: string;
+
+  execution?: {
+    payload?: IPayload;
+  };
+
+  cancelation?: {
+    reason?: unknown;
+  };
+}
+
 /**
  * This is the structure that the messages of the worker will have
  */
 export interface IMessageData<IPayload = null> {
   /**
-   * This are the parameters included in the message
-   */
-  payload: IPayload;
-
-  /**
-   * The messages from the worker could include errors if something went wrong
-   * */
-  reason: unknown;
-
-  /**
-   * Indicates if the message was canceled
-   * */
-  wasCanceled: boolean;
-
-  /**
-   * The messages from the worker could include a progress percentage
-   * */
-  progressPercentage?: number;
-
-  /**
    * This is the message id
    * */
   messageId: string;
+
+  /**
+   * When present, this means that the message was resolved
+   */
+  resolved?: { payload: [IPayload?] };
+
+  /**
+   * When present, this means that the message was rejected
+   * */
+  rejected?: { reason: unknown };
+
+  /**
+   * When present, this means that the message was canceled
+   * */
+  canceled?: { reason: unknown };
+
+  /**
+   * When present, this means that the should report the progress
+   * */
+  progress?: {
+    /**
+     * This is the progress percentage
+     * */
+    percentage: number;
+    /**
+     * This extra data can be included in the progress
+     * */
+    payload: unknown;
+  };
 }
 
 export interface IEasyWorkerInstance<IPayload = null, IResult = void> {
@@ -70,6 +96,36 @@ export interface IEasyWorkerInstance<IPayload = null, IResult = void> {
       event: MessageEvent<IMessageData<IPayload>>
     ) => void
   ): void;
+
+  /**
+   * Use this method to defined which will be the functionality of your worker when a message is send  to it
+   * @param {string} method - Create a callback for an specific method
+   * @param {function} callback - This is the callback that will be executed when a message is received
+   * @param {IEasyWebWorkerMessage} callback.message - This is the message that was received
+   * @param {IEasyWebWorkerMessage} callback.message.messageId - This is the message id
+   * @param {IEasyWebWorkerMessage} callback.message.payload - This are the parameters included in the message
+   * @param {IEasyWebWorkerMessage} callback.message.reject - This method is used to reject the message from inside the worker
+   * @param {IEasyWebWorkerMessage} callback.message.reportProgress - This method is used to report the progress of the message from inside the worker
+   * @param {IEasyWebWorkerMessage} callback.message.resolve - This method is used to resolve the message from inside the worker
+   * @param {MessageEvent} callback.event - This is the event that was received
+   * */
+  onMessage(
+    method: string,
+    callback: (
+      message: IEasyWebWorkerMessage<IPayload, IResult>,
+      event: MessageEvent<IMessageData<IPayload>>
+    ) => void
+  ): void;
+
+  /**
+   * Import scripts to the worker
+   */
+  importScripts(...scripts: string[]): void;
+
+  /**
+   * This method reject all the messages that are currently in the queue of the worker and close the worker
+   * */
+  close(): void;
 }
 
 /**
@@ -87,7 +143,7 @@ export type EasyWebWorkerBody<IPayload = null, IResult = void> = (
   /**
    * This is the context of the worker, you can use it to access to the global scope of the worker
    * */
-  context: any
+  context: DedicatedWorkerGlobalScope & Record<string, unknown>
 ) => void;
 
 export interface IEasyWebWorkerMessage<TPayload = null, TResult = void> {
@@ -109,7 +165,7 @@ export interface IEasyWebWorkerMessage<TPayload = null, TResult = void> {
   /**
    * This method is used to report the progress of the message from inside the worker
    * */
-  reportProgress(progressPercentage: number): void;
+  reportProgress(progressPercentage: number, payload?: unknown): void;
 
   /**
    * This method is used to resolve the message from inside the worker
@@ -128,27 +184,14 @@ const getImportScriptsTemplate = (scripts: string[] = []) => {
   return `self.importScripts(["${scripts.join('","')}"]);`;
 };
 
-export const createBlobFromString = (
-  source: string,
-  imports: string[] = []
-) => {
-  const content = `${getImportScriptsTemplate(imports)}
-  ${source}`;
-
-  return (window.URL || window.webkitURL).createObjectURL(
-    new Blob([content], {
-      type: 'application/javascript',
-    })
-  );
-};
-
 export const createBlobWorker = <IPayload = null, IResult = void>(
   source:
     | EasyWebWorkerBody<IPayload, IResult>
     | EasyWebWorkerBody<IPayload, IResult>[],
-  imports: string[] = []
+  imports: string[] = [],
+  origin: string = ''
 ) => {
-  const template = WorkerTemplate();
+  const template = getWorkerTemplate();
 
   const contentCollection: EasyWebWorkerBody<IPayload, IResult>[] =
     Array.isArray(source) ? source : [source];
@@ -157,14 +200,13 @@ export const createBlobWorker = <IPayload = null, IResult = void>(
     new Blob(
       [
         `${getImportScriptsTemplate(imports)}
-    
         ${template}
-    
         ${contentCollection
-          .map(
-            (content, index) =>
-              `// content #${index}\n(${content.toString()})(easyWorker, self);`
-          )
+          .map((content) => {
+            return `
+            \n var easyWorker = createEasyWebWorker("${origin}");
+            \n (${content})(easyWorker, self);`;
+          })
           .join('\n\n')}`,
       ],
       { type: 'application/javascript' }
@@ -237,7 +279,7 @@ export class EasyWebWorker<IPayload = null, IResult = void> {
   ) {
     this.name = name || generatedId();
     this.scripts = scripts;
-    this.worker = this.createWorker();
+    this.worker = this.initializeWorker();
     this.onWorkerError = onWorkerError;
   }
 
@@ -248,15 +290,12 @@ export class EasyWebWorker<IPayload = null, IResult = void> {
   /**
    * Categorizes the worker response and executes the corresponding callback
    */
-  private executeMessageCallback(
-    event: Pick<MessageEvent<IMessageData<IPayload>>, 'data'>
-  ) {
-    const message: EasyWebWorkerMessage<IPayload, IResult> | null =
-      this.messagesQueue.get(event.data.messageId) ?? null;
+  private executeMessageCallback(event: { data: IMessageData<IPayload> }) {
+    const message = this.messagesQueue.get(event.data.messageId) ?? null;
 
     if (!message) return;
 
-    const { payload, reason, wasCanceled, progressPercentage } = event.data;
+    const { progress } = event.data;
 
     // worker was disposed before the message was resolved
     if (!this.worker) {
@@ -266,29 +305,39 @@ export class EasyWebWorker<IPayload = null, IResult = void> {
     }
 
     // execute progress callback
-    if (progressPercentage !== undefined) {
-      message.reportProgress(progressPercentage);
+    if (progress) {
+      const { percentage, payload } = progress;
+
+      message.reportProgress(percentage, payload);
 
       return;
     }
 
     // remove message from queue
     this.RemoveMessageFromQueue(message.messageId);
-    message.wasCompleted = false;
 
-    if (wasCanceled) {
+    const { canceled } = event.data;
+
+    if (canceled) {
+      const { reason } = canceled;
+
       message.cancel(reason);
 
       return;
     }
 
-    if (reason) {
+    const { rejected } = event.data;
+
+    if (rejected) {
+      const { reason } = rejected;
+
       message.reject(reason);
 
       return;
     }
 
-    message.wasCompleted = true;
+    const { resolved } = event.data;
+    const { payload } = resolved;
 
     // resolve message with the serialized payload
     message.resolve(
@@ -311,8 +360,8 @@ export class EasyWebWorker<IPayload = null, IResult = void> {
     );
   }
 
-  protected createWorker(): Worker {
-    this.workerUrl = this.getWorkerUrl();
+  protected initializeWorker(): Worker {
+    this.workerUrl = this.workerUrl ?? this.getWorkerUrl();
 
     const worker = new Worker(this.workerUrl, {
       name: this.name,
@@ -338,12 +387,43 @@ export class EasyWebWorker<IPayload = null, IResult = void> {
    * Execute the cancel callback of each message in the queue if provided
    * @param {unknown} reason - reason messages where canceled
    */
-  public cancelAll(reason?: unknown): void {
+  public async cancelAll(reason?: unknown) {
     const messages = Array.from(this.messagesQueue.values());
+    const promises: CancelablePromise[] = [];
+    const total = messages.length;
+    const percentage = 100 / total;
 
-    messages.forEach((message) => message.cancel(reason));
+    messages.forEach((message) => {
+      const { messageId, decoupledPromise } = message;
+      const { promise } = decoupledPromise;
 
-    this.messagesQueue = new Map();
+      // promises are gonna be rejected so we need to wait until they are settled
+      promises.push(
+        promise.catch((error) => {
+          (
+            promise.reportProgress as (
+              percentage: number,
+              payload?: unknown
+            ) => void
+          )(percentage, error);
+        })
+      );
+
+      const data: IWorkerData<IPayload> = {
+        messageId,
+        cancelation: {
+          reason,
+        },
+      };
+
+      this.worker?.postMessage(data);
+    });
+
+    debugger;
+
+    await Promise.all(promises);
+
+    debugger;
   }
 
   /**
@@ -359,10 +439,14 @@ export class EasyWebWorker<IPayload = null, IResult = void> {
 
     this.messagesQueue.set(message.messageId, message);
 
-    this.worker?.postMessage({
+    const data: IWorkerData<IPayload> = {
       messageId,
-      payload: $payload,
-    });
+      execution: {
+        payload: $payload,
+      },
+    };
+
+    this.worker?.postMessage(data);
 
     return message.decoupledPromise.promise;
   }) as unknown as IPayload extends null
@@ -375,12 +459,12 @@ export class EasyWebWorker<IPayload = null, IResult = void> {
    * @param {unknown} reason - reason why the worker was terminated
    * @returns {IMessagePromise<IResult>} generated defer that will be resolved when the message completed
    */
-  public override = ((
+  public override = (async (
     ...[payload, reason]: IPayload extends null
       ? [null?, unknown?]
       : [IPayload, unknown?]
   ) => {
-    this.cancelAll(reason);
+    await this.cancelAll(reason);
 
     return this.send(...([payload] as [IPayload]));
   }) as unknown as IPayload extends null
@@ -393,7 +477,7 @@ export class EasyWebWorker<IPayload = null, IResult = void> {
    * @param {unknown} reason - reason why the worker was terminated
    * @returns {IMessagePromise<IResult>} generated defer that will be resolved when the message completed
    */
-  public overrideAfterCurrent = ((
+  public overrideAfterCurrent = (async (
     ...[payload, reason]: IPayload extends null
       ? [null?, unknown?]
       : [IPayload, unknown?]
@@ -404,7 +488,7 @@ export class EasyWebWorker<IPayload = null, IResult = void> {
 
       this.messagesQueue.delete(currentMessage.messageId);
 
-      this.cancelAll(reason);
+      await this.cancelAll(reason);
 
       this.messagesQueue.set(currentMessage.messageId, currentMessage);
     }
@@ -417,8 +501,8 @@ export class EasyWebWorker<IPayload = null, IResult = void> {
   /**
    * This method will remove the WebWorker and the BlobUrl
    */
-  public dispose(): void {
-    this.cancelAll();
+  public async dispose(): Promise<void> {
+    await this.cancelAll();
 
     URL.revokeObjectURL(this.workerUrl);
 

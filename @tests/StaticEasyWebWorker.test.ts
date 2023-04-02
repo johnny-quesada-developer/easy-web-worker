@@ -1,42 +1,32 @@
 import { IEasyWebWorkerMessage } from '../src/EasyWebWorker';
-import { StaticEasyWebWorker, WorkerMessage } from '../src/StaticEasyWebWorker';
+import { StaticEasyWebWorker } from '../src/StaticEasyWebWorker';
 
 describe('StaticEasyWebWorker', () => {
-  let workerSelf: any;
-
   describe('constructor', () => {
-    beforeEach(() => {
-      workerSelf = {};
-      jest
-        .spyOn(StaticEasyWebWorker.prototype, 'defineOnMessage')
-        .mockImplementation((messageTargetOrigin: string) => {
-          workerSelf.onmessage = (event: MessageEvent<any>) => {
-            const { messageId, payload } = event.data;
-
-            const message = new WorkerMessage<any, any>(
-              payload,
-              messageId,
-              messageTargetOrigin
-            );
-
-            (this as unknown as StaticEasyWebWorker).onMessageCallback.call(
-              this,
-              message as IEasyWebWorkerMessage<null, void>,
-              event
-            );
-          };
-        });
-    });
-
     it('properties should be correctly populated', () => {
+      expect.assertions(5);
+
       const workerBody = jest.fn(
-        (message: IEasyWebWorkerMessage<string, string>) =>
-          message.resolve(message.payload)
+        (message: IEasyWebWorkerMessage<string, string>) => {
+          message.resolve(message.payload);
+        }
       );
 
       const worker = new StaticEasyWebWorker<string, string>(workerBody);
 
-      expect(worker.onMessageCallback).toEqual(workerBody);
+      expect(worker.onMessage).toBeDefined();
+      expect(worker.close).toBeDefined();
+      expect(worker.importScripts).toBeDefined();
+
+      const onMessage = jest.fn((message: IEasyWebWorkerMessage) => {
+        expect(message.payload).toBe('hello');
+      }) as any;
+
+      worker.onMessage(onMessage);
+
+      self.postMessage({ execution: { payload: 'hello' } });
+
+      expect(onMessage).toHaveBeenCalled();
     });
   });
 });

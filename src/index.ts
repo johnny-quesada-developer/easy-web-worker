@@ -1,4 +1,7 @@
 export { EasyWebWorker as default } from './EasyWebWorker';
 
-export * from './EasyWebWorker';
-export * from './StaticEasyWebWorker';
+export { EasyWebWorker, EasyWebWorkerBody } from './EasyWebWorker';
+export {
+  StaticEasyWebWorker,
+  createStaticEasyWebWorker,
+} from './StaticEasyWebWorker';

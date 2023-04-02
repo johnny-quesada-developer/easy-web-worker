@@ -12,6 +12,7 @@ beforeEach(() => {
 
   globalAny.window = window;
   globalAny.Blob = MockBlob;
+
   globalAny.window.URL = {
     createObjectURL,
   };
@@ -21,6 +22,17 @@ beforeEach(() => {
   };
 
   globalAny.Worker = WorkerMock;
+
+  globalAny.self = {
+    importScripts: jest.fn(),
+    close: jest.fn(),
+    postMessage: (data) => {
+      globalAny.self.onmessage({
+        data,
+      });
+    },
+    onmessage: () => {},
+  };
 });
 
 afterEach(() => {
