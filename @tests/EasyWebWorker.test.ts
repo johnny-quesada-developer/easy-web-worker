@@ -1,4 +1,5 @@
-import EasyWebWorker, {
+import {
+  EasyWebWorker,
   EasyWebWorkerBody,
   IEasyWebWorkerMessage,
   IWorkerConfig,

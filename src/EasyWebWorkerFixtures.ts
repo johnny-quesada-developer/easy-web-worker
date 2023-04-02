@@ -46,7 +46,7 @@ const createEasyWebWorker = (targetOrigin) => {
 
       callbacks.forEach((callback) => callback(reason));
 
-      postMessage({ canceled: { reason } });
+      postMessage({ worker_canceled: { reason } });
     };
 
     const reportProgress = (percentage, payload) => {
