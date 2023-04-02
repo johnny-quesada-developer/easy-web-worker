@@ -2,7 +2,7 @@
 
 import { EasyWebWorkerMessage } from './EasyWebWorkerMessage';
 import { getWorkerTemplate, generatedId } from './EasyWebWorkerFixtures';
-import { CancelablePromise } from 'cancelable-promise-jq';
+import { CancelablePromise, toCancelablePromise } from 'cancelable-promise-jq';
 
 /**
  * EasyWorker Config
@@ -132,6 +132,13 @@ export interface IEasyWorkerInstance<IPayload = null, IResult = void> {
    * */
   close(): void;
 }
+
+type TOverrideConfig = {
+  /**
+   * If true, the worker reboots and cancel instantly all the messages that are currently in the queue
+   */
+  force?: boolean;
+};
 
 /**
  * This type defined the structure that a WorkerBody should have.
@@ -398,11 +405,17 @@ export class EasyWebWorker<TPayload = null, TResult = void> {
   /**
    * Execute the cancel callback of each message in the queue if provided
    * @param {unknown} reason - reason messages where canceled
+   * @param {boolean} force - if true, the messages will be cancelled immediately without waiting for the worker to respond
+   * This action will reboot the worker
    */
-  public cancelAll(reason?: unknown) {
+  public cancelAll(reason?: unknown, { force = false } = {}) {
     const messages = Array.from(this.messagesQueue.values());
     const total = messages.length;
     const percentage = 100 / total;
+
+    if (force) {
+      return this.reboot(reason);
+    }
 
     const rejectedPromises = messages.map((message) => {
       const { decoupledPromise } = message;
@@ -417,6 +430,12 @@ export class EasyWebWorker<TPayload = null, TResult = void> {
     });
 
     return Promise.all(rejectedPromises);
+  }
+
+  protected addMessageToQueue(
+    message: EasyWebWorkerMessage<TPayload, TResult>
+  ) {
+    this.messagesQueue.set(message.messageId, message);
   }
 
   /**
@@ -445,12 +464,19 @@ export class EasyWebWorker<TPayload = null, TResult = void> {
         },
       };
 
+      // if the worker was disposed, we need to automatically reject the promise
+      if (!this.worker) {
+        cancel(reason);
+
+        return toCancelablePromise(Promise.reject(reason));
+      }
+
       this.worker?.postMessage(data);
 
       return decoupledPromise.promise;
     };
 
-    this.messagesQueue.set(message.messageId, message);
+    this.addMessageToQueue(message);
 
     const data: IWorkerData<TPayload> = {
       messageId,
@@ -473,16 +499,20 @@ export class EasyWebWorker<TPayload = null, TResult = void> {
    * @returns {IMessagePromise<TResult>} generated defer that will be resolved when the message completed
    */
   public override = (async (
-    ...[payload, reason]: TPayload extends null
-      ? [null?, unknown?]
-      : [TPayload, unknown?]
+    ...[payload, reason, config]: TPayload extends null
+      ? [null?, unknown?, TOverrideConfig?]
+      : [TPayload, unknown?, TOverrideConfig?]
   ) => {
-    await this.cancelAll(reason);
+    await this.cancelAll(reason, config);
 
     return this.send(...([payload] as [TPayload]));
   }) as unknown as TPayload extends null
-    ? (reason?: unknown) => CancelablePromise<TResult>
-    : (payload: TPayload, reason?: unknown) => CancelablePromise<TResult>;
+    ? (reason?: unknown, config?: TOverrideConfig) => CancelablePromise<TResult>
+    : (
+        payload: TPayload,
+        reason?: unknown,
+        config?: TOverrideConfig
+      ) => CancelablePromise<TResult>;
 
   /**
    * This method will alow the current message to be completed and send a new one to the worker queue after it, all the messages after the current one will be canceled
@@ -491,33 +521,55 @@ export class EasyWebWorker<TPayload = null, TResult = void> {
    * @returns {IMessagePromise<TResult>} generated defer that will be resolved when the message completed
    */
   public overrideAfterCurrent = (async (
-    ...[payload, reason]: TPayload extends null
-      ? [null?, unknown?]
-      : [TPayload, unknown?]
+    ...[payload, reason, config]: TPayload extends null
+      ? [null?, unknown?, TOverrideConfig?]
+      : [TPayload, unknown?, TOverrideConfig?]
   ) => {
     if (this.messagesQueue.size) {
       const [firstItem] = this.messagesQueue;
       const [, currentMessage] = firstItem;
 
-      this.messagesQueue.delete(currentMessage.messageId);
+      this.RemoveMessageFromQueue(currentMessage.messageId);
 
-      await this.cancelAll(reason);
+      await this.cancelAll(reason, config);
 
-      this.messagesQueue.set(currentMessage.messageId, currentMessage);
+      this.addMessageToQueue(currentMessage);
     }
 
     return this.send(...([payload] as [TPayload]));
   }) as unknown as TPayload extends null
-    ? (reason?: unknown) => CancelablePromise<TResult>
-    : (payload: TPayload, reason?: unknown) => CancelablePromise<TResult>;
+    ? (reason?: unknown, TOverrideConfig?) => CancelablePromise<TResult>
+    : (
+        payload: TPayload,
+        reason?: unknown,
+        config?: TOverrideConfig
+      ) => CancelablePromise<TResult>;
+
+  /**
+   * This method will reboot the worker and cancel all the messages in the queue
+   * @param {unknown} reason - reason why the worker will be restarted
+   */
+  public reboot(reason: unknown = 'Worker was rebooted') {
+    this.worker.terminate();
+    this.worker = null;
+
+    // the messages need to be canceled before the worker is restarted to force an immediate rejection
+    const resolutionPromises = this.cancelAll(reason);
+
+    this.worker = this.initializeWorker();
+
+    return resolutionPromises;
+  }
 
   /**
    * This method will remove the WebWorker and the BlobUrl
    */
   public async dispose(): Promise<void> {
-    await this.cancelAll();
+    await this.cancelAll(null);
 
     URL.revokeObjectURL(this.workerUrl);
+
+    this.worker.terminate();
 
     this.worker = null;
   }

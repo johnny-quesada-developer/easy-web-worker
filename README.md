@@ -1,6 +1,6 @@
 # easy-web-worker
 
-This is a package to easily create and handle Workers, both run time and static .js workers files
+This library extends the capabilities of the **Worker** by integrating a pattern of cancelable promises from the library **cancelable-promise-jq**. For simple workers it removes the necessity of having to configure webpack or whatever bundler you are using. But when more complex solutions are needed, the class **StaticEasyWebWorker** allows you to integrate the easy worker and cancelable promises capabilities into your static worker.
 
 ## Creating a simple Web Worker
 
@@ -15,7 +15,7 @@ const backgroundWorker = new EasyWebWorker<string, string>((easyWorker) => {
   });
 });
 
-const messsageResult = await backgroundWorker.send('hello!');
+const messageResult = await backgroundWorker.send('hello!');
 ```
 
 ### Important notes:
@@ -25,7 +25,7 @@ EasyWebWorker<IPayload, IResult> has two generic parameters... They will affect 
 - If IResult is null, the _resolve_ method will not require parameters
 - If IPayload is null, the _send_ method will not require parameters
 
-Take into consideration that the _workerBody_ is a template to create a worker in run time, so you'll not be able to use anything outside of the Worker-Scope
+Take into consideration that the _workerBody_ is a template to create a worker in run time, so you'll not be able to use anything outside of the Worker-Scope.
 
 ```TS
 const message = 'Hello';
@@ -54,10 +54,18 @@ easyWorker.onMessage((message) => {
  // the message could resolve the *send* promise.
   message.resolve();
 
- // the message could also reject the *send* promise with an error.
+ // the message could be rejected from the worker
   message.reject(new Error());
 
-  // you could also report progress to the principal thread if you configurated a onProgress callback
+  // this message could be cancelled from inside the worker
+  message.cancel();
+
+  // the message is also able to listen to cancelation evens
+  message.onCancel(() => {
+    // release resources
+  })
+
+  // you could also report progress to the principal thread if you configured a onProgress callback
   message.reportProgress(25);
 });
 ```
@@ -118,11 +126,7 @@ This is a very simple example, but you could import a whole library into your wo
 
 ## StaticEasyWebWorker
 
-If you want to create a _Worker_ with a static .js file and don't want to lose the structure of messages and promises and the onProgress callback from the library... you could use _StaticEasyWebWorker<IPayload = null, IResult = void>_ directly in your Worker.
-
-trust me, talking about performance it's going to be the same. but may if you are trying to create something very complex and huge into a _Worker_... OK, a static js file could be a good option.
-
-Workers are gonna work just as the javascript you have in your main thread, but into another thread, so, the user experience could improve!!
+If you want to create a _Worker_ with a static .js file and don't want to lose the structure of messages and promises and the onProgress callback from the library... you could use StaticEasyWebWorker<IPayload = null, IResult = void>\_ directly in your Worker.
 
 let's see how to use it:
 
@@ -131,20 +135,18 @@ let's see how to use it:
 // onMessage Callback is gonna receive all _send_ method calls.
 
 ```TS
-const onMessageCallback = (message: IEasyWebWorkerMessage<null, number>) => {
+//  this is gonna create the same message structure the runtime Workers
+const worker = new StaticEasyWebWorker((message) => {
   setTimeout(() => {
     message.resolve(200);
   }, 5000);
-};
-
-//  this is gonna create the same message structure the runtime Workers
-new StaticEasyWebWorker<null, number>(onMessageCallback);
+});
 ```
 
 and in your main thread:
 
 ```TS
-const worker = new EasyWebWorker<null,number>('http://localhost:3000/worker.js');
+const worker = new EasyWebWorker<null,number>('./worker.js');
 await worker.send();
 ```
 
@@ -223,4 +225,53 @@ the output should be:
 
 Of course this is a very tiny array, but is just to give you and idea, actually you also could make fetch requests into workers... give it a try.
 
-_Thanks for reading, hope this help someone_
+# Methods
+
+### `EasyWebWorker.reboot(reason?: unknown): CancelableCancelablePromise<void>[]`
+
+This method will reboot the worker and cancel all the messages in the queue.
+
+- `reason` - (optional) reason why the worker will be restarted.
+
+Returns an array of promises that are resolved with the rejection reason provided when the messages are canceled.
+
+Example usage:
+
+```typescript
+const worker = new EasyWebWorker<string, string>((easyWorker) => {
+  easyWorker.onMessage(async (message) => {
+    message.resolve(`Received message: ${message.payload}`);
+  });
+});
+
+const messagePromise = worker.send('Hello!');
+
+worker.reboot('Worker was restarted');
+
+// The message promise will be rejected with the reason 'Worker was restarted'
+```
+
+### override(payload?, reason?, config?): CancelablePromise
+
+Cancel all current messages and send a new one.
+
+### cancelAll(reason?: unknown): CancelablePromise<void>[]
+
+Cancels all messages that are currently waiting to be processed by the worker.
+
+- `reason` - (optional) The reason for the cancellation.
+
+Returns an array of promises that are resolved with the rejection reason provided when the messages are canceled.
+
+### overrideAfterCurrent(payload?, reason?, config?): CancelablePromise
+
+Cancel all the messages but the current execution and add a new message
+
+### send(payload?, reason?, config?): CancelablePromise
+
+Sends a message to the worker
+
+- `payload` - (optional) The message payload.
+- `options` - (optional) Additional send options.
+
+**_Thanks for reading, hope this help someone_**
