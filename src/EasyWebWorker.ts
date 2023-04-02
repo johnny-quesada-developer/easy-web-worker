@@ -170,7 +170,7 @@ export interface IEasyWebWorkerMessage<TPayload = null, TResult = void> {
   /**
    * This method is used to report the progress of the message from inside the worker
    * */
-  reportProgress(progressPercentage: number, payload?: unknown): void;
+  reportProgress(percentage: number, payload?: unknown): void;
 
   /**
    * This method is used to resolve the message from inside the worker
@@ -181,6 +181,11 @@ export interface IEasyWebWorkerMessage<TPayload = null, TResult = void> {
    * This method is used to cancel the message from inside the worker
    * */
   cancel: (reason?: unknown) => void;
+
+  /**
+   * Thus method is used to subscribe to the cancel event from the main thread
+   */
+  onCancel: (callback: (reason?: unknown) => void) => void;
 }
 
 const getImportScriptsTemplate = (scripts: string[] = []) => {
@@ -315,12 +320,7 @@ export class EasyWebWorker<TPayload = null, TResult = void> {
     if (progress) {
       const { percentage, payload } = progress;
 
-      (
-        decoupledPromise.reportProgress as (
-          value: number,
-          netadata: unknown
-        ) => void
-      )(percentage, payload);
+      decoupledPromise.reportProgress(percentage, payload);
 
       return;
     }
@@ -410,12 +410,7 @@ export class EasyWebWorker<TPayload = null, TResult = void> {
 
       // promises are gonna be rejected so we need to wait until they are settled
       return promise.cancel(reason).catch((error) => {
-        (
-          promise.reportProgress as (
-            percentage: number,
-            payload?: unknown
-          ) => void
-        )(percentage, error);
+        promise.reportProgress(percentage, error);
 
         return error;
       });

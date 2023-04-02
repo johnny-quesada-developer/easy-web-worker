@@ -120,7 +120,7 @@ const createEasyWebWorker = (targetOrigin) => {
     const message = createMessage({
       messageId,
       payload,
-      origin: targetOrigin || origin || '*',
+      origin: targetOrigin || origin || undefined,
     });
 
     workerMessages.set(messageId, message);

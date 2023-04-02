@@ -1,6 +1,6 @@
 {
   "name": "easy-web-worker",
-  "version": "1.1.6",
+  "version": "1.1.9",
   "description": "This is a library to easily handle and create web-workers, if you are a web developer and never tried this... do not wait any longer! Workers are an amazing option to improve user experience and make your webpages even greater",
   "main": "lib/bundle.js",
   "types": "lib/index.d.ts",
@@ -44,7 +44,7 @@
     "@babel/preset-typescript": "^7.21.0",
     "@types/jest": "^29.2.4",
     "babel-loader": "^9.1.2",
-    "cancelable-promise-jq": ">=1.1.1",
+    "cancelable-promise-jq": ">=1.1.2",
     "jest": "^29.3.1",
     "jsdom": "^16.4.0",
     "ts-jest": "^29.0.3",
@@ -55,7 +55,7 @@
     "webpack-cli": "^5.0.1"
   },
   "peerDependencies": {
-    "cancelable-promise-jq": ">=1.1.1"
+    "cancelable-promise-jq": ">=1.1.2"
   },
   "peerDependenciesMeta": {
     "cancelable-promise-jq": {
