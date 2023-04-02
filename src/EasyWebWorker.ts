@@ -1,7 +1,11 @@
 /// <reference lib="webworker" />
 
 import { EasyWebWorkerMessage } from './EasyWebWorkerMessage';
-import { getWorkerTemplate, generatedId } from './EasyWebWorkerFixtures';
+import {
+  getWorkerTemplate,
+  generatedId,
+  simpleMinifier,
+} from './EasyWebWorkerFixtures';
 import { CancelablePromise, toCancelablePromise } from 'cancelable-promise-jq';
 
 /**
@@ -208,26 +212,27 @@ export const createBlobWorker = <IPayload = null, IResult = void>(
   imports: string[] = [],
   origin: string = ''
 ) => {
+  const isDevMode = window.process?.env?.DEV_MODE == 'true';
+
   const template = getWorkerTemplate();
 
   const contentCollection: EasyWebWorkerBody<IPayload, IResult>[] =
     Array.isArray(source) ? source : [source];
 
+  let worker_content = `${getImportScriptsTemplate(imports)}
+  ${template}
+  ${contentCollection
+    .map((content) => {
+      return `
+      \n var easyWorker = createEasyWebWorker("${origin}");
+      \n (${content})(easyWorker, self);`;
+    })
+    .join('\n\n')}`;
+
+  worker_content = isDevMode ? worker_content : simpleMinifier(worker_content);
+
   return (window.URL || window.webkitURL).createObjectURL(
-    new Blob(
-      [
-        `${getImportScriptsTemplate(imports)}
-        ${template}
-        ${contentCollection
-          .map((content) => {
-            return `
-            \n var easyWorker = createEasyWebWorker("${origin}");
-            \n (${content})(easyWorker, self);`;
-          })
-          .join('\n\n')}`,
-      ],
-      { type: 'application/javascript' }
-    )
+    new Blob([worker_content], { type: 'application/javascript' })
   );
 };
 
