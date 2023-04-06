@@ -34,6 +34,8 @@ export interface IWorkerData<IPayload> {
    * */
   messageId: string;
 
+  method?: string;
+
   execution?: {
     payload?: IPayload;
   };
@@ -87,7 +89,7 @@ export interface IMessageData<IPayload = null> {
   };
 }
 
-export interface IEasyWorkerInstance<IPayload = null, IResult = void> {
+export interface IEasyWorkerInstance<TPayload = null, TResult = void> {
   /**
    * Use this method to defined which will be the functionality of your worker when a message is send  to it
    * @param {function} callback - This is the callback that will be executed when a message is received
@@ -101,8 +103,8 @@ export interface IEasyWorkerInstance<IPayload = null, IResult = void> {
    * */
   onMessage(
     callback: (
-      message: IEasyWebWorkerMessage<IPayload, IResult>,
-      event: MessageEvent<IMessageData<IPayload>>
+      message: IEasyWebWorkerMessage<TPayload, TResult>,
+      event: MessageEvent<IMessageData<TPayload>>
     ) => void
   ): void;
 
@@ -118,11 +120,11 @@ export interface IEasyWorkerInstance<IPayload = null, IResult = void> {
    * @param {IEasyWebWorkerMessage} callback.message.resolve - This method is used to resolve the message from inside the worker
    * @param {MessageEvent} callback.event - This is the event that was received
    * */
-  onMessage(
+  onMessage<TPayload_ = null, TResult_ = void>(
     method: string,
     callback: (
-      message: IEasyWebWorkerMessage<IPayload, IResult>,
-      event: MessageEvent<IMessageData<IPayload>>
+      message: IEasyWebWorkerMessage<TPayload_, TResult_>,
+      event: MessageEvent<IMessageData<TPayload_>>
     ) => void
   ): void;
 
@@ -260,7 +262,7 @@ export class EasyWebWorker<TPayload = null, TResult = void> {
   /**
    * These where send to the worker but not yet resolved
    */
-  private messagesQueue: Map<string, EasyWebWorkerMessage<TPayload, TResult>> =
+  private messagesQueue: Map<string, EasyWebWorkerMessage<unknown, unknown>> =
     new Map();
 
   /**
@@ -437,10 +439,23 @@ export class EasyWebWorker<TPayload = null, TResult = void> {
     return Promise.all(rejectedPromises);
   }
 
-  protected addMessageToQueue(
-    message: EasyWebWorkerMessage<TPayload, TResult>
-  ) {
+  protected addMessageToQueue(message: EasyWebWorkerMessage<unknown, unknown>) {
     this.messagesQueue.set(message.messageId, message);
+  }
+
+  /**
+   * Send a message to the worker queue to an specific method
+   * @template TResult_ - result type of the message (if any)
+   * @template TPayload_ - payload type of the message  (if any)
+   * @param {string} method - method name
+   * @param {TPayload} payload - whatever json data you want to send to the worker
+   * @returns {IMessagePromise<TResult>} generated defer that will be resolved when the message completed
+   */
+  public sendToMethod<TResult_ = void, TPayload_ = null>(
+    method: string,
+    payload?: TPayload_
+  ): CancelablePromise<TResult_> {
+    return this.sendToWorker<TPayload_, TResult_>({ method, payload });
   }
 
   /**
@@ -448,10 +463,24 @@ export class EasyWebWorker<TPayload = null, TResult = void> {
    * @param {TPayload} payload - whatever json data you want to send to the worker
    * @returns {IMessagePromise<TResult>} generated defer that will be resolved when the message completed
    */
-  public send = ((...payload: TPayload extends null ? [null?] : [TPayload]) => {
+  public send = ((
+    ...payload: TPayload extends null ? [null?] : [TPayload]
+  ): CancelablePromise<TResult> => {
     const [$payload] = payload as [TPayload];
 
-    const message = new EasyWebWorkerMessage<TPayload, TResult>();
+    return this.sendToWorker<TPayload, TResult>({ payload: $payload });
+  }) as unknown as TPayload extends null
+    ? () => CancelablePromise<TResult>
+    : (payload: TPayload) => CancelablePromise<TResult>;
+
+  private sendToWorker = <TPayload_ = null, TResult_ = void>({
+    payload,
+    method,
+  }: {
+    payload?: TPayload_;
+    method?: string;
+  }): CancelablePromise<TResult_> => {
+    const message = new EasyWebWorkerMessage<TPayload_, TResult_>();
     const { messageId, decoupledPromise } = message;
 
     const { cancel } = decoupledPromise;
@@ -462,8 +491,9 @@ export class EasyWebWorker<TPayload = null, TResult = void> {
 
       // if the message is canceled, we need to send a cancelation message to the worker,
       // once the worker response, the message will be removed from the queue nad the promise will be canceled in the main thread
-      const data: IWorkerData<TPayload> = {
+      const data: IWorkerData<TPayload_> = {
         messageId,
+        method,
         cancelation: {
           reason,
         },
@@ -481,21 +511,20 @@ export class EasyWebWorker<TPayload = null, TResult = void> {
       return decoupledPromise.promise;
     };
 
-    this.addMessageToQueue(message);
+    this.addMessageToQueue(message as EasyWebWorkerMessage<unknown, unknown>);
 
-    const data: IWorkerData<TPayload> = {
+    const data: IWorkerData<TPayload_> = {
       messageId,
+      method,
       execution: {
-        payload: $payload,
+        payload,
       },
     };
 
     this.worker?.postMessage(data);
 
     return decoupledPromise.promise;
-  }) as unknown as TPayload extends null
-    ? () => CancelablePromise<TResult>
-    : (payload: TPayload) => CancelablePromise<TResult>;
+  };
 
   /**
    * This method terminate all current messages and send a new one to the worker queue

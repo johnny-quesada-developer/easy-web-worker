@@ -316,6 +316,92 @@ describe('EasyWebWorker', () => {
       });
     });
 
+    describe('sendToMethod', () => {
+      it('worker should run correctly specific method', async () => {
+        expect.assertions(3);
+
+        const workerContent: EasyWebWorkerBody<number, number> = (
+          easyWorker
+        ) => {
+          easyWorker.onMessage<number, number>('doSomething', (message) => {
+            const { payload } = message;
+
+            message.resolve(payload + 2);
+          });
+        };
+
+        const worker = createWorker(workerContent);
+
+        createMockFunctionFromContent(workerBody)(workerSelf);
+
+        expect(await worker.sendToMethod('doSomething', 2)).toEqual(4);
+        expect(await worker.sendToMethod('doSomething', 8)).toEqual(10);
+        expect(await worker.sendToMethod('doSomething', -4)).toEqual(-2);
+      });
+
+      it('should be able to cancel a specific method execution', async () => {
+        expect.assertions(2);
+
+        const workerContent: EasyWebWorkerBody<number, number> = (
+          easyWorker
+        ) => {
+          easyWorker.onMessage<number, number>('doSomething', (message) => {
+            message.onCancel(() => {
+              expect(true).toEqual(true);
+            });
+
+            setTimeout(() => {
+              const { payload } = message;
+
+              message.resolve(payload + 2);
+            }, 1000);
+          });
+        };
+
+        const worker = createWorker(workerContent);
+
+        createMockFunctionFromContent(workerBody)(workerSelf);
+
+        const errorLogger = jest.fn();
+
+        await worker.sendToMethod('doSomething', 2).cancel().catch(errorLogger);
+
+        expect(errorLogger).toHaveBeenCalledTimes(1);
+      });
+
+      it('should correctly subscribe multiple methods', async () => {
+        expect.assertions(2);
+
+        const workerContent: EasyWebWorkerBody<number, number> = (
+          easyWorker
+        ) => {
+          easyWorker.onMessage<number, number>('doSomething', (message) => {
+            const { payload } = message;
+
+            message.resolve(payload + 2);
+          });
+
+          easyWorker.onMessage<number, number>('doSomethingElse', (message) => {
+            const { payload } = message;
+
+            message.resolve(payload + 3);
+          });
+        };
+
+        const worker = createWorker(workerContent);
+
+        createMockFunctionFromContent(workerBody)(workerSelf);
+
+        expect(
+          await worker.sendToMethod<number, number>('doSomething', 2)
+        ).toEqual(4);
+
+        expect(
+          await worker.sendToMethod<number, number>('doSomethingElse', 2)
+        ).toEqual(5);
+      });
+    });
+
     describe('override', () => {
       it('Worker should correctly invalid previous messages', () => {
         expect.assertions(4);

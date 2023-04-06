@@ -13,9 +13,20 @@ const backgroundWorker = new EasyWebWorker<string, string>((easyWorker) => {
 
     message.resolve(`this is  a message from the worker: ${payload}`);
   });
+
+  // you could also define and send specific methods which allow you to create a better structured API
+  easyWorker.onMessage<number, number>('doSomething', (message) => {
+    const { payload } = message;
+
+    message.resolve(payload + 2);
+  });
 });
 
+// outside your worker
 const messageResult = await backgroundWorker.send('hello!');
+
+// for specific methods us the sendToMethod function
+const messageResult2 = await backgroundWorker.sendToMethod('doSomething', 2);
 ```
 
 ### Important notes:
