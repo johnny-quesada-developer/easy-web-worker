@@ -1,5 +1,3 @@
-/// <reference lib="webworker" />
-
 import { EasyWebWorkerMessage } from './EasyWebWorkerMessage';
 import {
   getWorkerTemplate,

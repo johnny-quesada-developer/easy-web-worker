@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2016",
     "module": "commonjs",
-    "lib": ["es2016", "dom"],
+    "lib": ["es2016", "dom", "webworker"],
     "declaration": true,
     "outDir": "./lib",
     "strict": true,
