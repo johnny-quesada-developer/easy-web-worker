@@ -22,10 +22,19 @@ export const StaticEasyWebWorker = function <TPayload = null, TResult = void>(
     const cancelCallbacks = new Set<(reason) => void>();
 
     const postMessage = (data) => {
+      const { progress } = data;
+
+      if (!progress) {
+        /* If it's not a progress message means that the message is resolved | rejected | canceled */
+        workerMessages.delete(messageId);
+      }
+
       self.postMessage({ messageId, ...data }, origin);
     };
 
-    const resolve = (...result) => {
+    const resolve = function () {
+      const result = Array.from(arguments);
+
       postMessage({ resolved: { payload: result } });
     };
 
@@ -148,7 +157,7 @@ export const StaticEasyWebWorker = function <TPayload = null, TResult = void>(
     const message = createMessage({
       messageId,
       payload,
-      origin: targetOrigin || origin || '*',
+      origin: targetOrigin || origin || undefined,
     });
 
     const callback = workerCallbacks.get(method || '');
