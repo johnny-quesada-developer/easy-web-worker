@@ -26,6 +26,11 @@ export interface IWorkerConfig {
    * Callback that will be executed when the worker fails, this not necessary affect the current message execution
    * */
   onWorkerError: (error: ErrorEvent) => void;
+
+  /**
+   * Url of the worker file, this is reserver for EasyWebWorker created from a Worker Instance
+   */
+  url?: string;
 }
 
 export interface IWorkerData<IPayload> {
@@ -300,12 +305,21 @@ export class EasyWebWorker<TPayload = null, TResult = void> {
     /**
      * You could import scripts into your worker, this is useful if you want to use external libraries
      */
-    { scripts = [], name, onWorkerError = null }: Partial<IWorkerConfig> = {}
+    {
+      scripts = [],
+      name,
+      onWorkerError = null,
+      url = null,
+    }: Partial<IWorkerConfig> = {}
   ) {
     this.name = name || generatedId();
     this.scripts = scripts;
     this.worker = this.initializeWorker();
     this.onWorkerError = onWorkerError;
+
+    if (url) {
+      this.workerUrl = url;
+    }
   }
 
   private RemoveMessageFromQueue(messageId: string) {
