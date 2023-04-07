@@ -268,7 +268,7 @@ export class EasyWebWorker<TPayload = null, TResult = void> {
   /**
    * This is the URL of the worker file
    */
-  public workerUrl: string;
+  public workerUrl: string = null;
 
   /**
    * This is the list of scripts that will be imported into the worker
@@ -281,7 +281,7 @@ export class EasyWebWorker<TPayload = null, TResult = void> {
   public onWorkerError: (error: ErrorEvent) => void;
 
   protected get isExternalWorkerFile(): boolean {
-    return typeof this.workerBody === 'string';
+    return typeof this.source === 'string';
   }
 
   constructor(
@@ -291,10 +291,11 @@ export class EasyWebWorker<TPayload = null, TResult = void> {
      * the above the reason of why we are injecting all worker context into the MessageBody Callbacks, so,
      * you could easily identify what is on the context of your Worker.
      */
-    protected workerBody:
+    protected source:
       | EasyWebWorkerBody<TPayload, TResult>
       | EasyWebWorkerBody<TPayload, TResult>[]
-      | string,
+      | string
+      | Worker,
 
     /**
      * You could import scripts into your worker, this is useful if you want to use external libraries
@@ -375,11 +376,11 @@ export class EasyWebWorker<TPayload = null, TResult = void> {
 
   protected getWorkerUrl(): string {
     if (this.isExternalWorkerFile) {
-      return this.workerBody as string;
+      return this.source as string;
     }
 
     return createBlobWorker<TPayload, TResult>(
-      this.workerBody as
+      this.source as
         | EasyWebWorkerBody<TPayload, TResult>
         | EasyWebWorkerBody<TPayload, TResult>[],
       this.scripts
@@ -387,11 +388,19 @@ export class EasyWebWorker<TPayload = null, TResult = void> {
   }
 
   protected initializeWorker(): Worker {
-    this.workerUrl = this.workerUrl ?? this.getWorkerUrl();
+    const isWebWorkerInstance = this.source instanceof Worker;
 
-    const worker = new Worker(this.workerUrl, {
-      name: this.name,
-    });
+    if (!isWebWorkerInstance) {
+      this.workerUrl = this.workerUrl ?? this.getWorkerUrl();
+    }
+
+    const worker = (
+      isWebWorkerInstance
+        ? this.source
+        : new Worker(this.workerUrl, {
+            name: this.name,
+          })
+    ) as Worker;
 
     worker.onmessage = (event: MessageEvent<IMessageData<TPayload>>) => {
       this.executeMessageCallback(event);
