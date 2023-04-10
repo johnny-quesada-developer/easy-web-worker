@@ -2,6 +2,8 @@
 
 This library extends the capabilities of the **Worker** by integrating a pattern of cancelable promises from the library **cancelable-promise-jq**. For simple workers it removes the necessity of having to configure webpack or whatever bundler you are using. But when more complex solutions are needed, the class **StaticEasyWebWorker** allows you to integrate the easy worker and cancelable promises capabilities into your static worker.
 
+[Live Example with text-diff](https://johnny-quesada-developer.github.io/easy-web-workers-example/)
+
 ## Creating a simple Web Worker
 
 Creating a new worker is as simple as
