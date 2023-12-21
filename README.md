@@ -43,7 +43,7 @@ Start enhancing your applications with robust, cancelable promises and easy web 
 
 Experience it in action with a [Live Example featuring text-diff](https://johnny-quesada-developer.github.io/easy-web-workers-example/) 📘.
 
-For a comprehensive understanding, watch our informative [introduction video](https://www.youtube.com/watch?v=1UBqXk2MH8I) 🎥. You can also dive deeper into the code and explore on [easy-web-workers-examples](https://github.com/johnny-quesada-developer/easy-web-workers-example) 🧩.
+For a comprehensive understanding, watch our informative [introduction video](https://www.youtube.com/watch?v=CK-Uri9lDOE) 🎥. You can also dive deeper into the code and explore on [easy-web-workers-examples](https://github.com/johnny-quesada-developer/easy-web-workers-example) 🧩.
 
 ## Creating a simple Web Worker
 
