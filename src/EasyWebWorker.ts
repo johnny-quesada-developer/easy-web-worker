@@ -1,9 +1,5 @@
 import { EasyWebWorkerMessage } from './EasyWebWorkerMessage';
-import {
-  getWorkerTemplate,
-  generatedId,
-  simpleMinifier,
-} from './EasyWebWorkerFixtures';
+import { getWorkerTemplate, generatedId } from './EasyWebWorkerFixtures';
 import { CancelablePromise, toCancelablePromise } from 'cancelable-promise-jq';
 
 /**

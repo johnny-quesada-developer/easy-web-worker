@@ -1,8 +1,49 @@
-# easy-web-worker
+# easy-web-worker 🌟
 
-This library extends the capabilities of the **Worker** by integrating a pattern of cancelable promises from the library **cancelable-promise-jq**. For simple workers it removes the necessity of having to configure webpack or whatever bundler you are using. But when more complex solutions are needed, the class **StaticEasyWebWorker** allows you to integrate the easy worker and cancelable promises capabilities into your static worker.
+![Image John Avatar](https://raw.githubusercontent.com/johnny-quesada-developer/global-hooks-example/main/public/avatar2.jpeg)
 
-[Live Example with text-diff](https://johnny-quesada-developer.github.io/easy-web-workers-example/)
+Hello and Welcome to **easy-web-worker** with [cancelable-promise-jq](https://www.npmjs.com/package/cancelable-promise-jq) - Your new go-to solution for seamless web worker integration enhanced with **cancelable promises** in JavaScript! 🚀
+
+Are you tired of the hassle involved in setting up and managing web workers? Look no further! And take a look at the example!
+
+```ts
+const worker = new EasyWebWorker((easyWorker) => {
+  // this will be the body of the worker
+  easyWorker.onMessage((message) => {
+    const { payload } = message;
+
+    console.log(payload); // Hello Worker!
+
+    // do something heavy...
+
+    message.reportProgress(50); // report progress
+
+    message.resolve();
+    //message.reject(); // or reject
+  });
+});
+
+// send a message to the worker
+await worker.send('Hello Worker!');
+```
+
+**easy-web-worker** is designed to enhance the capabilities of the **Worker** class by integrating a pattern of cancelable promises from the **[cancelable-promise-jq](https://www.npmjs.com/package/cancelable-promise-jq)** library. For straightforward tasks, it simplifies the process by eliminating the need to configure webpack or other bundlers. And for more complex requirements, the **StaticEasyWebWorker** class allows the integration of easy worker and cancelable promises capabilities into your static workers.
+
+```ts
+// main thread
+const worker = new EasyWebWorker('worker.js');
+
+// inside the worker
+new StaticEasyWebWorker().onMessage((message) => {
+  // do something
+});
+```
+
+Start enhancing your applications with robust, cancelable promises and easy web worker integration today! 🌐
+
+Experience it in action with a [Live Example featuring text-diff](https://johnny-quesada-developer.github.io/easy-web-workers-example/) 📘.
+
+For a comprehensive understanding, watch our informative [introduction video](https://www.youtube.com/watch?v=1UBqXk2MH8I) 🎥. You can also dive deeper into the code and explore on [easy-web-workers-examples](https://github.com/johnny-quesada-developer/easy-web-workers-example) 🧩.
 
 ## Creating a simple Web Worker
 
