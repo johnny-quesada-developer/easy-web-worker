@@ -220,7 +220,7 @@ export const createBlobWorker = <IPayload = null, IResult = void>(
     imports
   )}${getWorkerTemplate()}${contentCollection
     .map((content) => {
-      return `var easyWorker=self.cw$("${origin}");(${content})(easyWorker, self);`;
+      return `self.ew$=self.cw$("${origin}");(${content})(self.ew$, self);`;
     })
     .join('')}`;
 

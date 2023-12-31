@@ -83,7 +83,7 @@ describe('EasyWebWorker', () => {
       let workerBody: string = '';
 
       blobSpy.mockImplementation((content: string[]) => {
-        workerBody = `${content.join('')} return easyWorker;`;
+        workerBody = `${content.join('')} return self.ew$;`;
       });
 
       const worker = new EasyWebWorker(workerContent, {
@@ -118,7 +118,7 @@ describe('EasyWebWorker', () => {
       let workerBody: string = '';
 
       blobSpy.mockImplementation((content: string[]) => {
-        workerBody = `${content.join('')} return easyWorker;`;
+        workerBody = `${content.join('')} return self.ew$;`;
       });
 
       const secondWorkerContent: EasyWebWorkerBody = (easyWorker, context) => {
@@ -164,7 +164,7 @@ describe('EasyWebWorker', () => {
 
     beforeEach(() => {
       blobSpy.mockImplementation((content: string[]) => {
-        workerBody = `${content.join('')} return easyWorker;`;
+        workerBody = `${content.join('')} return self.ew$;`;
       });
 
       workerSelf = {
