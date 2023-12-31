@@ -213,20 +213,16 @@ export const createBlobWorker = <IPayload = null, IResult = void>(
   imports: string[] = [],
   origin: string = ''
 ) => {
-  const template = getWorkerTemplate();
-
   const contentCollection: EasyWebWorkerBody<IPayload, IResult>[] =
     Array.isArray(source) ? source : [source];
 
-  const worker_content = `${getImportScriptsTemplate(imports)}
-  ${template}
-  ${contentCollection
+  const worker_content = `${getImportScriptsTemplate(
+    imports
+  )}${getWorkerTemplate()}${contentCollection
     .map((content) => {
-      return `
-      \n var easyWorker = createEasyWebWorker("${origin}");
-      \n (${content})(easyWorker, self);`;
+      return `var easyWorker=self.cw$("${origin}");(${content})(easyWorker, self);`;
     })
-    .join('\n\n')}`;
+    .join('')}`;
 
   return (window.URL || window.webkitURL).createObjectURL(
     new Blob([worker_content], { type: 'application/javascript' })
