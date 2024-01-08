@@ -31,15 +31,15 @@ export interface IWorkerData<IPayload> {
   /**
    * This is the message id
    * */
-  messageId: string;
+  readonly messageId: string;
 
-  method?: string;
+  readonly method?: string;
 
-  execution?: {
+  readonly execution?: {
     payload?: IPayload;
   };
 
-  cancelation?: {
+  readonly cancelation?: {
     reason?: unknown;
   };
 }
@@ -51,32 +51,32 @@ export interface IMessageData<IPayload = null> {
   /**
    * This is the message id
    * */
-  messageId: string;
+  readonly messageId: string;
 
   /**
    * When present, this means that the message was resolved
    */
-  resolved?: { payload: [IPayload?] };
+  readonly resolved?: { payload: [IPayload?] };
 
   /**
    * When present, this means that the message was rejected
    * */
-  rejected?: { reason: unknown };
+  readonly rejected?: { reason: unknown };
 
   /**
    * When present, this means that the message was canceled
    * */
-  canceled?: { reason: unknown };
+  readonly canceled?: { reason: unknown };
 
   /**
    * When present, this means that the message was canceled from inside the worker
    * */
-  worker_canceled?: { reason: unknown };
+  readonly worker_canceled?: { reason: unknown };
 
   /**
    * When present, this means that the should report the progress
    * */
-  progress?: {
+  readonly progress?: {
     /**
      * This is the progress percentage
      * */
@@ -167,37 +167,39 @@ export interface IEasyWebWorkerMessage<TPayload = null, TResult = void> {
   /**
    * This is the message id
    */
-  messageId: string;
+  readonly messageId: string;
 
   /**
    * This are the parameters included in the message
    * */
-  payload: TPayload;
+  readonly payload: TPayload;
 
   /**
    * This method is used to reject the message from inside the worker
    * */
-  reject: (reason?: unknown) => void;
+  readonly reject: (reason?: unknown) => void;
 
   /**
    * This method is used to report the progress of the message from inside the worker
    * */
-  reportProgress(percentage: number, payload?: unknown): void;
+  readonly reportProgress: (percentage: number, payload?: unknown) => void;
 
   /**
    * This method is used to resolve the message from inside the worker
    * */
-  resolve: TResult extends void ? () => void : (payload: TResult) => void;
+  readonly resolve: TResult extends void
+    ? () => void
+    : (payload: TResult) => void;
 
   /**
    * This method is used to cancel the message from inside the worker
    * */
-  cancel: (reason?: unknown) => void;
+  readonly cancel: (reason?: unknown) => void;
 
   /**
    * Thus method is used to subscribe to the cancel event from the main thread
    */
-  onCancel: (callback: (reason?: unknown) => void) => void;
+  readonly onCancel: (callback: (reason?: unknown) => void) => void;
 }
 
 const getImportScriptsTemplate = (scripts: string[] = []) => {
