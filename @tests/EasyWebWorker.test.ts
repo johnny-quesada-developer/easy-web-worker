@@ -3,7 +3,8 @@ import {
   EasyWebWorkerBody,
   IEasyWebWorkerMessage,
   IWorkerConfig,
-} from '../src/EasyWebWorker';
+  createEasyWebWorker,
+} from '../src';
 
 import * as testFixtures from './testFixtures';
 
@@ -38,7 +39,7 @@ describe('EasyWebWorker', () => {
     };
 
     it('properties should be correctly populated', () => {
-      const worker = new EasyWebWorker(workerContent, {
+      const worker = createEasyWebWorker(workerContent, {
         name: workerName,
         scripts,
       });

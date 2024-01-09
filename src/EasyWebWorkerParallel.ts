@@ -8,7 +8,29 @@ import {
   IWorkerData,
   TOverrideConfig,
   EasyWebWorker,
-} from 'EasyWebWorker';
+} from './EasyWebWorker';
+
+export type IWorkerConfigParallel = IWorkerConfig & {
+  /**
+   * Maximum quantity of workers that will be created, default is 4
+   */
+  maxWorkers?: number;
+  /**
+   * Indicates if the worker should be kept alive after the message is completed
+   * otherwise, the workers will be terminated after a configured delay has passed and there is no messages in the queue
+   */
+  keepAlive?: boolean;
+  /**
+   * Quantity of milliseconds to wait before terminating the worker if there is no messages in the queue
+   */
+  terminationDelay?: number;
+
+  /**
+   * Indicates whenever the maximum quantity of workers should be created at the initialization of the easy web worker,
+   * If warmUp is true keepAlive will be set to true
+   */
+  warmUp?: boolean;
+};
 
 /**
  * This is a class to create a new instance of the easy concurrent web worker
@@ -83,29 +105,7 @@ export class EasyWebWorkerParallel<TPayload = null, TResult = void> {
       keepAlive = false,
       terminationDelay = 1000,
       warmUp = false,
-    }: Partial<
-      IWorkerConfig & {
-        /**
-         * Maximum quantity of workers that will be created, default is 4
-         */
-        maxWorkers?: number;
-        /**
-         * Indicates if the worker should be kept alive after the message is completed
-         * otherwise, the workers will be terminated after a configured delay has passed and there is no messages in the queue
-         */
-        keepAlive?: boolean;
-        /**
-         * Quantity of milliseconds to wait before terminating the worker if there is no messages in the queue
-         */
-        terminationDelay?: number;
-
-        /**
-         * Indicates whenever the maximum quantity of workers should be created at the initialization of the easy web worker,
-         * If warmUp is true keepAlive will be set to true
-         */
-        warmUp?: boolean;
-      }
-    > = {}
+    }: Partial<IWorkerConfigParallel> = {}
   ) {
     this.name = name || generatedId();
     this.scripts = scripts;

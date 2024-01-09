@@ -14,7 +14,7 @@ Check out the running example with **React** and **TypeScript** at [CODEPEN](htt
 /**
  * The callback parameter will be the body of the worker
  */
-const worker = new EasyWebWorker((easyWorker) => {
+const worker = createEasyWebWorker((easyWorker) => {
   /**
    * Inside the worker we have to define an action when onMessage
    */
@@ -41,12 +41,13 @@ await worker.send('Hello Worker!');
 
 And that's it! You now have a worker running heavy computation in a real separate thread, with real asynchronous programming in JavaScript.
 
-You can also create an easy web worker from a static file, or from a native worker instance.
+You can also create an easy web worker from a static file, or from a native worker instance:
 
 ```ts
-// static file
-const worker = new EasyWebWorker('./worker.js');
+const worker = createEasyWebWorker('./worker.js');
+const worker = createEasyWebWorker(new Worker('./worker.js')); // ƒ Worker() { [native code] }
 
+const worker = new EasyWebWorker('./worker.js');
 const worker = new EasyWebWorker(new Worker('./worker.js')); // ƒ Worker() { [native code] }
 ```
 
