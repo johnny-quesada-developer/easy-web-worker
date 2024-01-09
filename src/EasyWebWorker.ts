@@ -274,7 +274,7 @@ export class EasyWebWorker<TPayload = null, TResult = void> {
   public onWorkerError: (error: ErrorEvent) => void;
 
   protected get isExternalWorkerFile(): boolean {
-    return typeof this.source === "string";
+    return typeof this.source === 'string';
   }
 
   constructor(
@@ -482,7 +482,10 @@ export class EasyWebWorker<TPayload = null, TResult = void> {
     return this.sendToWorker<TPayload, TResult>({ payload }, transfer);
   }) as unknown as TPayload extends null
     ? () => CancelablePromise<TResult>
-    : (payload: TPayload, transfer?: Transferable[]) => CancelablePromise<TResult>;
+    : (
+        payload: TPayload,
+        transfer?: Transferable[]
+      ) => CancelablePromise<TResult>;
 
   private sendToWorker = <TPayload_ = null, TResult_ = void>(
     {
@@ -597,7 +600,7 @@ export class EasyWebWorker<TPayload = null, TResult = void> {
    * This method will reboot the worker and cancel all the messages in the queue
    * @param {unknown} reason - reason why the worker will be restarted
    */
-  public reboot(reason: unknown = "Worker was rebooted") {
+  public reboot(reason: unknown = 'Worker was rebooted') {
     this.worker.terminate();
     this.worker = null;
 

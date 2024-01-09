@@ -77,7 +77,7 @@ export class EasyWebWorkerParallel<TPayload = null, TResult = void> {
     new Map();
 
   protected get isExternalWorkerFile(): boolean {
-    return typeof this.source === "string";
+    return typeof this.source === 'string';
   }
 
   constructor(
@@ -220,13 +220,13 @@ export class EasyWebWorkerParallel<TPayload = null, TResult = void> {
     isArrayOfWebWorkers: boolean;
     isArraySource?: boolean;
   } {
-    const isUrlBase = typeof this.source === "string";
-    const isFunctionTemplate = typeof this.source === "function";
+    const isUrlBase = typeof this.source === 'string';
+    const isFunctionTemplate = typeof this.source === 'function';
 
     const isArraySource = Array.isArray(this.source);
 
     const isArrayOfFunctions =
-      isArraySource && typeof this.source[0] === "function";
+      isArraySource && typeof this.source[0] === 'function';
 
     const isArrayOfWebWorkers =
       isArraySource && this.source[0] instanceof Worker;
