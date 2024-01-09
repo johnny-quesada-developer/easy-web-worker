@@ -131,7 +131,7 @@ export class EasyWebWorkerParallel<TPayload = null, TResult = void> {
     const { maxWorkers } = this;
 
     new Array(maxWorkers).fill(null).forEach(() => {
-      this.getWorkerInstance(null);
+      this.getWorkerFromPool(null);
     });
   };
 
@@ -242,7 +242,7 @@ export class EasyWebWorkerParallel<TPayload = null, TResult = void> {
     }
 
     if (isArrayOfWebWorkers) {
-      this.workers = (this.source as Worker[]).map(this.getWorkerInstance);
+      this.workers = (this.source as Worker[]).map(this.getWorkerFromPool);
 
       return {
         isArrayOfWebWorkers,
@@ -318,17 +318,6 @@ export class EasyWebWorkerParallel<TPayload = null, TResult = void> {
     ? () => CancelablePromise<TResult>
     : (payload: TPayload) => CancelablePromise<TResult>;
 
-  /**
-   * Get a worker from the pool and rotate the pool
-   */
-  private getWorkerFromPool = (): Worker => {
-    const worker = this.workers.shift();
-
-    this.workers.push(worker);
-
-    return worker;
-  };
-
   private createNewWorkerInstance = (): Worker => {
     const worker = new Worker(this.baseUrl, {
       name: `${this.name}-${this.workers.length}`,
@@ -350,19 +339,35 @@ export class EasyWebWorkerParallel<TPayload = null, TResult = void> {
     return worker;
   };
 
-  private getWorkerInstance = (_worker: Worker): Worker => {
+  private getWorkerFromPool = (_worker?: Worker): Worker => {
+    // static workers instances
+    if (_worker) {
+      this.workers.push(_worker);
+
+      return _worker;
+    }
+
     const { maxWorkers, messagesQueue } = this;
     const messagesQueueSize = messagesQueue.size;
 
-    if (messagesQueueSize >= maxWorkers) {
-      const worker = this.getWorkerFromPool();
+    // there are less workers than the maximum allowed, and there is messages in the queue
+    if (
+      !this.workers.length ||
+      (this.workers.length < maxWorkers && messagesQueueSize)
+    ) {
+      const worker: Worker = this.createNewWorkerInstance();
+
+      this.workers.push(worker);
 
       return worker;
     }
 
-    const worker: Worker = _worker ?? this.createNewWorkerInstance();
+    // rotate the worker
+    const worker = this.workers.shift();
 
     this.workers.push(worker);
+
+    return worker;
   };
 
   private sendToWorker = <TPayload_ = null, TResult_ = void>({
