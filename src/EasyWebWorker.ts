@@ -138,7 +138,7 @@ export interface IEasyWorkerInstance<TPayload = null, TResult = void> {
   close(): void;
 }
 
-type TOverrideConfig = {
+export type TOverrideConfig = {
   /**
    * If true, the worker reboots and cancel instantly all the messages that are currently in the queue
    */
@@ -232,7 +232,7 @@ export const createBlobWorker = <IPayload = null, IResult = void>(
 };
 
 /**
- * This is a class to create global-store objects
+ * This is a class to create an EasyWebWorker
  * @template TPayload - Indicates if your WORKERS messages requires a parameter to be provided, NULL indicates they doesn't
  * @template TResult - Indicates if your WORKERS messages has a result... NULL indicates all you messages are Promise<void>
  * @param {EasyWebWorkerBody<TPayload, TResult> | EasyWebWorkerBody<TPayload, TResult>[]} workerBody -
@@ -304,10 +304,7 @@ export class EasyWebWorker<TPayload = null, TResult = void> {
     this.scripts = scripts;
     this.worker = this.initializeWorker();
     this.onWorkerError = onWorkerError;
-
-    if (url) {
-      this.workerUrl = url;
-    }
+    this.workerUrl = url || this.workerUrl;
   }
 
   private RemoveMessageFromQueue(messageId: string) {
