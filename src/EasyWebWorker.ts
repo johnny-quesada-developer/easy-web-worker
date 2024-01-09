@@ -25,6 +25,26 @@ export interface IWorkerConfig {
    * Url of the worker file, this is reserver for EasyWebWorker created from a Worker Instance
    */
   url?: string;
+
+  /**
+   * Maximum quantity of workers that will be created, default is 4
+   */
+  maxWorkers?: number;
+  /**
+   * Indicates if the worker should be kept alive after the message is completed
+   * otherwise, the workers will be terminated after a configured delay has passed and there is no messages in the queue
+   */
+  keepAlive?: boolean;
+  /**
+   * Quantity of milliseconds to wait before terminating the worker if there is no messages in the queue
+   */
+  terminationDelay?: number;
+
+  /**
+   * Indicates whenever the maximum quantity of workers should be created at the initialization of the easy web worker,
+   * If warmUp is true keepAlive will be set to true
+   */
+  warmUpWorkers?: boolean;
 }
 
 export interface IWorkerData<IPayload> {
@@ -250,7 +270,19 @@ export class EasyWebWorker<TPayload = null, TResult = void> {
   /**
    * @deprecated Directly modifying the worker may lead to unexpected behavior. Use it only if you know what you are doing.
    */
-  public worker: Worker;
+  public get worker(): Worker {
+    return this.workers.length > 1 ? null : this.workers[0];
+  }
+
+  public maxWorkers: number = 1;
+
+  private workers: Worker[] = [];
+
+  public keepAlive: boolean = true;
+
+  public warmUpWorkers: boolean = false;
+
+  public terminationDelay: number = 1000;
 
   /**
    * These where send to the worker but not yet resolved
@@ -288,7 +320,8 @@ export class EasyWebWorker<TPayload = null, TResult = void> {
       | EasyWebWorkerBody<TPayload, TResult>
       | EasyWebWorkerBody<TPayload, TResult>[]
       | string
-      | Worker,
+      | Worker
+      | Worker[],
 
     /**
      * You could import scripts into your worker, this is useful if you want to use external libraries
@@ -298,14 +331,157 @@ export class EasyWebWorker<TPayload = null, TResult = void> {
       name,
       onWorkerError = null,
       url = null,
+      maxWorkers = 1,
+      keepAlive: _keepAlive = null,
+      terminationDelay = 1000,
+      warmUpWorkers: _warmUpWorkers = null,
     }: Partial<IWorkerConfig> = {}
   ) {
+    const warmUpWorkers =
+      !maxWorkers || maxWorkers === 1 ? true : _warmUpWorkers;
+    const keepAlive = warmUpWorkers || (_keepAlive ?? false);
+
     this.name = name || generatedId();
     this.scripts = scripts;
-    this.worker = this.initializeWorker();
     this.onWorkerError = onWorkerError;
-    this.workerUrl = url || this.workerUrl;
+    this.workerUrl = url ?? null;
+    this.maxWorkers = maxWorkers;
+    this.keepAlive = keepAlive;
+    this.terminationDelay = terminationDelay;
+    this.warmUpWorkers = warmUpWorkers;
+
+    this.computeWorkerBaseSource();
+    this.warmUp();
   }
+
+  private warmUp = () => {
+    if (!this.warmUpWorkers) return;
+
+    const { maxWorkers } = this;
+
+    new Array(maxWorkers).fill(null).forEach(() => {
+      this.getWorkerFromPool(null);
+    });
+  };
+
+  private createNewWorkerInstance = (): Worker => {
+    const worker = new Worker(this.workerUrl, {
+      name: `${this.name}-${this.workers.length}`,
+    });
+
+    worker.onmessage = (event: MessageEvent<IMessageData<TPayload>>) => {
+      this.executeMessageCallback(event);
+    };
+
+    /**
+     * If not handled, the error will be thrown to the global scope
+     */
+    worker.onerror = (reason) => {
+      if (!this.onWorkerError) throw reason;
+
+      this.onWorkerError(reason);
+    };
+
+    return worker;
+  };
+
+  private getWorkerFromPool = (_worker?: Worker): Worker => {
+    // static workers instances
+    if (_worker) {
+      this.workers.push(_worker);
+
+      return _worker;
+    }
+
+    const { maxWorkers, messagesQueue } = this;
+    const messagesQueueSize = messagesQueue.size;
+
+    // there are less workers than the maximum allowed, and there is messages in the queue
+    if (
+      !this.workers.length ||
+      (this.workers.length < maxWorkers && messagesQueueSize)
+    ) {
+      const worker: Worker = this.createNewWorkerInstance();
+
+      this.workers.push(worker);
+
+      return worker;
+    }
+
+    // rotate the worker
+    const worker = this.workers.shift();
+
+    this.workers.push(worker);
+
+    return worker;
+  };
+
+  protected computeWorkerBaseSource = () => {
+    const { workerUrl, isArrayOfWebWorkers } = (() => {
+      const isWorkerInstance = this.source instanceof Worker;
+
+      if (isWorkerInstance) {
+        this.workers = [this.getWorkerFromPool(this.source as Worker)];
+
+        return {
+          isArrayOfWebWorkers: false,
+          workerUrl: null,
+        };
+      }
+
+      const isUrlBase = typeof this.source === 'string';
+      const isFunctionTemplate = typeof this.source === 'function';
+
+      if (isUrlBase || isFunctionTemplate) {
+        const workerUrl = this.workerUrl ?? this.getWorkerUrl();
+
+        return {
+          isArrayOfWebWorkers: false,
+          workerUrl,
+        };
+      }
+
+      const isArraySource = Array.isArray(this.source);
+
+      const isArrayOfFunctionsTemplates =
+        isArraySource && typeof this.source[0] === 'function';
+
+      if (isArrayOfFunctionsTemplates) {
+        const workerUrl = this.workerUrl ?? this.getWorkerUrl();
+
+        return {
+          isArrayOfWebWorkers: false,
+          workerUrl,
+        };
+      }
+
+      const isArrayOfWebWorkers =
+        isArraySource && this.source[0] instanceof Worker;
+
+      if (isArrayOfWebWorkers) {
+        this.workers = (this.source as Worker[]).map(this.getWorkerFromPool);
+
+        return {
+          isArrayOfWebWorkers,
+          workerUrl: null,
+        };
+      }
+
+      return {
+        isArrayOfWebWorkers: false,
+        workerUrl: null,
+      };
+    })();
+
+    this.workerUrl = workerUrl;
+
+    this.maxWorkers = isArrayOfWebWorkers
+      ? (this.source as []).length
+      : this.maxWorkers;
+
+    // if the source is an array of web workers we need to keep them alive
+    this.keepAlive = isArrayOfWebWorkers ? true : this.keepAlive;
+  };
 
   private RemoveMessageFromQueue(messageId: string) {
     this.messagesQueue.delete(messageId);
@@ -321,8 +497,8 @@ export class EasyWebWorker<TPayload = null, TResult = void> {
 
     const { progress } = event.data;
 
-    // worker was disposed before the message was resolved
-    if (!this.worker) {
+    // workers were disposed before the message was resolved
+    if (!this.workers.length) {
       this.RemoveMessageFromQueue(message.messageId);
 
       return;
@@ -493,7 +669,11 @@ export class EasyWebWorker<TPayload = null, TResult = void> {
 
     const { cancel } = decoupledPromise;
 
+    const worker = this.getWorkerFromPool();
+
     decoupledPromise.promise.cancel = (reason) => {
+      debugger;
+
       // restore the original cancel method so we can cancel the message when the worker response
       decoupledPromise.cancel = cancel;
 
@@ -508,16 +688,28 @@ export class EasyWebWorker<TPayload = null, TResult = void> {
       };
 
       // if the worker was disposed, we need to automatically reject the promise
-      if (!this.worker) {
+      if (!this.workers.length) {
         cancel(reason);
 
         return toCancelablePromise(Promise.reject(reason));
       }
 
-      this.worker?.postMessage(data);
+      worker.postMessage(data);
 
       return decoupledPromise.promise;
     };
+
+    if (!this.keepAlive) {
+      decoupledPromise.promise?.finally?.(() => {
+        setTimeout(() => {
+          const { messagesQueue } = this;
+          if (messagesQueue.size) return;
+
+          this.workers.forEach((worker) => worker.terminate());
+          this.workers = [];
+        }, this.terminationDelay);
+      });
+    }
 
     this.addMessageToQueue(message as EasyWebWorkerMessage<unknown, unknown>);
 
@@ -529,7 +721,7 @@ export class EasyWebWorker<TPayload = null, TResult = void> {
       },
     };
 
-    this.worker?.postMessage(data);
+    worker.postMessage(data);
 
     return decoupledPromise.promise;
   };
@@ -592,13 +784,19 @@ export class EasyWebWorker<TPayload = null, TResult = void> {
    * @param {unknown} reason - reason why the worker will be restarted
    */
   public reboot(reason: unknown = 'Worker was rebooted') {
-    this.worker.terminate();
-    this.worker = null;
+    if (!this.workerUrl) {
+      throw new Error(
+        'You can not reboot a worker that was created from a Worker Instance'
+      );
+    }
+
+    this.workers.forEach((worker) => worker.terminate());
+    this.workers = [];
 
     // the messages need to be canceled before the worker is restarted to force an immediate rejection
     const resolutionPromises = this.cancelAll(reason);
 
-    this.worker = this.initializeWorker();
+    this.warmUp();
 
     return resolutionPromises;
   }
@@ -609,10 +807,9 @@ export class EasyWebWorker<TPayload = null, TResult = void> {
   public async dispose(): Promise<void> {
     await this.cancelAll(null);
 
-    URL.revokeObjectURL(this.workerUrl);
+    if (this.workerUrl) URL.revokeObjectURL(this.workerUrl);
 
-    this.worker.terminate();
-
-    this.worker = null;
+    this.workers.forEach((worker) => worker.terminate());
+    this.workers = [];
   }
 }
