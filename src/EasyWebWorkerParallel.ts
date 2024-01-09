@@ -77,7 +77,7 @@ export class EasyWebWorkerParallel<TPayload = null, TResult = void> {
     new Map();
 
   protected get isExternalWorkerFile(): boolean {
-    return typeof this.source === 'string';
+    return typeof this.source === "string";
   }
 
   constructor(
@@ -220,13 +220,13 @@ export class EasyWebWorkerParallel<TPayload = null, TResult = void> {
     isArrayOfWebWorkers: boolean;
     isArraySource?: boolean;
   } {
-    const isUrlBase = typeof this.source === 'string';
-    const isFunctionTemplate = typeof this.source === 'function';
+    const isUrlBase = typeof this.source === "string";
+    const isFunctionTemplate = typeof this.source === "function";
 
     const isArraySource = Array.isArray(this.source);
 
     const isArrayOfFunctions =
-      isArraySource && typeof this.source[0] === 'function';
+      isArraySource && typeof this.source[0] === "function";
 
     const isArrayOfWebWorkers =
       isArraySource && this.source[0] instanceof Worker;
@@ -298,9 +298,13 @@ export class EasyWebWorkerParallel<TPayload = null, TResult = void> {
    */
   public sendToMethod<TResult_ = void, TPayload_ = null>(
     method: string,
-    payload?: TPayload_
+    payload?: TPayload_,
+    transfer?: Transferable[]
   ): CancelablePromise<TResult_> {
-    return this.sendToWorker<TPayload_, TResult_>({ method, payload });
+    return this.sendToWorker<TPayload_, TResult_>(
+      { method, payload },
+      transfer
+    );
   }
 
   /**
@@ -309,14 +313,16 @@ export class EasyWebWorkerParallel<TPayload = null, TResult = void> {
    * @returns {IMessagePromise<TResult>} generated defer that will be resolved when the message completed
    */
   public send = ((
-    ...payload: TPayload extends null ? [null?] : [TPayload]
+    payload: TPayload,
+    transfer?: Transferable[]
   ): CancelablePromise<TResult> => {
-    const [$payload] = payload as [TPayload];
-
-    return this.sendToWorker<TPayload, TResult>({ payload: $payload });
+    return this.sendToWorker<TPayload, TResult>({ payload }, transfer);
   }) as unknown as TPayload extends null
     ? () => CancelablePromise<TResult>
-    : (payload: TPayload) => CancelablePromise<TResult>;
+    : (
+        payload: TPayload,
+        transfer?: Transferable[]
+      ) => CancelablePromise<TResult>;
 
   private createNewWorkerInstance = (): Worker => {
     const worker = new Worker(this.baseUrl, {
@@ -370,13 +376,16 @@ export class EasyWebWorkerParallel<TPayload = null, TResult = void> {
     return worker;
   };
 
-  private sendToWorker = <TPayload_ = null, TResult_ = void>({
-    payload,
-    method,
-  }: {
-    payload?: TPayload_;
-    method?: string;
-  }): CancelablePromise<TResult_> => {
+  private sendToWorker = <TPayload_ = null, TResult_ = void>(
+    {
+      payload,
+      method,
+    }: {
+      payload?: TPayload_;
+      method?: string;
+    },
+    transfer?: Transferable[]
+  ): CancelablePromise<TResult_> => {
     const message = new EasyWebWorkerMessage<TPayload_, TResult_>();
     const { messageId, decoupledPromise } = message;
 
@@ -432,7 +441,7 @@ export class EasyWebWorkerParallel<TPayload = null, TResult = void> {
       },
     };
 
-    worker.postMessage(data);
+    worker.postMessage(data, transfer);
 
     return decoupledPromise.promise;
   };

@@ -274,7 +274,7 @@ export class EasyWebWorker<TPayload = null, TResult = void> {
   public onWorkerError: (error: ErrorEvent) => void;
 
   protected get isExternalWorkerFile(): boolean {
-    return typeof this.source === 'string';
+    return typeof this.source === "string";
   }
 
   constructor(
@@ -461,9 +461,13 @@ export class EasyWebWorker<TPayload = null, TResult = void> {
    */
   public sendToMethod<TResult_ = void, TPayload_ = null>(
     method: string,
-    payload?: TPayload_
+    payload?: TPayload_,
+    transfer?: Transferable[]
   ): CancelablePromise<TResult_> {
-    return this.sendToWorker<TPayload_, TResult_>({ method, payload });
+    return this.sendToWorker<TPayload_, TResult_>(
+      { method, payload },
+      transfer
+    );
   }
 
   /**
@@ -472,22 +476,24 @@ export class EasyWebWorker<TPayload = null, TResult = void> {
    * @returns {IMessagePromise<TResult>} generated defer that will be resolved when the message completed
    */
   public send = ((
-    ...payload: TPayload extends null ? [null?] : [TPayload]
+    payload: TPayload,
+    transfer?: Transferable[]
   ): CancelablePromise<TResult> => {
-    const [$payload] = payload as [TPayload];
-
-    return this.sendToWorker<TPayload, TResult>({ payload: $payload });
+    return this.sendToWorker<TPayload, TResult>({ payload }, transfer);
   }) as unknown as TPayload extends null
     ? () => CancelablePromise<TResult>
-    : (payload: TPayload) => CancelablePromise<TResult>;
+    : (payload: TPayload, transfer?: Transferable[]) => CancelablePromise<TResult>;
 
-  private sendToWorker = <TPayload_ = null, TResult_ = void>({
-    payload,
-    method,
-  }: {
-    payload?: TPayload_;
-    method?: string;
-  }): CancelablePromise<TResult_> => {
+  private sendToWorker = <TPayload_ = null, TResult_ = void>(
+    {
+      payload,
+      method,
+    }: {
+      payload?: TPayload_;
+      method?: string;
+    },
+    transfer?: Transferable[]
+  ): CancelablePromise<TResult_> => {
     const message = new EasyWebWorkerMessage<TPayload_, TResult_>();
     const { messageId, decoupledPromise } = message;
 
@@ -529,7 +535,7 @@ export class EasyWebWorker<TPayload = null, TResult = void> {
       },
     };
 
-    this.worker?.postMessage(data);
+    this.worker?.postMessage(data, transfer);
 
     return decoupledPromise.promise;
   };
@@ -591,7 +597,7 @@ export class EasyWebWorker<TPayload = null, TResult = void> {
    * This method will reboot the worker and cancel all the messages in the queue
    * @param {unknown} reason - reason why the worker will be restarted
    */
-  public reboot(reason: unknown = 'Worker was rebooted') {
+  public reboot(reason: unknown = "Worker was rebooted") {
     this.worker.terminate();
     this.worker = null;
 
