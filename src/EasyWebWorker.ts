@@ -5,7 +5,7 @@ import { CancelablePromise, toCancelablePromise } from 'cancelable-promise-jq';
 /**
  * EasyWorker Config
  * */
-export interface IWorkerConfig {
+export interface IWorkerConfig<TPrimitiveParameters extends any[] = unknown[]> {
   /**
    **  External scripts that you want to include in your worker
    */
@@ -45,6 +45,16 @@ export interface IWorkerConfig {
    * If warmUp is true keepAlive will be set to true
    */
   warmUpWorkers?: boolean;
+
+  /**
+   * Allows to pass static primitive parameters to the worker
+   */
+  primitiveParameters?: TPrimitiveParameters;
+
+  /**
+   * Allows to override the worker file origin
+   */
+  origin?: string;
 }
 
 export interface IWorkerData<IPayload> {
@@ -171,7 +181,11 @@ export type TOverrideConfig = {
  * @template IResult - Indicates if your WORKERS messages has a result... NULL indicates all you messages are Promise<void>
  * @param {IEasyWorkerInstance<IPayload, IResult>} easyWorker - ,
  */
-export type EasyWebWorkerBody<IPayload = null, IResult = void> = (
+export type EasyWebWorkerBody<
+  IPayload = null,
+  IResult = void,
+  TPrimitiveParameters extends any[] = unknown[]
+> = (
   /**
    * This is the instance of the worker that you can use to communicate with the main thread
    */
@@ -180,7 +194,9 @@ export type EasyWebWorkerBody<IPayload = null, IResult = void> = (
   /**
    * This is the context of the worker, you can use it to access to the global scope of the worker
    * */
-  context: DedicatedWorkerGlobalScope & Record<string, unknown>
+  context: DedicatedWorkerGlobalScope & {
+    primitiveParameters: TPrimitiveParameters;
+  } & Record<string, unknown>
 ) => void;
 
 export interface IEasyWebWorkerMessage<TPayload = null, TResult = void> {
@@ -228,17 +244,28 @@ const getImportScriptsTemplate = (scripts: string[] = []) => {
   return `self.importScripts(["${scripts.join('","')}"]);`;
 };
 
-export const createBlobWorker = <IPayload = null, IResult = void>(
+export const createBlobWorker = <
+  IPayload = null,
+  IResult = void,
+  TPrimitiveParameters extends any[] = unknown[]
+>(
   source:
     | EasyWebWorkerBody<IPayload, IResult>
     | EasyWebWorkerBody<IPayload, IResult>[],
   imports: string[] = [],
-  origin: string = ''
+  origin: string = '',
+  {
+    primitiveParameters = [] as TPrimitiveParameters,
+  }: {
+    primitiveParameters?: TPrimitiveParameters;
+  } = {}
 ) => {
   const contentCollection: EasyWebWorkerBody<IPayload, IResult>[] =
     Array.isArray(source) ? source : [source];
 
-  const worker_content = `${getImportScriptsTemplate(
+  const worker_content = `self.primitiveParameters=JSON.parse(\`${JSON.stringify(
+    primitiveParameters ?? []
+  )}\`);${getImportScriptsTemplate(
     imports
   )}${getWorkerTemplate()}${contentCollection
     .map((content) => {
@@ -264,7 +291,11 @@ export const createBlobWorker = <IPayload = null, IResult = void>(
  * consult IWorkerConfig description to have more information
  * */
 
-export class EasyWebWorker<TPayload = null, TResult = void> {
+export class EasyWebWorker<
+  TPayload = null,
+  TResult = void,
+  TPrimitiveParameters extends any[] = unknown[]
+> {
   public name: string;
 
   /**
@@ -283,6 +314,10 @@ export class EasyWebWorker<TPayload = null, TResult = void> {
   public warmUpWorkers: boolean = false;
 
   public terminationDelay: number = 1000;
+
+  public origin: string = '';
+
+  public primitiveParameters: TPrimitiveParameters = [] as TPrimitiveParameters;
 
   /**
    * These where send to the worker but not yet resolved
@@ -335,7 +370,9 @@ export class EasyWebWorker<TPayload = null, TResult = void> {
       keepAlive: _keepAlive = null,
       terminationDelay = 1000,
       warmUpWorkers: _warmUpWorkers = null,
-    }: Partial<IWorkerConfig> = {}
+      primitiveParameters,
+      origin = '',
+    }: Partial<IWorkerConfig<TPrimitiveParameters>> = {}
   ) {
     const warmUpWorkers =
       !maxWorkers || maxWorkers === 1 ? true : _warmUpWorkers;
@@ -350,6 +387,11 @@ export class EasyWebWorker<TPayload = null, TResult = void> {
     this.terminationDelay = terminationDelay;
     this.warmUpWorkers = warmUpWorkers;
 
+    this.primitiveParameters = (primitiveParameters ??
+      []) as TPrimitiveParameters;
+
+    this.origin = origin;
+
     this.computeWorkerBaseSource();
     this.warmUp();
   }
@@ -359,16 +401,10 @@ export class EasyWebWorker<TPayload = null, TResult = void> {
 
     const { maxWorkers } = this;
 
-    new Array(maxWorkers).fill(null).forEach(() => {
-      this.getWorkerFromPool(null);
-    });
+    new Array(maxWorkers).fill(null).forEach(() => this.getWorkerFromPool());
   };
 
-  private createNewWorkerInstance = (): Worker => {
-    const worker = new Worker(this.workerUrl, {
-      name: `${this.name}-${this.workers.length}`,
-    });
-
+  private fillWorkerMethods = (worker: Worker) => {
     worker.onmessage = (event: MessageEvent<IMessageData<TPayload>>) => {
       this.executeMessageCallback(event);
     };
@@ -385,14 +421,20 @@ export class EasyWebWorker<TPayload = null, TResult = void> {
     return worker;
   };
 
-  private getWorkerFromPool = (_worker?: Worker): Worker => {
-    // static workers instances
-    if (_worker) {
-      this.workers.push(_worker);
+  private createNewWorker = () => {
+    let worker = new Worker(this.workerUrl, {
+      name: (() => {
+        const { length } = this.workers;
+        if (length === 0) return this.name;
 
-      return _worker;
-    }
+        return `${this.name}-${length}`;
+      })(),
+    });
 
+    return this.fillWorkerMethods(worker);
+  };
+
+  private getWorkerFromPool = (): Worker => {
     const { maxWorkers, messagesQueue } = this;
     const messagesQueueSize = messagesQueue.size;
 
@@ -401,7 +443,7 @@ export class EasyWebWorker<TPayload = null, TResult = void> {
       !this.workers.length ||
       (this.workers.length < maxWorkers && messagesQueueSize)
     ) {
-      const worker: Worker = this.createNewWorkerInstance();
+      const worker = this.createNewWorker();
 
       this.workers.push(worker);
 
@@ -421,7 +463,8 @@ export class EasyWebWorker<TPayload = null, TResult = void> {
       const isWorkerInstance = this.source instanceof Worker;
 
       if (isWorkerInstance) {
-        this.workers = [this.getWorkerFromPool(this.source as Worker)];
+        // static simgle workers instance
+        this.workers = [this.fillWorkerMethods(this.source as Worker)];
 
         return {
           isArrayOfWebWorkers: false,
@@ -459,7 +502,8 @@ export class EasyWebWorker<TPayload = null, TResult = void> {
         isArraySource && this.source[0] instanceof Worker;
 
       if (isArrayOfWebWorkers) {
-        this.workers = (this.source as Worker[]).map(this.getWorkerFromPool);
+        // static workers collection
+        this.workers = (this.source as Worker[]).map(this.fillWorkerMethods);
 
         return {
           isArrayOfWebWorkers,
@@ -476,7 +520,7 @@ export class EasyWebWorker<TPayload = null, TResult = void> {
     this.workerUrl = workerUrl;
 
     this.maxWorkers = isArrayOfWebWorkers
-      ? (this.source as []).length
+      ? this.workers.length
       : this.maxWorkers;
 
     // if the source is an array of web workers we need to keep them alive
@@ -554,43 +598,16 @@ export class EasyWebWorker<TPayload = null, TResult = void> {
       return this.source as string;
     }
 
-    return createBlobWorker<TPayload, TResult>(
+    return createBlobWorker<TPayload, TResult, TPrimitiveParameters>(
       this.source as
         | EasyWebWorkerBody<TPayload, TResult>
         | EasyWebWorkerBody<TPayload, TResult>[],
-      this.scripts
+      this.scripts,
+      this.origin ?? '',
+      {
+        primitiveParameters: this.primitiveParameters,
+      }
     );
-  }
-
-  protected initializeWorker(): Worker {
-    const isWebWorkerInstance = this.source instanceof Worker;
-
-    if (!isWebWorkerInstance) {
-      this.workerUrl = this.workerUrl ?? this.getWorkerUrl();
-    }
-
-    const worker = (
-      isWebWorkerInstance
-        ? this.source
-        : new Worker(this.workerUrl, {
-            name: this.name,
-          })
-    ) as Worker;
-
-    worker.onmessage = (event: MessageEvent<IMessageData<TPayload>>) => {
-      this.executeMessageCallback(event);
-    };
-
-    /**
-     * If not handled, the error will be thrown to the global scope
-     */
-    worker.onerror = (reason) => {
-      if (!this.onWorkerError) throw reason;
-
-      this.onWorkerError(reason);
-    };
-
-    return worker;
   }
 
   /**
@@ -672,8 +689,6 @@ export class EasyWebWorker<TPayload = null, TResult = void> {
     const worker = this.getWorkerFromPool();
 
     decoupledPromise.promise.cancel = (reason) => {
-      debugger;
-
       // restore the original cancel method so we can cancel the message when the worker response
       decoupledPromise.cancel = cancel;
 
