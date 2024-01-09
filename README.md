@@ -8,6 +8,8 @@ Hello and welcome to **easy-web-worker** with [cancelable-promise-jq](https://ww
 
 Check out the running example with **React** and **TypeScript** at [CODEPEN](https://codepen.io/johnnynabetes/pen/wvOvygW?editors=0010); let's explore the capabilities of JavaScript's concurrent processing with Web Workers!"
 
+Now EasyWebWorkers' Concurrent Mode is Now in Beta
+
 ### Creating a web worker never was easier!
 
 ```ts
