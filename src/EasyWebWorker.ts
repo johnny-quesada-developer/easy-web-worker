@@ -225,7 +225,7 @@ export interface IEasyWebWorkerMessage<TPayload = null, TResult = void> {
   /**
    * This method is used to resolve the message from inside the worker
    * */
-  readonly resolve: TResult extends void
+  readonly resolve: [TResult] extends [void]
     ? () => void
     : (payload: TResult) => void;
 
@@ -595,7 +595,7 @@ export class EasyWebWorker<
 
     // resolve message with the serialized payload
     decoupledPromise.resolve(
-      ...((payload ?? []) as unknown as TResult extends void
+      ...((payload ?? []) as unknown as [TResult] extends [void]
         ? [null?]
         : [TResult])
     );
@@ -662,9 +662,13 @@ export class EasyWebWorker<
    */
   public sendToMethod<TResult_ = void, TPayload_ = null>(
     method: string,
-    payload?: TPayload_
+    payload?: TPayload_,
+    transfer?: Transferable[]
   ): CancelablePromise<TResult_> {
-    return this.sendToWorker<TPayload_, TResult_>({ method, payload });
+    return this.sendToWorker<TPayload_, TResult_>(
+      { method, payload },
+      transfer
+    );
   }
 
   /**
@@ -673,22 +677,24 @@ export class EasyWebWorker<
    * @returns {IMessagePromise<TResult>} generated defer that will be resolved when the message completed
    */
   public send = ((
-    ...payload: TPayload extends null ? [null?] : [TPayload]
+    payload: TPayload,
+    transfer?: Transferable[]
   ): CancelablePromise<TResult> => {
-    const [$payload] = payload as [TPayload];
-
-    return this.sendToWorker<TPayload, TResult>({ payload: $payload });
-  }) as unknown as TPayload extends null
+    return this.sendToWorker<TPayload, TResult>({ payload }, transfer);
+  }) as [TPayload] extends [null]
     ? () => CancelablePromise<TResult>
     : (payload: TPayload) => CancelablePromise<TResult>;
 
-  private sendToWorker = <TPayload_ = null, TResult_ = void>({
-    payload,
-    method,
-  }: {
-    payload?: TPayload_;
-    method?: string;
-  }): CancelablePromise<TResult_> => {
+  private sendToWorker = <TPayload_ = null, TResult_ = void>(
+    {
+      payload,
+      method,
+    }: {
+      payload?: TPayload_;
+      method?: string;
+    },
+    transfer?: Transferable[]
+  ): CancelablePromise<TResult_> => {
     const message = new EasyWebWorkerMessage<TPayload_, TResult_>();
     const { messageId, decoupledPromise } = message;
 
@@ -717,7 +723,7 @@ export class EasyWebWorker<
         return toCancelablePromise(Promise.reject(reason));
       }
 
-      worker.postMessage(data);
+      worker.postMessage(data, transfer);
 
       return decoupledPromise.promise;
     };
@@ -756,14 +762,14 @@ export class EasyWebWorker<
    * @returns {IMessagePromise<TResult>} generated defer that will be resolved when the message completed
    */
   public override = (async (
-    ...[payload, reason, config]: TPayload extends null
+    ...[payload, reason, config]: [TPayload] extends [null]
       ? [null?, unknown?, TOverrideConfig?]
       : [TPayload, unknown?, TOverrideConfig?]
   ) => {
     await this.cancelAll(reason, config);
 
     return this.send(...([payload] as [TPayload]));
-  }) as unknown as TPayload extends null
+  }) as unknown as [TPayload] extends [null]
     ? (reason?: unknown, config?: TOverrideConfig) => CancelablePromise<TResult>
     : (
         payload: TPayload,
@@ -778,7 +784,7 @@ export class EasyWebWorker<
    * @returns {IMessagePromise<TResult>} generated defer that will be resolved when the message completed
    */
   public overrideAfterCurrent = (async (
-    ...[payload, reason, config]: TPayload extends null
+    ...[payload, reason, config]: [TPayload] extends [null]
       ? [null?, unknown?, TOverrideConfig?]
       : [TPayload, unknown?, TOverrideConfig?]
   ) => {
@@ -794,7 +800,7 @@ export class EasyWebWorker<
     }
 
     return this.send(...([payload] as [TPayload]));
-  }) as unknown as TPayload extends null
+  }) as unknown as [TPayload] extends [null]
     ? (reason?: unknown, TOverrideConfig?) => CancelablePromise<TResult>
     : (
         payload: TPayload,
