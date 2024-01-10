@@ -16,6 +16,8 @@ export interface IWorkerConfig<TPrimitiveParameters extends any[] = unknown[]> {
    */
   name: string;
 
+  workerOptions?: WorkerOptions;
+
   /**
    * Callback that will be executed when the worker fails, this not necessary affect the current message execution
    * */
@@ -319,6 +321,8 @@ export class EasyWebWorker<
 
   public primitiveParameters: TPrimitiveParameters = [] as TPrimitiveParameters;
 
+  public workerOptions?: WorkerOptions;
+
   /**
    * These where send to the worker but not yet resolved
    */
@@ -372,13 +376,16 @@ export class EasyWebWorker<
       warmUpWorkers: _warmUpWorkers = null,
       primitiveParameters,
       origin = '',
+      workerOptions,
     }: Partial<IWorkerConfig<TPrimitiveParameters>> = {}
   ) {
     const warmUpWorkers =
       !maxWorkers || maxWorkers === 1 ? true : _warmUpWorkers;
     const keepAlive = warmUpWorkers || (_keepAlive ?? false);
 
-    this.name = name || generatedId();
+    this.workerOptions = workerOptions ?? {};
+
+    this.name = this.workerOptions.name || name || generatedId();
     this.scripts = scripts;
     this.onWorkerError = onWorkerError;
     this.workerUrl = url ?? null;
@@ -423,6 +430,7 @@ export class EasyWebWorker<
 
   private createNewWorker = () => {
     let worker = new Worker(this.workerUrl, {
+      ...this.workerOptions,
       name: (() => {
         const { length } = this.workers;
         if (length === 0) return this.name;

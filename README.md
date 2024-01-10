@@ -8,7 +8,7 @@ Hello and welcome to **easy-web-worker** with [cancelable-promise-jq](https://ww
 
 Check out the running example with **React** and **TypeScript** at [CODEPEN](https://codepen.io/johnnynabetes/pen/wvOvygW?editors=0010); let's explore the capabilities of JavaScript's concurrent processing with Web Workers!"
 
-Now EasyWebWorkers' Concurrent Mode is Now in Beta
+[Important!] Starting from version 4.0.0, EasyWebWorker supports concurrency mode. This means you can now configure whether a single **EasyWebWorker** should use multiple Web Worker instances. This feature is extremely powerful for code that requires not only heavy computations occasionally but also robust concurrent processing. For more detailed information, please see the section below. [concurrency mode](#concurrency-mode)
 
 ### Creating a web worker never was easier!
 
@@ -17,6 +17,11 @@ Now EasyWebWorkers' Concurrent Mode is Now in Beta
  * The callback parameter will be the body of the worker
  */
 const worker = createEasyWebWorker((easyWorker) => {
+  const fibonacci = (n) => {
+    if (n <= 1) return n;
+    return fibonacci(n - 1) + fibonacci(n - 2);
+  };
+
   /**
    * Inside the worker we have to define an action when onMessage
    */
@@ -25,8 +30,9 @@ const worker = createEasyWebWorker((easyWorker) => {
      * The payload includes whatever parameters are sent from the main thread
      */
     const { payload } = message;
+    const result = fibonacci(payload.base);
 
-    message.resolve();
+    message.resolve(result);
     //message.reject(); // or reject
   });
 });
@@ -38,7 +44,7 @@ Then, for sending a message to the worker:
 /**
  * This returns a CancelablePromise
  */
-await worker.send('Hello Worker!');
+await worker.send(40);
 ```
 
 And that's it! You now have a worker running heavy computation in a real separate thread, with real asynchronous programming in JavaScript.
@@ -257,6 +263,46 @@ await worker.send();
 ```
 
 Super easy right?
+
+## Concurrency mode
+
+With EasyWebWorker, you can create operations that require heavy concurrency and delegate them to a web workers queue, or create workers on demand depending on the traffic and specific tasks. Let's take a look:
+
+```TS
+/**
+ * Notice that the structure of the worker remains the same;
+ * the only changes are in the configuration parameters of the worker.
+ * Take a look below.*/
+const worker = createEasyWebWorker((easyWorker) => {
+  easyWorker.onMessage((message) => {
+    const { payload } = message;
+
+    // heavy computation like fibonacci
+
+    message.resolve(result);
+  });
+}, {
+  // We will now scale up to four workers if necessary.
+  maxWorkers: 4
+});
+```
+
+By default, creating an **EasyWebWorker** also creates a single native JavaScript worker. Without any added configuration, this Worker instance will remain active unless it is programmatically disposed. However, by modifying the **maxWorkers** parameter, you can control the number of native workers used, allowing the **EasyWebWorker** to execute multiple messages across multiple threads.
+
+You can also control whether these additional workers should be created on demand when messages are sent to the **EasyWebWorker**. This can be done along with setting the **terminationDelay**, which indicates how long to wait before disposing of a **Worker** to avoid unnecessary resource consumption. Alternatively, you can choose to **warmUp** and keep the Workers alive from the moment the **EasyWebWorker** is created.
+
+From the main thread, the consumption of the worker remains the same. Depending on the configuration, the workers will be created either statically or on-demand as needed. The EasyWebWorker will be responsible for selecting them from a pool. Additionally, the EasyWebWorker will manage the distribution of messages among the available workers.
+
+```ts
+// Since maxWorkers is configured to 4, a total of 3 native workers, will be created.
+const results = await Promise.all([
+  worker.send(payload),
+  worker.send(payload1),
+  worker.send(payload2),
+]);
+```
+
+In the previous example, since the **warmUp** parameter wasn’t included, only 3 Native workers will be created to handle the 3 messages, even though the maximum available is 4. Additionally, since the **keepAlive** parameter was not included, if a total of 1 second passes without new messages, the Native workers will be disposed of to save resources.
 
 ## Want to see more?
 
