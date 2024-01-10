@@ -427,3 +427,10 @@ Sends a message to the worker
 - `options` - (optional) Additional send options.
 
 **_Thanks for reading, hope this help someone_**
+
+## Collaborators
+
+[![Image Johnny Quesada](https://avatars.githubusercontent.com/u/62082152?v=4&s=150)](https://github.com/johnny-quesada-developer)
+&nbsp;&nbsp;&nbsp;&nbsp;[![Image Gabriele Cirulli](https://avatars.githubusercontent.com/u/886011?v=4&s=150)](https://github.com/gabrielecirulli)
+
+[Johnny Quesada](https://github.com/johnny-quesada-developer) &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Gabriele Cirulli](https://github.com/gabrielecirulli)
