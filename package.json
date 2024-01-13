@@ -8,9 +8,11 @@
     "lib"
   ],
   "scripts": {
-    "test:debug": "node --inspect-brk node_modules/.bin/jest --watch --runInBand",
+    "test": "npm run build && jest --maxWorkers=4 -c --no-watchman -u",
+    "test:debug": "npm run build && node --inspect-brk node_modules/.bin/jest --watch --runInBand",
+    "test:debug:quick": "node --inspect-brk node_modules/.bin/jest --watch --runInBand",
     "test:quick": "jest --maxWorkers=4 -c --no-watchman -u",
-    "test:coverage": "jest --maxWorkers=4 -c --colors --no-watchman --verbose --coverage",
+    "test:coverage": "npm run build && jest --maxWorkers=4 -c --colors --no-watchman --verbose --coverage",
     "build": "webpack --config webpack.config.js",
     "prepare": "npm run build",
     "version": "npm run format && git add -A src",
@@ -43,6 +45,7 @@
     "@babel/preset-env": "^7.20.2",
     "@babel/preset-typescript": "^7.21.0",
     "@types/jest": "^29.2.4",
+    "@types/node": "^20.11.0",
     "babel-loader": "^9.1.2",
     "cancelable-promise-jq": "^1.1.3",
     "jest": "^29.3.1",

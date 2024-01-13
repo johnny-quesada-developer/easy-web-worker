@@ -9,6 +9,7 @@ export const createEasyWebWorker = <TPayload = null, TResult = void>(
     | EasyWebWorkerBody<TPayload, TResult>
     | EasyWebWorkerBody<TPayload, TResult>[]
     | string
+    | URL
     | Worker
     | Worker[],
   /**

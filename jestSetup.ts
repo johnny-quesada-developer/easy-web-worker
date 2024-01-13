@@ -1,38 +1,36 @@
-import { JSDOM } from 'jsdom';
-import {
-  WorkerMock,
-  MockBlob,
-  createObjectURL,
-} from './@tests/testFixtures/Mocks';
+import { Worker } from 'node:worker_threads';
+import { URL_MOCK, BLOB_MOCK, WINDOW_MOCK } from './@tests/fixtures';
 
-const { window } = new JSDOM('<!DOCTYPE html>');
+export class WORKER_MOCK extends Worker {
+  constructor(source: string) {
+    super(source);
+
+    this.addListener('message', (message) => {
+      this.onmessage?.(message);
+    });
+  }
+
+  public postMessage(data: any) {
+    const event = {
+      data,
+    };
+
+
+    super.postMessage(event);
+  }
+
+  public onmessage: (event: { data: any }) => void = () => { };
+
+  public onerror: (event: { data: any }) => void = () => { };
+}
 
 beforeEach(() => {
   const globalAny: any = global;
 
-  globalAny.window = window;
-  globalAny.Blob = MockBlob;
-
-  globalAny.window.URL = {
-    createObjectURL,
-  };
-
-  globalAny.window.webkitURL = {
-    createObjectURL,
-  };
-
-  globalAny.Worker = WorkerMock;
-
-  globalAny.self = {
-    importScripts: jest.fn(),
-    close: jest.fn(),
-    postMessage: (data) => {
-      globalAny.self.onmessage({
-        data,
-      });
-    },
-    onmessage: () => {},
-  };
+  globalAny.window = WINDOW_MOCK;
+  globalAny.Blob = BLOB_MOCK;
+  globalAny.window.URL = URL_MOCK;
+  globalAny.Worker = WORKER_MOCK;
 });
 
 afterEach(() => {
