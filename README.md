@@ -6,7 +6,7 @@ Hello and welcome to **easy-web-worker** with [cancelable-promise-jq](https://ww
 
 [Web Workers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers) are a native tool provided by **JavaScript**, allowing you to use them within your favorite framework like **React**, **Angular**, **Vue**, and others, or with pure **JavaScript** and **TypeScript**.
 
-Check out the running example with **React** and **TypeScript** at [CODEPEN](https://codepen.io/johnnynabetes/pen/wvOvygW?editors=0010); let's explore the capabilities of JavaScript's concurrent processing with Web Workers!"
+Check out the running example with **React** and **TypeScript** at [CODEPEN](https://codepen.io/johnnynabetes/full/wvOvygW); let's explore the capabilities of JavaScript's concurrent processing with Web Workers!"
 
 [Important!] Starting from version 4.0.0, EasyWebWorker supports concurrency mode. This means you can now configure whether a single **EasyWebWorker** should use multiple Web Worker instances. This feature is extremely powerful for code that requires not only heavy computations occasionally but also robust concurrent processing. For more detailed information, please see the section below. [concurrency mode](#concurrency-mode)
 
