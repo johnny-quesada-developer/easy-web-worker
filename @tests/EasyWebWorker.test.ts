@@ -107,11 +107,11 @@ describe('EasyWebWorker', () => {
 
         return worker
           .send(1)
-          .onProgress(progressLogger)
+          .onProgress(() => progressLogger())
           .then(() => {})
-          .onProgress(progressLogger)
+          .onProgress(() => progressLogger())
           .then(() => {})
-          .onProgress(progressLogger)
+          .onProgress(() => progressLogger())
           .then(() => {
             expect(progressLogger).toHaveBeenCalledTimes(3);
           });

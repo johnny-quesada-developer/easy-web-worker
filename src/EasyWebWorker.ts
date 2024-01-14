@@ -864,11 +864,14 @@ export class EasyWebWorker<
     return new CancelablePromise<TResult>(async (resolve, _, { onCancel }) => {
       const cancelAllPromise = this.cancelAll(reason, config);
 
-      onCancel(() => {
+      const unsubscribe = onCancel(() => {
         cancelAllPromise.cancel();
       });
 
       await cancelAllPromise;
+
+      // callback is not needed anymore
+      unsubscribe();
 
       resolve(this.send(...([payload] as [TPayload])));
     });
@@ -903,13 +906,16 @@ export class EasyWebWorker<
             reportProgress
           );
 
-          onCancel(() => {
+          const unsubscribe = onCancel(() => {
             cancelAllPromise.cancel();
           });
 
           this.addMessageToQueue(currentMessage);
 
           await cancelAllPromise;
+
+          // callback is not needed anymore
+          unsubscribe();
         }
 
         resolve(this.send(...([payload] as [TPayload])));
