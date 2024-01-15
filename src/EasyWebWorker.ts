@@ -783,7 +783,10 @@ export class EasyWebWorker<
     return this.sendToWorker<TPayload, TResult>({ payload }, transfer);
   }) as [TPayload] extends [null]
     ? () => CancelablePromise<TResult>
-    : (payload: TPayload) => CancelablePromise<TResult>;
+    : (
+        payload: TPayload,
+        transfer?: Transferable[]
+      ) => CancelablePromise<TResult>;
 
   private sendToWorker = <TPayload_ = null, TResult_ = void>(
     {
@@ -845,7 +848,7 @@ export class EasyWebWorker<
       },
     };
 
-    worker.postMessage(data);
+    worker.postMessage(data, transfer);
 
     return decoupledPromise.promise;
   };
