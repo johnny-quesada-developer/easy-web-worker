@@ -147,3 +147,53 @@ worker.onMessage("cancelTest", (message) => {
     message.cancel("canceled from inside the worker");
   }, 1);
 });
+
+let previousMessage = null;
+let didCallbackWasCalled = false;
+let callbackKey = null;
+
+worker.onMessage("getDidCallbackWasCalled", (message) => {
+  message.resolve(didCallbackWasCalled);
+});
+
+worker.onMessage("sendOpenMessage", (message) => {
+  const { payload } = message;
+
+  callbackKey = payload;
+
+  previousMessage = message;
+
+  message[callbackKey](() => {
+    didCallbackWasCalled = true;
+  });
+});
+
+worker.onMessage("sendCloseMessage", (message) => {
+  if (callbackKey === "onProgress") {
+    previousMessage?.reportProgress(1);
+  }
+
+  previousMessage?.[callbackKey === "onCancel" ? "cancel" : "resolve"]();
+
+  message.resolve();
+});
+
+worker.onMessage("transferArrayBuffer", (message) => {
+  const { arrayBuffer, action } = message.payload;
+
+  if (action === "reportProgress") {
+    message.reportProgress(50, message.payload, [arrayBuffer]);
+
+    message.resolve(message.payload);
+
+    return;
+  }
+
+  message[action](
+    {
+      arrayBuffer,
+      action,
+    },
+    [arrayBuffer]
+  );
+});

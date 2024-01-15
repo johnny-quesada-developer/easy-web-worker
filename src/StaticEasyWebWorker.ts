@@ -1,8 +1,13 @@
+import { Subscription } from "cancelable-promise-jq";
 import {
   IEasyWebWorkerMessage,
   IEasyWorkerInstance,
   IMessageData,
-} from './EasyWebWorker';
+  TMessageCallback,
+  TMessageCallbackType,
+  TMessagePostType,
+  TMessageStatus,
+} from "./EasyWebWorker";
 
 /**
  * Constructor for the StaticEasyWebWorker
@@ -16,10 +21,10 @@ export const StaticEasyWebWorker = function <TPayload = null, TResult = void>(
     message: IEasyWebWorkerMessage<TPayload, TResult>,
     event: MessageEvent<IMessageData<TPayload>>
   ) => void,
-  $origin: string = ''
+  $origin: string = ""
 ) {
   const { close, onMessage, importScripts } = ((_origin) => {
-    const workerMessages = new Map();
+    const workerMessages = new Map<string, IEasyWebWorkerMessage>();
 
     /* This structure allows us to have multiple callbacks for the same worker */
     const workerCallbacks = new Map<
@@ -27,9 +32,9 @@ export const StaticEasyWebWorker = function <TPayload = null, TResult = void>(
       (message: IEasyWebWorkerMessage, data: IMessageData) => void
     >([
       [
-        '',
+        "",
         () => {
-          throw "you didn't defined a message-callback, please assign a callback by calling IEasyWorkerInstance.onMessage";
+          throw "you didn't defined a message-callback, please assign a callback by calling easyWorker.onMessage";
         },
       ],
     ]);
@@ -39,32 +44,42 @@ export const StaticEasyWebWorker = function <TPayload = null, TResult = void>(
       payload,
       method,
       origin,
-    }): IEasyWebWorkerMessage => {
-      const cancelCallbacks = new Set<(reason: unknown) => void>();
-      let messageStatus = 'pending';
+    }: {
+      messageId: string;
+      payload: TPayload;
+      method: string;
+      origin: string;
+    }): IEasyWebWorkerMessage<any> => {
+      let messageStatus: TMessageStatus = "pending";
+      const messageCallbacks = new Map<
+        TMessageCallbackType,
+        Set<(messageData: IMessageData<any>, transfer: Transferable[]) => void>
+      >();
 
-      const postMessage = (data, transfer) => {
+      const postMessage = (
+        messageType: TMessagePostType,
+        messageData: IMessageData<any>,
+        transfer: Transferable[] = []
+      ) => {
         const currentMessageStatus = messageStatus;
 
-        const targetMessageStatus = (() => {
-          if (data.resolved) return 'resolved';
-          if (data.rejected) return 'rejected';
-          if (data.worker_cancelation) return 'canceled';
-
-          return messageStatus;
-        })();
+        const targetMessageStatus: TMessageStatus =
+          messageType === "progress" ? "pending" : messageType;
 
         if (!workerMessages.has(messageId)) {
-          const message = "%c#" + messageId + " Message Not Found: %cThis means that the message was already resolved | rejected | canceled. To avoid this error, please make sure that you are not resolving | rejecting | canceling the same message twice. Also make sure that you are not reporting progress after the message was processed. Remember each message can handle his one cancelation by adding a handler with the %cmessage.onCancel%c method. To now more about this method, please check the documentation at: %chttps://www.npmjs.com/package/easy-web-worker#ieasywebworkermessageipayload--null-iresult--void %cTrying to process message:";
+          const message =
+            "%c#" +
+            messageId +
+            " Message Not Found: %cThis means that the message was already resolved | rejected | canceled. To avoid this error, please make sure that you are not resolving | rejecting | canceling the same message twice. Also make sure that you are not reporting progress after the message was processed. Remember each message can handle his one cancelation by adding a handler with the %cmessage.onCancel%c method. To now more about this method, please check the documentation at: %chttps://www.npmjs.com/package/easy-web-worker#ieasywebworkermessageipayload--null-iresult--void %cTrying to process message:";
 
           console.error(
             message,
-            'color: darkorange; font-size: 12px; font-weight: bold;',
-            'font-weight: normal;',
-            'font-weight: bold;',
-            'font-weight: normal;',
-            'color: lightblue; font-size: 10px; font-weight: bold;',
-            'font-weight: bold; color: darkorange;',
+            "color: darkorange; font-size: 12px; font-weight: bold;",
+            "font-weight: normal;",
+            "font-weight: bold;",
+            "font-weight: normal;",
+            "color: lightblue; font-size: 10px; font-weight: bold;",
+            "font-weight: bold; color: darkorange;",
             {
               messageId,
               status: {
@@ -72,77 +87,130 @@ export const StaticEasyWebWorker = function <TPayload = null, TResult = void>(
                 target: targetMessageStatus,
               },
               method,
-              action: data,
+              action: messageData,
             }
           );
 
           return;
         }
 
-        const { progress } = data;
+        const callbacksKeys = {
+          resolved: "onResolve",
+          rejected: "onReject",
+          /**
+           * Cancelation could be triggered by the worker or by the main thread
+           * */
+          canceled: "onCancel",
+          worker_cancelation: "onCancel",
+          pending: "onProgress",
+        }[targetMessageStatus] as TMessageCallbackType;
 
-        if (!progress) {
+        const targetCallbacks = messageCallbacks.get(callbacksKeys);
+
+        targetCallbacks?.forEach((callback) => callback(messageData, transfer));
+
+        const isMessageTermination = !messageData.progress;
+
+        if (isMessageTermination) {
+          /**
+           * If terminate the message, we also need to call the onFinalize callbacks if any
+           */
+          messageCallbacks
+            .get("onFinalize")
+            ?.forEach((callback) => callback(messageData, transfer));
+
           /* If it's not a progress message means that the message is resolved | rejected | canceled */
           workerMessages.delete(messageId);
         }
 
-        self.postMessage({ messageId, ...data }, origin, transfer);
+        self.postMessage({ messageId, ...messageData }, origin, transfer);
 
         messageStatus = targetMessageStatus;
       };
 
-      const getStatus = () =>
-        messageStatus as 'pending' | 'resolved' | 'rejected' | 'canceled';
+      const getStatus = (): TMessageStatus => messageStatus;
 
-      const isPending = () => messageStatus === 'pending';
+      const isPending = () => messageStatus === "pending";
 
-      const resolve = ((result, transfer) => {
+      const resolve = ((result: TResult, transfer: Transferable[] = []) =>
         postMessage(
+          "resolved",
           { resolved: { payload: result === undefined ? [] : [result] } },
           transfer
+        )) as IEasyWebWorkerMessage["resolve"];
+
+      const reject = ((reason: unknown, transfer: Transferable[] = []) => {
+        postMessage("rejected", { rejected: { reason } }, transfer);
+      }) as IEasyWebWorkerMessage["reject"];
+
+      const cancel: IEasyWebWorkerMessage["cancel"] = (
+        reason: unknown,
+        transfer: Transferable[] = []
+      ) =>
+        postMessage(
+          "worker_cancelation",
+          { worker_cancelation: { reason } },
+          transfer
         );
-      }) as IEasyWebWorkerMessage['resolve'];
 
-      const reject = (reason) => {
-        postMessage({ rejected: { reason } }, []);
-      };
+      const reportProgress = ((
+        percentage: number,
+        payload: unknown,
+        transfer: Transferable[] = []
+      ) => {
+        postMessage(
+          "progress",
+          { progress: { percentage, payload } },
+          transfer
+        );
+      }) as IEasyWebWorkerMessage["reportProgress"];
 
-      const cancel = (reason) => {
-        const callbacks = [...cancelCallbacks];
+      const createSubscription =
+        <TSubscriptionType extends TMessageCallbackType>(
+          type: TSubscriptionType
+        ) =>
+        (callback: TMessageCallback): Subscription => {
+          if (!messageCallbacks.has(type)) {
+            messageCallbacks.set(type, new Set());
+          }
 
-        callbacks.forEach((callback) => callback(reason));
+          const callbacks = messageCallbacks.get(type);
 
-        postMessage({ worker_cancelation: { reason } }, []);
-      };
+          callbacks.add(callback);
 
-      const reportProgress = (percentage, payload, transfer) => {
-        postMessage({ progress: { percentage, payload } }, transfer);
-      };
-
-      /* Returns a function that can be used to unsubscribe from the cancelation */
-      const onCancel = (callback) => {
-        cancelCallbacks.add(callback);
-
-        return () => cancelCallbacks.delete(callback);
-      };
+          return () => callbacks.delete(callback);
+        };
 
       return {
         messageId,
-        getStatus,
-        isPending,
         method,
         payload,
+
+        getStatus,
+        isPending,
+
+        /**
+         * Actions
+         */
         resolve,
         reject,
         cancel,
-        onCancel,
         reportProgress,
+
+        /**
+         * Callbacks
+         */
+        onResolve: createSubscription("onResolve"),
+        onReject: createSubscription("onReject"),
+        onCancel: createSubscription("onCancel"),
+        onProgress: createSubscription("onProgress"),
+        onFinalize: createSubscription("onFinalize"),
       };
     };
 
     const onMessage = (...args) => {
       const [param1, param2] = args;
-      const hasCustomCallbackKey = typeof param1 === 'string';
+      const hasCustomCallbackKey = typeof param1 === "string";
 
       if (hasCustomCallbackKey) {
         const callbackKey = param1;
@@ -154,14 +222,14 @@ export const StaticEasyWebWorker = function <TPayload = null, TResult = void>(
       }
 
       const callback = param1;
-      workerCallbacks.set('', callback);
+      workerCallbacks.set("", callback);
     };
 
     const close = () => {
       /* should cancel all the promises of the main thread */
       const messages = [...workerMessages.values()];
 
-      messages.forEach((message) => message.reject(new Error('worker closed')));
+      messages.forEach((message) => message.reject(new Error("worker closed")));
 
       self.close();
     };
@@ -192,7 +260,7 @@ export const StaticEasyWebWorker = function <TPayload = null, TResult = void>(
 
       workerMessages.set(messageId, message);
 
-      const callback = workerCallbacks.get(method || '');
+      const callback = workerCallbacks.get(method || "");
 
       callback(message, event);
     };
@@ -231,7 +299,7 @@ export const createStaticEasyWebWorker = <TPayload = null, TResult = void>(
     message: IEasyWebWorkerMessage<TPayload, TResult>,
     event: MessageEvent<IMessageData<TPayload>>
   ) => void,
-  targetOrigin: string = ''
+  targetOrigin: string = ""
 ) => {
   const worker = new StaticEasyWebWorker(onMessageCallback, targetOrigin);
 

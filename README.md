@@ -52,16 +52,18 @@ And that's it! You now have a worker running heavy computation in a real separat
 You can also create an easy web worker from a static file, or from a native worker instance:
 
 ```ts
-const worker = createEasyWebWorker('./worker.js');
-const worker = createEasyWebWorker(new Worker('./worker.js')); // ƒ Worker() { [native code] }
+const worker = createEasyWebWorker("./worker.js");
+const worker = createEasyWebWorker(new Worker("./worker.js")); // ƒ Worker() { [native code] }
 
-const worker = new EasyWebWorker('./worker.js');
-const worker = new EasyWebWorker(new Worker('./worker.js')); // ƒ Worker() { [native code] }
+const worker = new EasyWebWorker("./worker.js");
+const worker = new EasyWebWorker(new Worker("./worker.js")); // ƒ Worker() { [native code] }
 ```
 
 When working with **static files**, which can offer substantial benefits with web workers, you simply need to create an instance of **StaticEasyWebWorker**.
 
 The **StaticEasyWebWorker** provides an interface to continue working with [cancelable-promise-jq](https://www.npmjs.com/package/cancelable-promise-jq) and build more complex APIs within your worker.
+
+From inside your worker, the message callbacks receive a message that includes multiple methods and functions. You can use these to communicate back with the main thread, or to subscribe to and react to the lifecycle of a worker.
 
 ```ts
 const easyWorker = new StaticEasyWebWorker();
@@ -70,30 +72,57 @@ const easyWorker = new StaticEasyWebWorker();
  *  For adding a default onMessage
  */
 easyWorker.onMessage((message) => {
-  // do something
+  /** Your message receives a payload,
+   * which is any information sent from the main thread.*/
+  const { payload } = message;
 
-  message.reportProgress(10); // report progress
+  const bigArrayBuffer = new new ArrayBuffer(1000000)();
 
-  /** Take action when the message is canceled by the main thread*/
-  message.onCancel(() => {});
+  /** You can resolve the message and respond to the main thread's promise that is listening.
+   * This promise could also send data back to the main thread and transfer data if needed */
+  message.resolve({ bigArrayBuffer }, [bigArrayBuffer]);
 
-  message.resolve();
+  /** You can reject the message and send back a reason,
+   * if no transfer is necessary just avoid the second parameter */
+  message.reject(new Error("something happened"));
+
+  const metadata = { message: "progress from inside the worker" };
+
+  /** You can report progress */
+  message.reportProgress(10, metadata, []); // all the methods allows you to send Transferable[]
+
+  /** You can cancel an operation from within the worker */
+  message.cancel("the operating was canceled from the worker");
+
+  /** You can subscribe to the cancellation event of the message,
+   * regardless of whether this cancellation is internal or external to the worker.*/
+  const unsubscribeCancel = message.onCancel((reason) => {});
+
+  // you can unsubscribe from the cancel event as well
+  unsubscribeCancel();
+
+  /**
+   * And there is extra listeners for the other events
+   * This events represent the lifecycle of the message
+   */
+  const unsubscribeResolve = message.onResolve((data) => {});
+  const unsubscribeReject = message.onReject((data) => {});
+  const unsubscribeProgress = message.onProgress((data) => {});
+  const unsubscribeFinalize = message.onFinalize((data) => {});
+
+  /** You can also review the status of the message at any time*/
+  const status = message.getStatus(); // pending | resolved | rejected | canceled
 });
 
 /**
  * For adding specific actions
  */
-easyWorker.onMessage('readCSV', (message) => {
+easyWorker.onMessage("readCSV", (message) => {
   // do something
-
-  message.reportProgress(20); // report progress
-
-  /** Take action when the message is canceled by the main thread*/
-  message.onCancel(() => {});
-
-  message.resolve();
 });
 ```
+
+It's important to mention that the **cancel** method is the only one that provides two-way binding. It can travel all the way from the main thread to the worker, cancel something inside the worker, and notify the main thread upon completion.
 
 **easy-web-worker** is designed to enhance the capabilities of the **Worker** class by integrating a pattern of cancelable promises from the [cancelable-promise-jq](https://www.npmjs.com/package/cancelable-promise-jq) library. For straightforward tasks, it simplifies the process by eliminating the need to configure webpack or other bundlers. And for more complex requirements, the **StaticEasyWebWorker** class allows the integration of easy worker and cancelable promises capabilities into your static workers.
 
@@ -396,9 +425,9 @@ const worker = new EasyWebWorker<string, string>((easyWorker) => {
   });
 });
 
-const messagePromise = worker.send('Hello!');
+const messagePromise = worker.send("Hello!");
 
-worker.reboot('Worker was restarted');
+worker.reboot("Worker was restarted");
 
 // The message promise will be rejected with the reason 'Worker was restarted'
 ```

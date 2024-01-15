@@ -1,27 +1,27 @@
-import { Worker } from 'node:worker_threads';
+import { Worker } from "node:worker_threads";
 
 import {
   EasyWebWorker,
   EasyWebWorkerBody,
   IEasyWebWorkerMessage,
   createEasyWebWorker,
-} from '../src';
+} from "../src";
 
-describe('EasyWebWorker', () => {
+describe("EasyWebWorker", () => {
   beforeEach(() => {});
 
-  describe('constructor', () => {
-    const workerName = 'workerTest';
+  describe("constructor", () => {
+    const workerName = "workerTest";
 
     const workerContent: EasyWebWorkerBody = (easyWorker, context) => {
-      context.globalPropertyTest = 'globalPropertyTest';
+      context.globalPropertyTest = "globalPropertyTest";
 
       easyWorker.onMessage((message) => {
         message.resolve();
       });
     };
 
-    it('properties should be correctly populated', () => {
+    it("properties should be correctly populated", () => {
       const worker = createEasyWebWorker(workerContent, {
         workerOptions: {
           name: workerName,
@@ -33,7 +33,7 @@ describe('EasyWebWorker', () => {
       expect(worker.workers.length).toBe(1);
     });
 
-    it('worker should initialize correctly', () => {
+    it("worker should initialize correctly", () => {
       const worker = new EasyWebWorker(workerContent, {
         workerOptions: {
           name: workerName,
@@ -47,13 +47,13 @@ describe('EasyWebWorker', () => {
       expect(worker.workers[0]).toBeInstanceOf(Worker);
     });
 
-    it('worker should initialize correctly workerBody[] (multiple body sources)', async () => {
+    it("worker should initialize correctly workerBody[] (multiple body sources)", async () => {
       const secondWorkerContent: EasyWebWorkerBody<null, boolean> = (
         easyWorker,
         context
       ) => {
         easyWorker.onMessage((message) => {
-          message.resolve(context.globalPropertyTest === 'globalPropertyTest');
+          message.resolve(context.globalPropertyTest === "globalPropertyTest");
         });
       };
 
@@ -72,11 +72,11 @@ describe('EasyWebWorker', () => {
     });
   });
 
-  describe('Methods', () => {
+  describe("Methods", () => {
     beforeEach(() => {});
 
-    describe('send', () => {
-      it('worker should run correctly messages', async () => {
+    describe("send", () => {
+      it("worker should run correctly messages", async () => {
         expect.assertions(3);
 
         const worker = createEasyWebWorker<number, number>((easyWorker) => {
@@ -92,7 +92,7 @@ describe('EasyWebWorker', () => {
         expect(await worker.send(-4)).toEqual(-2);
       });
 
-      it('should correctly report progress on children promises', async () => {
+      it("should correctly report progress on children promises", async () => {
         expect.assertions(1);
 
         const worker = createEasyWebWorker<number, number>((easyWorker) => {
@@ -117,7 +117,7 @@ describe('EasyWebWorker', () => {
           });
       });
 
-      it('worker should correctly report progress', async () => {
+      it("worker should correctly report progress", async () => {
         expect.assertions(2);
 
         const onProgressSpy = jest.fn();
@@ -144,7 +144,7 @@ describe('EasyWebWorker', () => {
         expect(onProgressSpy).toHaveBeenCalledTimes(100);
       });
 
-      it('worker content should run correctly messages workerBody[] (multiple body sources)', async () => {
+      it("worker content should run correctly messages workerBody[] (multiple body sources)", async () => {
         expect.assertions(2);
 
         const onProgressSpy = jest.fn(() => {});
@@ -176,30 +176,30 @@ describe('EasyWebWorker', () => {
       });
     });
 
-    describe('sendToMethod', () => {
-      it('worker should run correctly specific method', async () => {
+    describe("sendToMethod", () => {
+      it("worker should run correctly specific method", async () => {
         expect.assertions(3);
 
         const worker = createEasyWebWorker((easyWorker) => {
-          easyWorker.onMessage<number, number>('doSomething', (message) => {
+          easyWorker.onMessage<number, number>("doSomething", (message) => {
             const { payload } = message;
 
             message.resolve(payload + 2);
           });
         });
 
-        expect(await worker.sendToMethod('doSomething', 2)).toEqual(4);
-        expect(await worker.sendToMethod('doSomething', 8)).toEqual(10);
-        expect(await worker.sendToMethod('doSomething', -4)).toEqual(-2);
+        expect(await worker.sendToMethod("doSomething", 2)).toEqual(4);
+        expect(await worker.sendToMethod("doSomething", 8)).toEqual(10);
+        expect(await worker.sendToMethod("doSomething", -4)).toEqual(-2);
       });
 
-      it('should be able to cancel a specific method execution', async () => {
+      it("should be able to cancel a specific method execution", async () => {
         expect.assertions(2);
 
         const worker = createEasyWebWorker((easyWorker) => {
           let wasCanceled = false;
 
-          easyWorker.onMessage<number, number>('doSomething', (message) => {
+          easyWorker.onMessage<number, number>("doSomething", (message) => {
             message.onCancel(() => {
               wasCanceled = true;
             });
@@ -213,32 +213,35 @@ describe('EasyWebWorker', () => {
             }, 1000);
           });
 
-          easyWorker.onMessage<null, boolean>('getWasCanceled', (message) => {
+          easyWorker.onMessage<null, boolean>("getWasCanceled", (message) => {
             message.resolve(wasCanceled);
           });
         });
 
         const errorLogger = jest.fn();
 
-        await worker.sendToMethod('doSomething', 2).cancel().catch(errorLogger);
+        await worker
+          .sendToMethod("doSomething", 2)
+          .cancel()
+          .catch(() => errorLogger());
 
-        const wasCanceled = await worker.sendToMethod('getWasCanceled');
+        const wasCanceled = await worker.sendToMethod("getWasCanceled");
 
         expect(wasCanceled).toEqual(true);
         expect(errorLogger).toHaveBeenCalledTimes(1);
       });
 
-      it('should correctly subscribe multiple methods', async () => {
+      it("should correctly subscribe multiple methods", async () => {
         expect.assertions(2);
 
         const worker = createEasyWebWorker((easyWorker) => {
-          easyWorker.onMessage<number, number>('doSomething', (message) => {
+          easyWorker.onMessage<number, number>("doSomething", (message) => {
             const { payload } = message;
 
             message.resolve(payload + 2);
           });
 
-          easyWorker.onMessage<number, number>('doSomethingElse', (message) => {
+          easyWorker.onMessage<number, number>("doSomethingElse", (message) => {
             const { payload } = message;
 
             message.resolve(payload + 3);
@@ -246,16 +249,16 @@ describe('EasyWebWorker', () => {
         });
 
         expect(
-          await worker.sendToMethod<number, number>('doSomething', 2)
+          await worker.sendToMethod<number, number>("doSomething", 2)
         ).toEqual(4);
 
         expect(
-          await worker.sendToMethod<number, number>('doSomethingElse', 2)
+          await worker.sendToMethod<number, number>("doSomethingElse", 2)
         ).toEqual(5);
       });
 
-      describe('override', () => {
-        it('Worker should correctly invalid previous messages', () => {
+      describe("override", () => {
+        it("Worker should correctly invalid previous messages", () => {
           expect.assertions(4);
 
           const worker = createEasyWebWorker((easyWorker) => {
@@ -302,8 +305,8 @@ describe('EasyWebWorker', () => {
         });
       });
 
-      describe('overrideAfterCurrent', () => {
-        it('Worker should correctly invalid previous messages after current execution', async () => {
+      describe("overrideAfterCurrent", () => {
+        it("Worker should correctly invalid previous messages after current execution", async () => {
           expect.assertions(4);
 
           const worker = createEasyWebWorker((easyWorker) => {
@@ -344,7 +347,7 @@ describe('EasyWebWorker', () => {
           expect(errorLogger).toHaveBeenCalledTimes(1);
         });
 
-        it('Worker should correctly invalid previous messages after current execution (with multiple workers)', async () => {
+        it("Worker should correctly invalid previous messages after current execution (with multiple workers)", async () => {
           expect.assertions(4);
 
           const worker = createEasyWebWorker((easyWorker) => {
@@ -392,8 +395,8 @@ describe('EasyWebWorker', () => {
         });
       });
 
-      describe('dispose', () => {
-        it('should correctly dispose worker (remove worker and revokeObjectURL)', async () => {
+      describe("dispose", () => {
+        it("should correctly dispose worker (remove worker and revokeObjectURL)", async () => {
           expect.assertions(4);
 
           const worker = createEasyWebWorker((easyWorker) => {
@@ -436,8 +439,8 @@ describe('EasyWebWorker', () => {
         });
       });
 
-      describe('cancel', () => {
-        it('should correctly cancel worker', async () => {
+      describe("cancel", () => {
+        it("should correctly cancel worker", async () => {
           expect.assertions(2);
 
           const worker = createEasyWebWorker((easyWorker) => {
@@ -456,20 +459,20 @@ describe('EasyWebWorker', () => {
           await worker
             .send()
             .then(callback1)
-            .cancel('cancel')
+            .cancel("cancel")
             .catch(errorLogger);
 
           expect(callback1).not.toHaveBeenCalled();
-          expect(errorLogger).toHaveBeenCalledWith('cancel');
+          expect(errorLogger).toHaveBeenCalledWith("cancel");
         });
       });
 
-      it('should cancel the message from inside the worker', async () => {
+      it("should cancel the message from inside the worker", async () => {
         expect.assertions(2);
 
         const worker = createEasyWebWorker((easyWorker) => {
           easyWorker.onMessage((message) => {
-            message.cancel('cancel-from-worker');
+            message.cancel("cancel-from-worker");
           });
         });
 
@@ -479,7 +482,182 @@ describe('EasyWebWorker', () => {
         await worker.send().then(callback1).catch(errorLogger);
 
         expect(callback1).not.toHaveBeenCalled();
-        expect(errorLogger).toHaveBeenCalledWith('cancel-from-worker');
+        expect(errorLogger).toHaveBeenCalledWith("cancel-from-worker");
+      });
+
+      ["onResolve", "onCancel", "onProgress", "onFinalize"].forEach(
+        (callbackKey) => {
+          it(`should correctly subscribe to ${callbackKey}`, async () => {
+            expect.assertions(5);
+
+            const worker = createEasyWebWorker(
+              (easyWorker, context) => {
+                let previousMessage: IEasyWebWorkerMessage | null = null;
+                let didCallbackWasCalled = false;
+
+                const [callback] = context.primitiveParameters as unknown[] as [
+                  keyof IEasyWebWorkerMessage
+                ];
+
+                easyWorker.onMessage((message) => {
+                  previousMessage = message;
+
+                  message[callback as any](() => {
+                    didCallbackWasCalled = true;
+                  });
+                });
+
+                easyWorker.onMessage<null, boolean>(
+                  "getDidCallbackWasCalled",
+                  (message) => {
+                    message.resolve(didCallbackWasCalled);
+                  }
+                );
+
+                easyWorker.onMessage("resolvePrevious", (message) => {
+                  if (callback === "onProgress") {
+                    previousMessage?.reportProgress(1);
+                  }
+
+                  previousMessage?.[
+                    callback === "onCancel" ? "cancel" : "resolve"
+                  ]();
+
+                  message.resolve();
+                });
+              },
+              {
+                primitiveParameters: [callbackKey],
+              }
+            );
+
+            const callback1 = jest.fn();
+            const errorLogger = jest.fn();
+
+            worker.send().then(callback1).catch(errorLogger);
+
+            await new Promise((resolve) => setTimeout(resolve, 10));
+
+            expect(callback1).not.toHaveBeenCalled();
+
+            let didCallbackWasCalled = await worker.sendToMethod(
+              "getDidCallbackWasCalled"
+            );
+
+            expect(didCallbackWasCalled).toEqual(false);
+
+            await worker.sendToMethod("resolvePrevious").then(callback1);
+
+            didCallbackWasCalled = await worker.sendToMethod(
+              "getDidCallbackWasCalled"
+            );
+
+            expect(callback1).toBeCalledTimes(
+              callbackKey === "onCancel" ? 1 : 2
+            );
+            expect(didCallbackWasCalled).toEqual(true);
+            expect(errorLogger).toHaveBeenCalledTimes(
+              callbackKey === "onCancel" ? 1 : 0
+            );
+          });
+        }
+      );
+
+      describe("transferable", () => {
+        type TPayload = {
+          arrayBuffer: ArrayBuffer;
+          action;
+        };
+
+        let worker: EasyWebWorker<TPayload, TPayload>;
+
+        beforeEach(() => {
+          worker = createEasyWebWorker<TPayload, TPayload>((easyWorker) => {
+            easyWorker.onMessage((message) => {
+              const { arrayBuffer, action } = message.payload;
+
+              if (action === "reportProgress") {
+                message.reportProgress(50, message.payload, [arrayBuffer]);
+
+                message.resolve(message.payload);
+
+                return;
+              }
+
+              message[action](
+                {
+                  arrayBuffer,
+                  action,
+                },
+                [arrayBuffer]
+              );
+            });
+          });
+        });
+
+        (
+          ["resolve", "reject", "cancel", "reportProgress"] as (
+            | "resolve"
+            | "reject"
+            | "cancel"
+            | "reportProgress"
+          )[]
+        ).forEach((action) => {
+          it(`should transfer a big array buffer when action is ${action}`, async () => {
+            expect.assertions(action === "reportProgress" ? 5 : 3);
+
+            const errorLogger = jest.fn();
+            const progressLogger = jest.fn();
+            const bigArrayBuffer = new ArrayBuffer(1000000);
+
+            type TPayload = {
+              arrayBuffer: ArrayBuffer;
+              action;
+            };
+
+            let progressMetadata: TPayload = null as unknown as TPayload;
+
+            const result = await worker
+              .send(
+                {
+                  arrayBuffer: bigArrayBuffer,
+                  action,
+                },
+                [bigArrayBuffer]
+              )
+              .onProgress((progress, metadata) => {
+                progressLogger(progress);
+
+                progressMetadata = metadata as TPayload;
+              })
+              .catch<TPayload>((reason) => {
+                errorLogger();
+
+                return reason;
+              });
+
+            if (action === "resolve") {
+              expect(errorLogger).not.toHaveBeenCalled();
+              expect(progressLogger).not.toHaveBeenCalled();
+            }
+
+            if (action === "reject" || action === "cancel") {
+              expect(errorLogger).toHaveBeenCalledTimes(1);
+              expect(progressLogger).not.toHaveBeenCalled();
+            }
+
+            if (action === "reportProgress") {
+              expect(progressLogger).toHaveBeenCalledWith(50);
+              expect(errorLogger).not.toHaveBeenCalled();
+              expect(bigArrayBuffer).toStrictEqual(
+                progressMetadata?.arrayBuffer
+              );
+              expect(bigArrayBuffer).toStrictEqual(result.arrayBuffer);
+            }
+
+            expect(result.arrayBuffer).toStrictEqual(bigArrayBuffer);
+          });
+        });
       });
     });
   });

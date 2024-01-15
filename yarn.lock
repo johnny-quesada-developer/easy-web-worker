@@ -1884,10 +1884,10 @@ camelcase@^6.2.0:
   resolved "https://registry.npmjs.org/camelcase/-/camelcase-6.3.0.tgz"
   integrity sha512-Gmy6FhYlCY7uOElZUSbxo2UCDH8owEk996gkbrpsgGtrJLM3J7jGxl9Ic7Qwwj4ivOE5AWZWRMecDdF7hqGjFA==
 
-cancelable-promise-jq@^2.0.2:
-  version "2.0.2"
-  resolved "https://registry.yarnpkg.com/cancelable-promise-jq/-/cancelable-promise-jq-2.0.2.tgz#af1f9291a08b80871c6a9ebf96edbd6b1caa2ad4"
-  integrity sha512-w++3TOjU2I7dbTrMEMPYv9QA06KbkIg5bEqVPhTZN0Prdfx4cGM2ehQU+b5J9eIose1WS8Ii86hYvRryrtGOrQ==
+cancelable-promise-jq@^2.0.4:
+  version "2.0.4"
+  resolved "https://registry.yarnpkg.com/cancelable-promise-jq/-/cancelable-promise-jq-2.0.4.tgz#d170a26c8fcd291fed01f396143b7505b45df00c"
+  integrity sha512-9hQO+/tlAKIXVYeJJui3ZLLYV/z3eCplnfuR5eWrKWn2E276uUFEsUpelRkVszfH5IHfb2ThJwwvt52lHnOluQ==
 
 caniuse-lite@^1.0.30001449:
   version "1.0.30001469"

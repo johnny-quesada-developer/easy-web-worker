@@ -1,10 +1,11 @@
-import { EasyWebWorkerMessage } from './EasyWebWorkerMessage';
-import { getWorkerTemplate, generatedId } from './EasyWebWorkerFixtures';
+import { EasyWebWorkerMessage } from "./EasyWebWorkerMessage";
+import { getWorkerTemplate, generatedId } from "./EasyWebWorkerFixtures";
 import {
   CancelablePromise,
+  Subscription,
   groupAsCancelablePromise,
   toCancelablePromise,
-} from 'cancelable-promise-jq';
+} from "cancelable-promise-jq";
 
 /**
  * EasyWorker Config
@@ -88,7 +89,7 @@ export interface IMessageData<IPayload = null> {
   /**
    * This is the message id
    * */
-  readonly messageId: string;
+  readonly messageId?: string;
 
   /**
    * When present, this means that the message was resolved
@@ -206,6 +207,30 @@ export type EasyWebWorkerBody<
   } & Record<string, unknown>
 ) => void;
 
+export type TMessagePostType =
+  | "progress"
+  | "resolved"
+  | "rejected"
+  | "canceled"
+  | "worker_cancelation";
+
+export type TMessageCallback = (
+  messageData: IMessageData<any>,
+  transfer: Transferable[]
+) => void;
+
+export type TMessageCallbackType =
+  | "onResolve"
+  | "onCancel"
+  | "onReject"
+  | "onProgress"
+  | "onFinalize";
+
+export type TMessageStatus = TMessagePostType | "pending";
+
+/**
+ * This contract is just for the messages inside the workers
+ */
 export interface IEasyWebWorkerMessage<TPayload = null, TResult = void> {
   origin?: string;
 
@@ -225,11 +250,6 @@ export interface IEasyWebWorkerMessage<TPayload = null, TResult = void> {
   readonly payload: TPayload;
 
   /**
-   * This method is used to reject the message from inside the worker
-   * */
-  readonly reject: (reason?: unknown, transfer?: Transferable[]) => void;
-
-  /**
    * This method is used to report the progress of the message from inside the worker
    * */
   readonly reportProgress: (
@@ -246,22 +266,53 @@ export interface IEasyWebWorkerMessage<TPayload = null, TResult = void> {
     : (payload: TResult, transfer?: Transferable[]) => void;
 
   /**
+   * This method is used to reject the message from inside the worker
+   * */
+  readonly reject: (reason?: unknown, transfer?: Transferable[]) => void;
+
+  /**
    * This method is used to cancel the message from inside the worker
    * */
   readonly cancel: (reason?: unknown, transfer?: Transferable[]) => void;
 
   /**
-   * Thus method is used to subscribe to the cancel event from the main thread
+   * Gets the current status of the message
    */
-  readonly onCancel: (callback: (reason?: unknown) => void) => void;
+  readonly getStatus: () => TMessageStatus;
 
-  readonly getStatus: () => 'pending' | 'resolved' | 'rejected' | 'canceled';
-
+  /**
+   * Returns true if the message is pending
+   */
   readonly isPending: () => boolean;
+
+  /**
+   * This method is used to subscribe to the worker resolve event of the message
+   */
+  readonly onResolve: (callback: TMessageCallback) => Subscription;
+
+  /**
+   * This method is used to subscribe to the worker reject event of the message
+   */
+  readonly onReject: (callback: TMessageCallback) => Subscription;
+
+  /**
+   * This method is used to subscribe to the worker cancelation event of the message
+   */
+  readonly onCancel: (callback: TMessageCallback) => Subscription;
+
+  /**
+   * This method is used to subscribe to the worker onProgress event of the message
+   */
+  readonly onProgress: (callback: TMessageCallback) => Subscription;
+
+  /**
+   * This method is used to subscribe to the worker finally event of the message, once the message is resolved | rejected | canceled
+   */
+  readonly onFinalize: (callback: TMessageCallback) => Subscription;
 }
 
 const getImportScriptsTemplate = (scripts: string[] = []) => {
-  if (!scripts.length) return '';
+  if (!scripts.length) return "";
 
   return `self.importScripts(["${scripts.join('","')}"]);`;
 };
@@ -275,7 +326,7 @@ export const createBlobWorker = <
     | EasyWebWorkerBody<IPayload, IResult>
     | EasyWebWorkerBody<IPayload, IResult>[],
   imports: string[] = [],
-  origin: string = '',
+  origin: string = "",
   {
     primitiveParameters = [] as TPrimitiveParameters,
   }: {
@@ -295,10 +346,10 @@ export const createBlobWorker = <
     .map((content) => {
       return `\n(${content?.toString().trim()})(ew$,cn$);`;
     })
-    .join('')}`;
+    .join("")}`;
 
   return (window.URL || window.webkitURL).createObjectURL(
-    new Blob([worker_content], { type: 'application/javascript' })
+    new Blob([worker_content], { type: "application/javascript" })
   );
 };
 
@@ -371,7 +422,7 @@ export class EasyWebWorker<
   /**
    * @deprecated this will be removed in the next major version and keep it just inside the config object
    */
-  public origin: string = '';
+  public origin: string = "";
 
   /**
    * @deprecated this will be removed in the next major version and keep it just inside the config object
@@ -402,7 +453,7 @@ export class EasyWebWorker<
   public onWorkerError: (error: ErrorEvent) => void;
 
   protected get isExternalWorkerFile(): boolean {
-    return typeof this.source === 'string' || this.source instanceof URL;
+    return typeof this.source === "string" || this.source instanceof URL;
   }
 
   constructor(
@@ -426,7 +477,7 @@ export class EasyWebWorker<
     config: Partial<IWorkerConfig<TPrimitiveParameters>> = {}
   ) {
     this.workerUrl =
-      typeof source === 'string' || source instanceof URL ? source : null;
+      typeof source === "string" || source instanceof URL ? source : null;
 
     const {
       scripts = [],
@@ -437,7 +488,7 @@ export class EasyWebWorker<
       terminationDelay = 1000,
       warmUpWorkers: _warmUpWorkers = null,
       primitiveParameters,
-      origin = '',
+      origin = "",
       workerOptions = {},
     } = config ?? ({} as IWorkerConfig<TPrimitiveParameters>);
 
@@ -459,7 +510,7 @@ export class EasyWebWorker<
       onWorkerError,
       terminationDelay,
       primitiveParameters: primitiveParameters as TPrimitiveParameters,
-      origin: origin ?? '',
+      origin: origin ?? "",
     };
 
     /**
@@ -565,8 +616,8 @@ export class EasyWebWorker<
       }
 
       const isUrlBase =
-        typeof this.source === 'string' || this.source instanceof URL;
-      const isFunctionTemplate = typeof this.source === 'function';
+        typeof this.source === "string" || this.source instanceof URL;
+      const isFunctionTemplate = typeof this.source === "function";
 
       if (isUrlBase || isFunctionTemplate) {
         const workerUrl = this.workerUrl ?? this.getWorkerUrl();
@@ -580,7 +631,7 @@ export class EasyWebWorker<
       const isArraySource = Array.isArray(this.source);
 
       const isArrayOfFunctionsTemplates =
-        isArraySource && typeof this.source[0] === 'function';
+        isArraySource && typeof this.source[0] === "function";
 
       if (isArrayOfFunctionsTemplates) {
         const workerUrl = this.workerUrl ?? this.getWorkerUrl();
@@ -936,10 +987,10 @@ export class EasyWebWorker<
    * This method will reboot the worker and cancel all the messages in the queue
    * @param {unknown} reason - reason why the worker will be restarted
    */
-  public reboot(reason: unknown = 'Worker was rebooted') {
+  public reboot(reason: unknown = "Worker was rebooted") {
     if (!this.workerUrl) {
       throw new Error(
-        'You can not reboot a worker that was created from a Worker Instance'
+        "You can not reboot a worker that was created from a Worker Instance"
       );
     }
 
@@ -962,7 +1013,7 @@ export class EasyWebWorker<
 
     if (this.workerUrl) {
       (window.URL || window.webkitURL).revokeObjectURL(
-        typeof this.workerUrl === 'string'
+        typeof this.workerUrl === "string"
           ? this.workerUrl
           : this.workerUrl.href
       );
