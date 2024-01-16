@@ -13,7 +13,10 @@ describe("EasyWebWorker", () => {
   describe("constructor", () => {
     const workerName = "workerTest";
 
-    const workerContent: EasyWebWorkerBody = (easyWorker, context) => {
+    const workerContent: EasyWebWorkerBody<any, any> = (
+      easyWorker,
+      context
+    ) => {
       context.globalPropertyTest = "globalPropertyTest";
 
       easyWorker.onMessage((message) => {

@@ -4,7 +4,6 @@ import {
   CancelablePromise,
   Subscription,
   groupAsCancelablePromise,
-  toCancelablePromise,
 } from "cancelable-promise-jq";
 
 /**
@@ -465,7 +464,7 @@ export class EasyWebWorker<
      */
     protected source:
       | EasyWebWorkerBody<TPayload, TResult>
-      | EasyWebWorkerBody<any, any>[]
+      | EasyWebWorkerBody<TPayload, TResult>[]
       | string
       | URL
       | Worker
