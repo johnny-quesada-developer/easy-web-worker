@@ -710,7 +710,7 @@ export class EasyWebWorker<
     if (worker_cancelation) {
       const { reason } = worker_cancelation;
 
-      decoupledPromise.reject(reason);
+      decoupledPromise._cancel(reason);
 
       return;
     }

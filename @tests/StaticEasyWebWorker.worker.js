@@ -1,12 +1,12 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
+'use strict';
+Object.defineProperty(exports, '__esModule', { value: true });
 
-const path = require("path");
-const { parentPort, isMainThread, workerData } = require("node:worker_threads");
+const path = require('path');
+const { parentPort, isMainThread, workerData } = require('node:worker_threads');
 
 const { URL_MOCK, BLOB_MOCK, WINDOW_MOCK } = require(path.resolve(
   __dirname,
-  "./fixtures.js"
+  './fixtures.js'
 ));
 
 /**
@@ -25,40 +25,43 @@ const { URL_MOCK, BLOB_MOCK, WINDOW_MOCK } = require(path.resolve(
   globalThis.self = {
     importScripts: () => {},
     close: parentPort.close,
-    postMessage: (data) => {
-      parentPort?.postMessage({
-        data,
-      });
+    postMessage: (data, origin, transfer) => {
+      parentPort?.postMessage(
+        {
+          data,
+        },
+        transfer
+      );
     },
     onmessage: null,
     onerror: null,
   };
 
-  parentPort.on("message", (message) => {
+  parentPort.on('message', (message) => {
     self.onmessage?.(message);
   });
 
-  parentPort.on("error", (error) => {
+  parentPort.on('error', (error) => {
     self.onerror?.(error);
   });
 })();
 
-const easyWebWorkers = require(path.resolve(__dirname, "../lib/bundle.js"));
+const easyWebWorkers = require(path.resolve(__dirname, '../lib/bundle.js'));
 const { createStaticEasyWebWorker } = easyWebWorkers;
 
 const worker = createStaticEasyWebWorker((message) => {
-  const result = "Hello from StaticEasyWebWorker!";
+  const result = 'Hello from StaticEasyWebWorker!';
 
   message.resolve(result);
 });
 
-worker.onMessage("actionWithPayload", (message) => {
+worker.onMessage('actionWithPayload', (message) => {
   const result = `Hello ${message.payload}!`;
 
   message.resolve(result);
 });
 
-worker.onMessage("progressTest", (message) => {
+worker.onMessage('progressTest', (message) => {
   let result = 0;
 
   for (let i = 0; i < 100; i++) {
@@ -76,7 +79,7 @@ let asyncOperationState = {
   didAsyncOperationCancel: false,
 };
 
-worker.onMessage("asyncOperation", (message) => {
+worker.onMessage('asyncOperation', (message) => {
   try {
     asyncOperationState.asyncOperationWasCalled = true;
 
@@ -105,23 +108,23 @@ worker.onMessage("asyncOperation", (message) => {
   }
 });
 
-worker.onMessage("getAsyncOperationState", (message) => {
+worker.onMessage('getAsyncOperationState', (message) => {
   message.resolve(asyncOperationState);
 });
 
 let count = 0;
 
-worker.onMessage("setCount", (message) => {
+worker.onMessage('setCount', (message) => {
   count = message.payload;
 
   message.resolve(count);
 });
 
-worker.onMessage("getCount", (message) => {
+worker.onMessage('getCount', (message) => {
   message.resolve(count);
 });
 
-worker.onMessage("fastAsyncOperation", (message) => {
+worker.onMessage('fastAsyncOperation', (message) => {
   const interval = setInterval(() => {
     // not necessary to clean up the interval here since the onCancel callback will be called
     if (!message.isPending()) return;
@@ -142,9 +145,9 @@ worker.onMessage("fastAsyncOperation", (message) => {
   });
 });
 
-worker.onMessage("cancelTest", (message) => {
+worker.onMessage('cancelTest', (message) => {
   setTimeout(() => {
-    message.cancel("canceled from inside the worker");
+    message.cancel('canceled from inside the worker');
   }, 1);
 });
 
@@ -152,11 +155,11 @@ let previousMessage = null;
 let didCallbackWasCalled = false;
 let callbackKey = null;
 
-worker.onMessage("getDidCallbackWasCalled", (message) => {
+worker.onMessage('getDidCallbackWasCalled', (message) => {
   message.resolve(didCallbackWasCalled);
 });
 
-worker.onMessage("sendOpenMessage", (message) => {
+worker.onMessage('sendOpenMessage', (message) => {
   const { payload } = message;
 
   callbackKey = payload;
@@ -168,23 +171,23 @@ worker.onMessage("sendOpenMessage", (message) => {
   });
 });
 
-worker.onMessage("sendCloseMessage", (message) => {
-  if (callbackKey === "onProgress") {
+worker.onMessage('sendCloseMessage', (message) => {
+  if (callbackKey === 'onProgress') {
     previousMessage?.reportProgress(1);
   }
 
-  previousMessage?.[callbackKey === "onCancel" ? "cancel" : "resolve"]();
+  previousMessage?.[callbackKey === 'onCancel' ? 'cancel' : 'resolve']();
 
   message.resolve();
 });
 
-worker.onMessage("transferArrayBuffer", (message) => {
+worker.onMessage('transferArrayBuffer', (message) => {
   const { arrayBuffer, action } = message.payload;
 
-  if (action === "reportProgress") {
+  if (action === 'reportProgress') {
     message.reportProgress(50, message.payload, [arrayBuffer]);
 
-    message.resolve(message.payload);
+    message.resolve(arrayBuffer.byteLength);
 
     return;
   }
