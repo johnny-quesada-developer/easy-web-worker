@@ -366,7 +366,7 @@ describe('StaticEasyWebWorker', () => {
           )[]
         ).forEach((action) => {
           it(`should transfer a big array buffer when ${action}`, async () => {
-            expect.assertions(action === 'reportProgress' ? 4 : 3);
+            expect.assertions(4);
 
             const errorLogger = jest.fn();
             const progressLogger = jest.fn();
@@ -412,17 +412,15 @@ describe('StaticEasyWebWorker', () => {
             if (action === 'reportProgress') {
               expect(progressLogger).toHaveBeenCalledWith(50);
               expect(errorLogger).not.toHaveBeenCalled();
-              expect(bigArrayBuffer).toStrictEqual(
-                progressMetadata?.arrayBuffer
-              );
 
-              // byte length should be 0 because the array buffer was transferred
-              expect(result).toStrictEqual(0);
+              expect(bigArrayBuffer.byteLength).toEqual(0);
+              expect(progressMetadata.arrayBuffer.byteLength).toEqual(1000000);
 
               return;
             }
 
-            expect(result.arrayBuffer).toStrictEqual(bigArrayBuffer);
+            expect(result.arrayBuffer.byteLength).toEqual(1000000);
+            expect(bigArrayBuffer.byteLength).toEqual(0);
           });
         });
       });
