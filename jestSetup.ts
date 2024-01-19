@@ -10,7 +10,6 @@ export class WORKER_MOCK extends Worker {
     });
   }
 
-  // @ts-ignore - this is a mock of the web worker which does have origin property
   public postMessage(data: any, transfer?: any[]) {
     const event = {
       data,

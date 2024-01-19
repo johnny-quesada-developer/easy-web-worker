@@ -1,10 +1,10 @@
-import { EasyWebWorkerMessage } from "./EasyWebWorkerMessage";
-import { getWorkerTemplate, generatedId } from "./EasyWebWorkerFixtures";
+import { EasyWebWorkerMessage } from './EasyWebWorkerMessage';
+import { getWorkerTemplate, generatedId } from './EasyWebWorkerFixtures';
 import {
   CancelablePromise,
   Subscription,
   groupAsCancelablePromise,
-} from "cancelable-promise-jq";
+} from 'cancelable-promise-jq';
 
 /**
  * EasyWorker Config
@@ -51,11 +51,6 @@ export interface IWorkerConfig<TPrimitiveParameters extends any[] = unknown[]> {
    * Allows to pass static primitive parameters to the worker
    */
   primitiveParameters?: TPrimitiveParameters;
-
-  /**
-   * Allows to override the worker file origin
-   */
-  origin?: string;
 
   /**
    * @deprecated This url parameter don't have any effect on the worker, it will be removed in the next major version
@@ -207,11 +202,11 @@ export type EasyWebWorkerBody<
 ) => void;
 
 export type TMessagePostType =
-  | "progress"
-  | "resolved"
-  | "rejected"
-  | "canceled"
-  | "worker_cancelation";
+  | 'progress'
+  | 'resolved'
+  | 'rejected'
+  | 'canceled'
+  | 'worker_cancelation';
 
 export type TMessageCallback = (
   messageData: IMessageData<any>,
@@ -219,20 +214,18 @@ export type TMessageCallback = (
 ) => void;
 
 export type TMessageCallbackType =
-  | "onResolve"
-  | "onCancel"
-  | "onReject"
-  | "onProgress"
-  | "onFinalize";
+  | 'onResolve'
+  | 'onCancel'
+  | 'onReject'
+  | 'onProgress'
+  | 'onFinalize';
 
-export type TMessageStatus = TMessagePostType | "pending";
+export type TMessageStatus = TMessagePostType | 'pending';
 
 /**
  * This contract is just for the messages inside the workers
  */
 export interface IEasyWebWorkerMessage<TPayload = null, TResult = void> {
-  origin?: string;
-
   /**
    * This is the method name targeted by the message
    */
@@ -311,7 +304,7 @@ export interface IEasyWebWorkerMessage<TPayload = null, TResult = void> {
 }
 
 const getImportScriptsTemplate = (scripts: string[] = []) => {
-  if (!scripts.length) return "";
+  if (!scripts.length) return '';
 
   return `self.importScripts(["${scripts.join('","')}"]);`;
 };
@@ -325,7 +318,6 @@ export const createBlobWorker = <
     | EasyWebWorkerBody<IPayload, IResult>
     | EasyWebWorkerBody<IPayload, IResult>[],
   imports: string[] = [],
-  origin: string = "",
   {
     primitiveParameters = [] as TPrimitiveParameters,
   }: {
@@ -339,16 +331,14 @@ export const createBlobWorker = <
     imports
   )}self.primitiveParameters=JSON.parse(\`${JSON.stringify(
     primitiveParameters ?? []
-  )}\`);let ew$=${getWorkerTemplate({
-    origin,
-  })};let cn$=self;${contentCollection
+  )}\`);let ew$=${getWorkerTemplate()};let cn$=self;${contentCollection
     .map((content) => {
       return `\n(${content?.toString().trim()})(ew$,cn$);`;
     })
-    .join("")}`;
+    .join('')}`;
 
   return (window.URL || window.webkitURL).createObjectURL(
-    new Blob([worker_content], { type: "application/javascript" })
+    new Blob([worker_content], { type: 'application/javascript' })
   );
 };
 
@@ -421,11 +411,6 @@ export class EasyWebWorker<
   /**
    * @deprecated this will be removed in the next major version and keep it just inside the config object
    */
-  public origin: string = "";
-
-  /**
-   * @deprecated this will be removed in the next major version and keep it just inside the config object
-   */
   public primitiveParameters: TPrimitiveParameters = [] as TPrimitiveParameters;
 
   /**
@@ -452,7 +437,7 @@ export class EasyWebWorker<
   public onWorkerError: (error: ErrorEvent) => void;
 
   protected get isExternalWorkerFile(): boolean {
-    return typeof this.source === "string" || this.source instanceof URL;
+    return typeof this.source === 'string' || this.source instanceof URL;
   }
 
   constructor(
@@ -476,7 +461,7 @@ export class EasyWebWorker<
     config: Partial<IWorkerConfig<TPrimitiveParameters>> = {}
   ) {
     this.workerUrl =
-      typeof source === "string" || source instanceof URL ? source : null;
+      typeof source === 'string' || source instanceof URL ? source : null;
 
     const {
       scripts = [],
@@ -487,7 +472,6 @@ export class EasyWebWorker<
       terminationDelay = 1000,
       warmUpWorkers: _warmUpWorkers = null,
       primitiveParameters,
-      origin = "",
       workerOptions = {},
     } = config ?? ({} as IWorkerConfig<TPrimitiveParameters>);
 
@@ -509,7 +493,6 @@ export class EasyWebWorker<
       onWorkerError,
       terminationDelay,
       primitiveParameters: primitiveParameters as TPrimitiveParameters,
-      origin: origin ?? "",
     };
 
     /**
@@ -525,7 +508,6 @@ export class EasyWebWorker<
     this.warmUpWorkers = warmUpWorkers;
     this.primitiveParameters = (primitiveParameters ??
       []) as TPrimitiveParameters;
-    this.origin = origin;
 
     this.computeWorkerBaseSource();
     this.warmUp();
@@ -615,8 +597,8 @@ export class EasyWebWorker<
       }
 
       const isUrlBase =
-        typeof this.source === "string" || this.source instanceof URL;
-      const isFunctionTemplate = typeof this.source === "function";
+        typeof this.source === 'string' || this.source instanceof URL;
+      const isFunctionTemplate = typeof this.source === 'function';
 
       if (isUrlBase || isFunctionTemplate) {
         const workerUrl = this.workerUrl ?? this.getWorkerUrl();
@@ -630,7 +612,7 @@ export class EasyWebWorker<
       const isArraySource = Array.isArray(this.source);
 
       const isArrayOfFunctionsTemplates =
-        isArraySource && typeof this.source[0] === "function";
+        isArraySource && typeof this.source[0] === 'function';
 
       if (isArrayOfFunctionsTemplates) {
         const workerUrl = this.workerUrl ?? this.getWorkerUrl();
@@ -741,14 +723,13 @@ export class EasyWebWorker<
       return this.source as string;
     }
 
-    const { primitiveParameters, scripts, origin } = this.config;
+    const { primitiveParameters, scripts } = this.config;
 
     return createBlobWorker<TPayload, TResult, TPrimitiveParameters>(
       this.source as
         | EasyWebWorkerBody<TPayload, TResult>
         | EasyWebWorkerBody<TPayload, TResult>[],
       scripts,
-      origin,
       {
         primitiveParameters,
       }
@@ -986,10 +967,10 @@ export class EasyWebWorker<
    * This method will reboot the worker and cancel all the messages in the queue
    * @param {unknown} reason - reason why the worker will be restarted
    */
-  public reboot(reason: unknown = "Worker was rebooted") {
+  public reboot(reason: unknown = 'Worker was rebooted') {
     if (!this.workerUrl) {
       throw new Error(
-        "You can not reboot a worker that was created from a Worker Instance"
+        'You can not reboot a worker that was created from a Worker Instance'
       );
     }
 
@@ -1012,7 +993,7 @@ export class EasyWebWorker<
 
     if (this.workerUrl) {
       (window.URL || window.webkitURL).revokeObjectURL(
-        typeof this.workerUrl === "string"
+        typeof this.workerUrl === 'string'
           ? this.workerUrl
           : this.workerUrl.href
       );

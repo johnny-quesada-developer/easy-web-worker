@@ -1,4 +1,4 @@
-import { Subscription } from "cancelable-promise-jq";
+import { Subscription } from 'cancelable-promise-jq';
 import {
   IEasyWebWorkerMessage,
   IEasyWorkerInstance,
@@ -7,12 +7,11 @@ import {
   TMessageCallbackType,
   TMessagePostType,
   TMessageStatus,
-} from "./EasyWebWorker";
+} from './EasyWebWorker';
 
 /**
  * Constructor for the StaticEasyWebWorker
  * @param onMessageCallback - callback to be called when a message is received
- * @param targetOrigin - the target origin to be used when sending messages
  * @returns an instance of the StaticEasyWebWorker
  * */
 export const StaticEasyWebWorker = function <TPayload = null, TResult = void>(
@@ -20,10 +19,9 @@ export const StaticEasyWebWorker = function <TPayload = null, TResult = void>(
   onMessageCallback?: (
     message: IEasyWebWorkerMessage<TPayload, TResult>,
     event: MessageEvent<IMessageData<TPayload>>
-  ) => void,
-  $origin: string = ""
+  ) => void
 ) {
-  const { close, onMessage, importScripts } = ((_origin) => {
+  const { close, onMessage, importScripts } = (() => {
     const workerMessages = new Map<string, IEasyWebWorkerMessage>();
 
     /* This structure allows us to have multiple callbacks for the same worker */
@@ -32,7 +30,7 @@ export const StaticEasyWebWorker = function <TPayload = null, TResult = void>(
       (message: IEasyWebWorkerMessage, data: IMessageData) => void
     >([
       [
-        "",
+        '',
         () => {
           throw "you didn't defined a message-callback, please assign a callback by calling easyWorker.onMessage";
         },
@@ -43,14 +41,12 @@ export const StaticEasyWebWorker = function <TPayload = null, TResult = void>(
       messageId,
       payload,
       method,
-      origin,
     }: {
       messageId: string;
       payload: TPayload;
       method: string;
-      origin: string;
     }): IEasyWebWorkerMessage<any> => {
-      let messageStatus: TMessageStatus = "pending";
+      let messageStatus: TMessageStatus = 'pending';
       const messageCallbacks = new Map<
         TMessageCallbackType,
         Set<(messageData: IMessageData<any>, transfer: Transferable[]) => void>
@@ -64,22 +60,22 @@ export const StaticEasyWebWorker = function <TPayload = null, TResult = void>(
         const currentMessageStatus = messageStatus;
 
         const targetMessageStatus: TMessageStatus =
-          messageType === "progress" ? "pending" : messageType;
+          messageType === 'progress' ? 'pending' : messageType;
 
         if (!workerMessages.has(messageId)) {
           const message =
-            "%c#" +
+            '%c#' +
             messageId +
-            " Message Not Found: %cThis means that the message was already resolved | rejected | canceled. To avoid this error, please make sure that you are not resolving | rejecting | canceling the same message twice. Also make sure that you are not reporting progress after the message was processed. Remember each message can handle his one cancelation by adding a handler with the %cmessage.onCancel%c method. To now more about this method, please check the documentation at: %chttps://www.npmjs.com/package/easy-web-worker#ieasywebworkermessageipayload--null-iresult--void %cTrying to process message:";
+            ' Message Not Found: %cThis means that the message was already resolved | rejected | canceled. To avoid this error, please make sure that you are not resolving | rejecting | canceling the same message twice. Also make sure that you are not reporting progress after the message was processed. Remember each message can handle his one cancelation by adding a handler with the %cmessage.onCancel%c method. To now more about this method, please check the documentation at: %chttps://www.npmjs.com/package/easy-web-worker#ieasywebworkermessageipayload--null-iresult--void %cTrying to process message:';
 
           console.error(
             message,
-            "color: darkorange; font-size: 12px; font-weight: bold;",
-            "font-weight: normal;",
-            "font-weight: bold;",
-            "font-weight: normal;",
-            "color: lightblue; font-size: 10px; font-weight: bold;",
-            "font-weight: bold; color: darkorange;",
+            'color: darkorange; font-size: 12px; font-weight: bold;',
+            'font-weight: normal;',
+            'font-weight: bold;',
+            'font-weight: normal;',
+            'color: lightblue; font-size: 10px; font-weight: bold;',
+            'font-weight: bold; color: darkorange;',
             {
               messageId,
               status: {
@@ -95,14 +91,14 @@ export const StaticEasyWebWorker = function <TPayload = null, TResult = void>(
         }
 
         const callbacksKeys = {
-          resolved: "onResolve",
-          rejected: "onReject",
+          resolved: 'onResolve',
+          rejected: 'onReject',
           /**
            * Cancelation could be triggered by the worker or by the main thread
            * */
-          canceled: "onCancel",
-          worker_cancelation: "onCancel",
-          pending: "onProgress",
+          canceled: 'onCancel',
+          worker_cancelation: 'onCancel',
+          pending: 'onProgress',
         }[targetMessageStatus] as TMessageCallbackType;
 
         const targetCallbacks = messageCallbacks.get(callbacksKeys);
@@ -116,39 +112,39 @@ export const StaticEasyWebWorker = function <TPayload = null, TResult = void>(
            * If terminate the message, we also need to call the onFinalize callbacks if any
            */
           messageCallbacks
-            .get("onFinalize")
+            .get('onFinalize')
             ?.forEach((callback) => callback(messageData, transfer));
 
           /* If it's not a progress message means that the message is resolved | rejected | canceled */
           workerMessages.delete(messageId);
         }
 
-        self.postMessage({ messageId, ...messageData }, origin, transfer);
+        self.postMessage({ messageId, ...messageData }, transfer);
 
         messageStatus = targetMessageStatus;
       };
 
       const getStatus = (): TMessageStatus => messageStatus;
 
-      const isPending = () => messageStatus === "pending";
+      const isPending = () => messageStatus === 'pending';
 
       const resolve = ((result: TResult, transfer: Transferable[] = []) =>
         postMessage(
-          "resolved",
+          'resolved',
           { resolved: { payload: result === undefined ? [] : [result] } },
           transfer
-        )) as IEasyWebWorkerMessage["resolve"];
+        )) as IEasyWebWorkerMessage['resolve'];
 
       const reject = ((reason: unknown, transfer: Transferable[] = []) => {
-        postMessage("rejected", { rejected: { reason } }, transfer);
-      }) as IEasyWebWorkerMessage["reject"];
+        postMessage('rejected', { rejected: { reason } }, transfer);
+      }) as IEasyWebWorkerMessage['reject'];
 
-      const cancel: IEasyWebWorkerMessage["cancel"] = (
+      const cancel: IEasyWebWorkerMessage['cancel'] = (
         reason: unknown,
         transfer: Transferable[] = []
       ) =>
         postMessage(
-          "worker_cancelation",
+          'worker_cancelation',
           { worker_cancelation: { reason } },
           transfer
         );
@@ -159,11 +155,11 @@ export const StaticEasyWebWorker = function <TPayload = null, TResult = void>(
         transfer: Transferable[] = []
       ) => {
         postMessage(
-          "progress",
+          'progress',
           { progress: { percentage, payload } },
           transfer
         );
-      }) as IEasyWebWorkerMessage["reportProgress"];
+      }) as IEasyWebWorkerMessage['reportProgress'];
 
       const createSubscription =
         <TSubscriptionType extends TMessageCallbackType>(
@@ -200,17 +196,17 @@ export const StaticEasyWebWorker = function <TPayload = null, TResult = void>(
         /**
          * Callbacks
          */
-        onResolve: createSubscription("onResolve"),
-        onReject: createSubscription("onReject"),
-        onCancel: createSubscription("onCancel"),
-        onProgress: createSubscription("onProgress"),
-        onFinalize: createSubscription("onFinalize"),
+        onResolve: createSubscription('onResolve'),
+        onReject: createSubscription('onReject'),
+        onCancel: createSubscription('onCancel'),
+        onProgress: createSubscription('onProgress'),
+        onFinalize: createSubscription('onFinalize'),
       };
     };
 
     const onMessage = (...args) => {
       const [param1, param2] = args;
-      const hasCustomCallbackKey = typeof param1 === "string";
+      const hasCustomCallbackKey = typeof param1 === 'string';
 
       if (hasCustomCallbackKey) {
         const callbackKey = param1;
@@ -222,20 +218,20 @@ export const StaticEasyWebWorker = function <TPayload = null, TResult = void>(
       }
 
       const callback = param1;
-      workerCallbacks.set("", callback);
+      workerCallbacks.set('', callback);
     };
 
     const close = () => {
       /* should cancel all the promises of the main thread */
       const messages = [...workerMessages.values()];
 
-      messages.forEach((message) => message.reject(new Error("worker closed")));
+      messages.forEach((message) => message.reject(new Error('worker closed')));
 
       self.close();
     };
 
     self.onmessage = (event) => {
-      const { data, origin } = event;
+      const { data } = event;
       const { messageId, cancelation } = data;
 
       if (cancelation) {
@@ -255,12 +251,11 @@ export const StaticEasyWebWorker = function <TPayload = null, TResult = void>(
         method,
         messageId,
         payload,
-        origin: _origin || origin || undefined,
       });
 
       workerMessages.set(messageId, message);
 
-      const callback = workerCallbacks.get(method || "");
+      const callback = workerCallbacks.get(method || '');
 
       callback(message, event);
     };
@@ -274,7 +269,7 @@ export const StaticEasyWebWorker = function <TPayload = null, TResult = void>(
       close,
       importScripts,
     };
-  })($origin);
+  })();
 
   this.close = close;
   this.onMessage = onMessage;
@@ -287,8 +282,7 @@ export const StaticEasyWebWorker = function <TPayload = null, TResult = void>(
   onMessageCallback?: (
     message: IEasyWebWorkerMessage<TPayload, TResult>,
     event: MessageEvent<IMessageData<TPayload>>
-  ) => void,
-  targetOrigin?: string
+  ) => void
 ) => IEasyWorkerInstance<TPayload, TResult>;
 
 /**
@@ -298,10 +292,9 @@ export const createStaticEasyWebWorker = <TPayload = null, TResult = void>(
   onMessageCallback?: (
     message: IEasyWebWorkerMessage<TPayload, TResult>,
     event: MessageEvent<IMessageData<TPayload>>
-  ) => void,
-  targetOrigin: string = ""
+  ) => void
 ) => {
-  const worker = new StaticEasyWebWorker(onMessageCallback, targetOrigin);
+  const worker = new StaticEasyWebWorker(onMessageCallback);
 
   return worker;
 };

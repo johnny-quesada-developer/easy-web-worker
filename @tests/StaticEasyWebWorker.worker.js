@@ -25,7 +25,7 @@ const { URL_MOCK, BLOB_MOCK, WINDOW_MOCK } = require(path.resolve(
   globalThis.self = {
     importScripts: () => {},
     close: parentPort.close,
-    postMessage: (data, origin, transfer) => {
+    postMessage: (data, transfer) => {
       parentPort?.postMessage(
         {
           data,
