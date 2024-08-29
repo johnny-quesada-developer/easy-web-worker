@@ -49,14 +49,35 @@ await worker.send(40);
 
 And that's it! You now have a worker running heavy computation in a real separate thread, with real asynchronous programming in JavaScript.
 
-You can also create an easy web worker from a static file, or from a native worker instance:
+You can also create an easy web worker from a static file, or from a native worker instance, here various examples:
 
 ```ts
-const worker = createEasyWebWorker("./worker.js");
-const worker = createEasyWebWorker(new Worker("./worker.js")); // ƒ Worker() { [native code] }
+// on vite and typescript
+import workerUrl from './worker?worker&url';
 
-const worker = new EasyWebWorker("./worker.js");
-const worker = new EasyWebWorker(new Worker("./worker.js")); // ƒ Worker() { [native code] }
+const isProduction = import.meta.env.MODE === 'production';
+
+const workerSource = isProduction
+  ? workerUrl
+  : new URL('./worker.ts', import.meta.url);
+
+const worker = new EasyWebWorker(workerSource, {
+  workerOptions: {
+    type: 'module',
+  },
+});
+
+// if you are using ESM - ECMAScript Modules
+const worker = createEasyWebWorker([
+  new Worker(new URL('./worker.js', import.meta.url)),
+]);
+
+// other ways with vanilla js
+const worker = createEasyWebWorker('./worker.js');
+const worker = createEasyWebWorker(new Worker('./worker.js')); // ƒ Worker() { [native code] }
+
+const worker = new EasyWebWorker('./worker.js');
+const worker = new EasyWebWorker(new Worker('./worker.js')); // ƒ Worker() { [native code] }
 ```
 
 When working with **static files**, which can offer substantial benefits with web workers, you simply need to create an instance of **StaticEasyWebWorker**.
@@ -84,15 +105,15 @@ onMessage((message) => {
 
   /** You can reject the message and send back a reason,
    * if no transfer is necessary just avoid the second parameter */
-  message.reject(new Error("something happened"));
+  message.reject(new Error('something happened'));
 
-  const metadata = { message: "progress from inside the worker" };
+  const metadata = { message: 'progress from inside the worker' };
 
   /** You can report progress */
   message.reportProgress(10, metadata, []); // all the methods allows you to send Transferable[]
 
   /** You can cancel an operation from within the worker */
-  message.cancel("the operating was canceled from the worker");
+  message.cancel('the operating was canceled from the worker');
 
   /** You can subscribe to the cancellation event of the message,
    * regardless of whether this cancellation is internal or external to the worker.*/
@@ -117,7 +138,7 @@ onMessage((message) => {
 /**
  * For adding specific actions
  */
-onMessage("readCSV", (message) => {
+onMessage('readCSV', (message) => {
   // do something
 });
 ```
@@ -182,7 +203,7 @@ await createEasyWebWorker<null, string>(({ onMessage }) => {
 If you need to pass a primitive parameter to the body of the worker, you can use the **primitiveParameters** configuration. This is an array of values that will be serialized and embedded into the worker's body.
 
 ```ts
-const message = "Hello";
+const message = 'Hello';
 
 await createEasyWebWorker<null, string>(
   ({ onMessage }, context) => {
@@ -193,7 +214,7 @@ await createEasyWebWorker<null, string>(
   {
     primitiveParameters: [message],
   }
-).send("hello!");
+).send('hello!');
 ```
 
 Take a look at Workers API if you don't know yet how they work: https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API,
@@ -460,9 +481,9 @@ const worker = createEasyWebWorker<string, string>(({ onMessage }) => {
   });
 });
 
-const messagePromise = worker.send("Hello!");
+const messagePromise = worker.send('Hello!');
 
-worker.reboot("Worker was restarted");
+worker.reboot('Worker was restarted');
 
 // The message promise will be rejected with the reason 'Worker was restarted'
 ```
