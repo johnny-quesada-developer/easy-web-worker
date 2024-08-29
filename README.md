@@ -67,6 +67,13 @@ const worker = new EasyWebWorker(workerSource, {
   },
 });
 
+// or
+const worker = createEasyWebWorker(workerSource, {
+  workerOptions: {
+    type: 'module',
+  },
+});
+
 // if you are using ESM - ECMAScript Modules
 const worker = createEasyWebWorker([
   new Worker(new URL('./worker.js', import.meta.url)),
