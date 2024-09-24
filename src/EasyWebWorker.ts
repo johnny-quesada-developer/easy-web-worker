@@ -468,17 +468,26 @@ export class EasyWebWorker<
       name,
       onWorkerError = null,
       maxWorkers = 1,
-      keepAlive: _keepAlive = null,
       terminationDelay = 1000,
-      warmUpWorkers: _warmUpWorkers = null,
       primitiveParameters,
       workerOptions = {},
     } = config ?? ({} as IWorkerConfig<TPrimitiveParameters>);
 
-    const warmUpWorkers =
-      !maxWorkers || maxWorkers === 1 ? true : _warmUpWorkers;
+    const warmUpWorkers = (() => {
+      if (typeof config?.warmUpWorkers === 'boolean')
+        return config.warmUpWorkers;
 
-    const keepAlive = warmUpWorkers || (_keepAlive ?? false);
+      const defaultWarmUpSingleWorker = maxWorkers === 1;
+      if (defaultWarmUpSingleWorker) return true;
+
+      return false;
+    })();
+
+    let keepAlive = (() => {
+      if (typeof config?.keepAlive === 'boolean') return config.keepAlive;
+
+      return warmUpWorkers;
+    })();
 
     this.config = {
       scripts: scripts ?? [],
@@ -503,13 +512,20 @@ export class EasyWebWorker<
     this.scripts = scripts;
     this.onWorkerError = onWorkerError;
     this.maxWorkers = maxWorkers;
-    this.keepAlive = keepAlive;
     this.terminationDelay = terminationDelay;
     this.warmUpWorkers = warmUpWorkers;
     this.primitiveParameters = (primitiveParameters ??
       []) as TPrimitiveParameters;
 
-    this.computeWorkerBaseSource();
+    const { isArrayOfWebWorkers } = this.computeWorkerBaseSource();
+
+    // if the source is an array of web workers we need to keep them alive
+    keepAlive = isArrayOfWebWorkers ? true : keepAlive;
+
+    this.keepAlive = keepAlive;
+
+    this.config.keepAlive = keepAlive;
+
     this.warmUp();
   }
 
@@ -557,7 +573,7 @@ export class EasyWebWorker<
   };
 
   private getWorkerFromPool = (): Worker => {
-    const { maxWorkers } = this.config;
+    const { maxWorkers, warmUpWorkers } = this.config;
 
     const { messagesQueue } = this;
     const messagesQueueSize = messagesQueue.size;
@@ -565,7 +581,7 @@ export class EasyWebWorker<
     // there are less workers than the maximum allowed, and there is messages in the queue
     if (
       !this.workers.length ||
-      (this.workers.length < maxWorkers && messagesQueueSize)
+      (this.workers.length < maxWorkers && (messagesQueueSize || warmUpWorkers))
     ) {
       const worker = this.createNewWorker();
 
@@ -648,8 +664,7 @@ export class EasyWebWorker<
       ? this.workers.length
       : this.config.maxWorkers;
 
-    // if the source is an array of web workers we need to keep them alive
-    this.config.keepAlive = isArrayOfWebWorkers ? true : this.config.keepAlive;
+    return { isArrayOfWebWorkers };
   };
 
   private RemoveMessageFromQueue(messageId: string) {
