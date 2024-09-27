@@ -1,7 +1,7 @@
 import path from 'path';
 import url from 'url';
 import EasyWebWorker from '../src';
-import { createDecoupledPromise } from 'cancelable-promise-jq';
+import { createDecoupledPromise } from 'easy-cancelable-promise';
 
 describe('StaticEasyWebWorker', () => {
   let worker: EasyWebWorker<null, string>;

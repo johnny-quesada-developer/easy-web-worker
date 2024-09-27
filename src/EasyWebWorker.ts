@@ -4,7 +4,7 @@ import {
   CancelablePromise,
   Subscription,
   groupAsCancelablePromise,
-} from 'cancelable-promise-jq';
+} from 'easy-cancelable-promise';
 
 /**
  * EasyWorker Config

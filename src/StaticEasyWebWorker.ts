@@ -1,4 +1,4 @@
-import { Subscription } from 'cancelable-promise-jq';
+import { Subscription } from 'easy-cancelable-promise';
 import {
   IEasyWebWorkerMessage,
   IEasyWorkerInstance,

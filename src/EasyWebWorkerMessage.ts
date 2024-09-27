@@ -2,7 +2,7 @@ import {
   CancelablePromise,
   TDecoupledCancelablePromise,
   createDecoupledPromise,
-} from 'cancelable-promise-jq';
+} from 'easy-cancelable-promise';
 import { generatedId } from './EasyWebWorkerFixtures';
 
 /**

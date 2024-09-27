@@ -2,7 +2,7 @@
 
 ![Image John Avatar](https://raw.githubusercontent.com/johnny-quesada-developer/global-hooks-example/main/public/avatar2.jpeg)
 
-Hello and welcome to **easy-web-worker** with [cancelable-promise-jq](https://www.npmjs.com/package/cancelable-promise-jq) – your go-to solution for seamless **Web Workers** integration, now enhanced with cancelable promises! 🚀
+Hello and welcome to **easy-web-worker** with [easy-cancelable-promise](https://www.npmjs.com/package/easy-cancelable-promise) – your go-to solution for seamless **Web Workers** integration, now enhanced with cancelable promises! 🚀
 
 [Web Workers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers) are a native tool provided by **JavaScript**, allowing you to use them within your favorite framework like **React**, **Angular**, **Vue**, and others, or with pure **JavaScript** and **TypeScript**.
 
@@ -89,7 +89,7 @@ const worker = new EasyWebWorker(new Worker('./worker.js')); // ƒ Worker() { [n
 
 When working with **static files**, which can offer substantial benefits with web workers, you simply need to create an instance of **StaticEasyWebWorker**.
 
-The **StaticEasyWebWorker** provides an interface to continue working with [cancelable-promise-jq](https://www.npmjs.com/package/cancelable-promise-jq) and build more complex APIs within your worker.
+The **StaticEasyWebWorker** provides an interface to continue working with [easy-cancelable-promise](https://www.npmjs.com/package/easy-cancelable-promise) and build more complex APIs within your worker.
 
 From inside your worker, the message callbacks receive a message that includes multiple methods and functions. You can use these to communicate back with the main thread, or to subscribe to and react to the lifecycle of a worker.
 
@@ -152,7 +152,7 @@ onMessage('readCSV', (message) => {
 
 It's important to mention that the **cancel** method is the only one that provides two-way binding. It can travel all the way from the main thread to the worker, cancel something inside the worker, and notify the main thread upon completion.
 
-**easy-web-worker** is designed to enhance the capabilities of the **Worker** class by integrating a pattern of cancelable promises from the [cancelable-promise-jq](https://www.npmjs.com/package/cancelable-promise-jq) library. For straightforward tasks, it simplifies the process by eliminating the need to configure webpack or other bundlers. And for more complex requirements, the **StaticEasyWebWorker** class allows the integration of easy worker and cancelable promises capabilities into your static workers.
+**easy-web-worker** is designed to enhance the capabilities of the **Worker** class by integrating a pattern of cancelable promises from the [easy-cancelable-promise](https://www.npmjs.com/package/easy-cancelable-promise) library. For straightforward tasks, it simplifies the process by eliminating the need to configure webpack or other bundlers. And for more complex requirements, the **StaticEasyWebWorker** class allows the integration of easy worker and cancelable promises capabilities into your static workers.
 
 Start enhancing your applications with robust, cancelable promises and easy web worker integration today! 🌐
 
