@@ -10,6 +10,12 @@ Check out the running example with **React** and **TypeScript** at [CODEPEN](htt
 
 [Important!] Starting from version 4.0.0, EasyWebWorker supports concurrency mode. This means you can now configure whether a single **EasyWebWorker** should use multiple Web Worker instances. This feature is extremely powerful for code that requires not only heavy computations occasionally but also robust concurrent processing. For more detailed information, please see the section below. [concurrency mode](#concurrency-mode)
 
+#### IMPORTANT!
+
+If you were previously using **easy-web-worker** with **cancelable-promise-jq**, please note that the **cancelable-promise-jq** package has been renamed/deprecated. To continue using the latest version of **easy-web-worker**, simply uninstall **cancelable-promise-jq** and replace all imports with **easy-cancelable-promise**.
+
+I sincerely apologize for any inconvenience this may cause.
+
 ### Creating a web worker never was easier!
 
 ```ts
