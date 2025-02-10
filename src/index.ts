@@ -1,5 +1,5 @@
 export { EasyWebWorker as default } from './EasyWebWorker';
-
-export * from './EasyWebWorker';
-export * from './StaticEasyWebWorker';
-export * from './EasyWebWorker.functions';
+export { EasyWebWorker } from './EasyWebWorker';
+export { StaticEasyWebWorker } from './StaticEasyWebWorker';
+export { createEasyWebWorker } from './createEasyWebWorker';
+export { createStaticEasyWebWorker } from './createStaticEasyWebWorker';

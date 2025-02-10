@@ -1,13 +1,14 @@
-import { Subscription } from 'easy-cancelable-promise';
 import {
   IEasyWebWorkerMessage,
   IEasyWorkerInstance,
   IMessageData,
+  IWorkerData,
+  Subscription,
   TMessageCallback,
   TMessageCallbackType,
   TMessagePostType,
   TMessageStatus,
-} from './EasyWebWorker';
+} from './types';
 
 /**
  * Constructor for the StaticEasyWebWorker
@@ -27,7 +28,7 @@ export const StaticEasyWebWorker = function <TPayload = null, TResult = void>(
     /* This structure allows us to have multiple callbacks for the same worker */
     const workerCallbacks = new Map<
       string,
-      (message: IEasyWebWorkerMessage, data: IMessageData) => void
+      <T>(message: IEasyWebWorkerMessage, data: IMessageData<T>) => void
     >([
       [
         '',
@@ -90,7 +91,7 @@ export const StaticEasyWebWorker = function <TPayload = null, TResult = void>(
           return;
         }
 
-        const callbacksKeys = {
+        const callbacksKey = {
           resolved: 'onResolve',
           rejected: 'onReject',
           /**
@@ -101,22 +102,38 @@ export const StaticEasyWebWorker = function <TPayload = null, TResult = void>(
           pending: 'onProgress',
         }[targetMessageStatus] as TMessageCallbackType;
 
-        const targetCallbacks = messageCallbacks.get(callbacksKeys);
-
-        targetCallbacks?.forEach((callback) => callback(messageData, transfer));
-
+        const targetCallbacks = messageCallbacks.get(callbacksKey);
         const isMessageTermination = !messageData.progress;
 
-        if (isMessageTermination) {
-          /**
-           * If terminate the message, we also need to call the onFinalize callbacks if any
-           */
-          messageCallbacks
-            .get('onFinalize')
-            ?.forEach((callback) => callback(messageData, transfer));
+        try {
+          targetCallbacks?.forEach((callback) =>
+            callback(messageData, transfer)
+          );
 
-          /* If it's not a progress message means that the message is resolved | rejected | canceled */
+          if (isMessageTermination) {
+            /**
+             * If terminate the message, we also need to call the onFinalize callbacks if any
+             */
+            messageCallbacks
+              .get('onFinalize')
+              ?.forEach((callback) => callback(messageData, transfer));
+          }
+        } catch (error) {
+          // if there is an error, we should remove the message from the workerMessages
           workerMessages.delete(messageId);
+
+          throw {
+            message: 'Error while processing message id: ' + messageId,
+            error,
+            messageData,
+            messageType,
+            when: callbacksKey,
+          };
+        } finally {
+          if (isMessageTermination) {
+            /* If it's not a progress message means that the message is resolved | rejected | canceled */
+            workerMessages.delete(messageId);
+          }
         }
 
         self.postMessage({ messageId, ...messageData }, transfer);
@@ -230,34 +247,54 @@ export const StaticEasyWebWorker = function <TPayload = null, TResult = void>(
       self.close();
     };
 
-    self.onmessage = (event) => {
-      const { data } = event;
-      const { messageId, cancelation } = data;
+    self.onmessage = (event: MessageEvent<IWorkerData<TPayload>>) => {
+      const messageId = event?.data?.messageId;
+      const __is_easy_web_worker_message__ =
+        event?.data?.__is_easy_web_worker_message__ ?? false;
 
-      if (cancelation) {
-        const { reason } = cancelation;
+      const isEasyWebWorkerMessage =
+        messageId && __is_easy_web_worker_message__;
 
-        const message = workerMessages.get(messageId);
+      // if it's not an easy web worker message, we should ignore it
+      if (!isEasyWebWorkerMessage) return;
 
-        message.cancel(reason);
+      try {
+        const { data } = event;
+        const { cancelation } = data;
 
-        return;
+        if (cancelation) {
+          const { reason } = cancelation;
+
+          const message = workerMessages.get(messageId);
+
+          message.cancel(reason);
+
+          return;
+        }
+
+        const { method, execution } = event.data;
+        const { payload } = execution;
+
+        const message = createMessage({
+          method,
+          messageId,
+          payload,
+        });
+
+        workerMessages.set(messageId, message);
+
+        const callback = workerCallbacks.get(method || '');
+
+        callback(message, event as IMessageData);
+      } catch (error) {
+        // if there is an error, we should remove the message from the workerMessages
+        workerMessages.delete(event.data?.messageId);
+
+        throw {
+          message: 'Error while processing message id: ' + messageId,
+          event,
+        };
       }
-
-      const { method, execution } = event.data;
-      const { payload } = execution;
-
-      const message = createMessage({
-        method,
-        messageId,
-        payload,
-      });
-
-      workerMessages.set(messageId, message);
-
-      const callback = workerCallbacks.get(method || '');
-
-      callback(message, event);
     };
 
     const importScripts = (...scripts: string[]) => {
@@ -284,17 +321,3 @@ export const StaticEasyWebWorker = function <TPayload = null, TResult = void>(
     event: MessageEvent<IMessageData<TPayload>>
   ) => void
 ) => IEasyWorkerInstance<TPayload, TResult>;
-
-/**
- * This method is used to create a new instance of the easy static web worker
- */
-export const createStaticEasyWebWorker = <TPayload = null, TResult = void>(
-  onMessageCallback?: (
-    message: IEasyWebWorkerMessage<TPayload, TResult>,
-    event: MessageEvent<IMessageData<TPayload>>
-  ) => void
-) => {
-  const worker = new StaticEasyWebWorker(onMessageCallback);
-
-  return worker;
-};

@@ -1,7 +1,10 @@
 node_modules
 
-lib
-./lib
+/lib
+*.js
+*.d.ts
+/coverage
+.DS_Store
 
 lib/EasyWebWorker.d.ts
 lib/EasyWebWorker.d.ts.map

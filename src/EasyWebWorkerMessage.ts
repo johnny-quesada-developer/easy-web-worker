@@ -1,9 +1,9 @@
-import {
+import type {
   CancelablePromise,
   TDecoupledCancelablePromise,
-  createDecoupledPromise,
 } from 'easy-cancelable-promise';
-import { generatedId } from './EasyWebWorkerFixtures';
+import { createDecoupledPromise } from 'easy-cancelable-promise/createDecoupledPromise';
+import { uniqueId } from './uniqueId';
 
 /**
  * This class represents a message that will be send to a worker
@@ -38,7 +38,7 @@ export class EasyWebWorkerMessage<TPayload = null, TResult = void> {
   };
 
   constructor() {
-    this.messageId = generatedId();
+    this.messageId = uniqueId('ms:');
 
     this.decoupledPromise = createDecoupledPromise<TResult>();
     this.decoupledPromise._cancel = this.decoupledPromise.promise.cancel;

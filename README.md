@@ -19,6 +19,8 @@ I sincerely apologize for any inconvenience this may cause.
 ### Creating a web worker never was easier!
 
 ```ts
+import { createEasyWebWorker } from 'easy-web-worker/createEasyWebWorker';
+
 /**
  * The callback parameter will be the body of the worker
  */
@@ -328,6 +330,9 @@ let's see how to use it:
 // onMessage Callback is gonna receive all _send_ method calls.
 
 ```TS
+// imports only the static web worker
+import { createStaticEasyWebWorker } from 'easy-web-worker/createStaticEasyWebWorker';
+
 //  this is gonna create the same message structure the runtime Workers
 const { onMessage } = createStaticEasyWebWorker();
 

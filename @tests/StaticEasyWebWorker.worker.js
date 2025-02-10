@@ -46,7 +46,7 @@ const { URL_MOCK, BLOB_MOCK, WINDOW_MOCK } = require(path.resolve(
   });
 })();
 
-const easyWebWorkers = require(path.resolve(__dirname, '../lib/bundle.js'));
+const easyWebWorkers = require(path.resolve(__dirname, '../bundle.js'));
 const { createStaticEasyWebWorker } = easyWebWorkers;
 
 const worker = createStaticEasyWebWorker((message) => {

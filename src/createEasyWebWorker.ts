@@ -1,8 +1,5 @@
-import {
-  EasyWebWorker,
-  EasyWebWorkerBody,
-  IWorkerConfig,
-} from './EasyWebWorker';
+import { EasyWebWorkerBody, IWorkerConfig } from './types';
+import { EasyWebWorker } from './EasyWebWorker';
 
 export const createEasyWebWorker = <TPayload = null, TResult = void>(
   source:

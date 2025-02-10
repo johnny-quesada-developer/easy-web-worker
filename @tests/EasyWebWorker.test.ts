@@ -1,11 +1,7 @@
 import { Worker } from 'node:worker_threads';
 
-import {
-  EasyWebWorker,
-  EasyWebWorkerBody,
-  IEasyWebWorkerMessage,
-  createEasyWebWorker,
-} from '../src';
+import { EasyWebWorker, createEasyWebWorker } from '../src';
+import { EasyWebWorkerBody, IEasyWebWorkerMessage } from '../src/types';
 
 describe('EasyWebWorker', () => {
   beforeEach(() => {});

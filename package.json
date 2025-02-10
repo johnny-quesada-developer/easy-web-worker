@@ -1,11 +1,65 @@
 {
   "name": "easy-web-worker",
-  "version": "7.0.1",
+  "version": "7.0.2",
   "description": "This is a library to easily handle and create web-workers, if you are a web developer and never tried this... do not wait any longer! Workers are an amazing option to improve user experience and make your webpages even greater",
-  "main": "lib/bundle.js",
-  "types": "lib/index.d.ts",
+  "main": "./bundle.js",
+  "types": "./index.d.ts",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "import": "./bundle.js",
+      "require": "./bundle.js",
+      "types": "./index.d.ts"
+    },
+    "./createBlobWorker": {
+      "import": "./createBlobWorker.js",
+      "require": "./createBlobWorker.js",
+      "types": "./createBlobWorker.d.ts"
+    },
+    "./createEasyWebWorker": {
+      "import": "./createEasyWebWorker.js",
+      "require": "./createEasyWebWorker.js",
+      "types": "./createEasyWebWorker.d.ts"
+    },
+    "./createStaticEasyWebWorker": {
+      "import": "./createStaticEasyWebWorker.js",
+      "require": "./createStaticEasyWebWorker.js",
+      "types": "./createStaticEasyWebWorker.d.ts"
+    },
+    "./EasyWebWorker": {
+      "import": "./EasyWebWorker.js",
+      "require": "./EasyWebWorker.js",
+      "types": "./EasyWebWorker.d.ts"
+    },
+    "./EasyWebWorkerMessage": {
+      "import": "./EasyWebWorkerMessage.js",
+      "require": "./EasyWebWorkerMessage.js",
+      "types": "./EasyWebWorkerMessage.d.ts"
+    },
+    "./getWorkerTemplate": {
+      "import": "./getWorkerTemplate.js",
+      "require": "./getWorkerTemplate.js",
+      "types": "./getWorkerTemplate.d.ts"
+    },
+    "./StaticEasyWebWorker": {
+      "import": "./StaticEasyWebWorker.js",
+      "require": "./StaticEasyWebWorker.js",
+      "types": "./StaticEasyWebWorker.d.ts"
+    },
+    "./types": {
+      "import": "./types.js",
+      "require": "./types.js",
+      "types": "./types.d.ts"
+    },
+    "./uniqueId": {
+      "import": "./uniqueId.js",
+      "require": "./uniqueId.js",
+      "types": "./uniqueId.d.ts"
+    }
+  },
   "files": [
-    "lib"
+    "*.js",
+    "*.d.ts"
   ],
   "scripts": {
     "test": "npm run build && jest --maxWorkers=4 -c --no-watchman -u",
@@ -18,7 +72,8 @@
     "version": "npm run format && git add -A src",
     "postversion": "git push && git push --tags",
     "lint": "eslint src --ext .js,.jsx,.ts,.tsx --max-warnings=0",
-    "lint:fix": "eslint --fix src  --ext .js,.jsx,.ts,.tsx --max-warnings=0"
+    "lint:fix": "eslint --fix src  --ext .js,.jsx,.ts,.tsx --max-warnings=0",
+    "clean": "find . -maxdepth 1 -type f \\( -name '*.js' -o -name '*.d.ts' \\) ! -name 'webpack.config.js' -exec rm {} +"
   },
   "repository": {
     "type": "git",
@@ -42,14 +97,14 @@
   "devDependencies": {
     "@babel/core": "^7.21.3",
     "@babel/plugin-proposal-class-properties": "^7.18.6",
-    "@babel/plugin-transform-modules-commonjs": "^7.21.2",
     "@babel/plugin-proposal-export-namespace-from": "^7.18.9",
+    "@babel/plugin-transform-modules-commonjs": "^7.21.2",
     "@babel/preset-env": "^7.20.2",
     "@babel/preset-typescript": "^7.21.0",
     "@types/jest": "^29.2.4",
     "@types/node": "^20.11.0",
     "babel-loader": "^9.1.2",
-    "easy-cancelable-promise": "^1.0.1",
+    "easy-cancelable-promise": "^1.0.2",
     "jest": "^29.3.1",
     "jsdom": "^16.4.0",
     "ts-jest": "^29.1.1",
