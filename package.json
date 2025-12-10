@@ -1,6 +1,6 @@
 {
   "name": "easy-web-worker",
-  "version": "7.0.2",
+  "version": "7.0.3",
   "description": "This is a library to easily handle and create web-workers, if you are a web developer and never tried this... do not wait any longer! Workers are an amazing option to improve user experience and make your webpages even greater",
   "main": "./bundle.js",
   "types": "./index.d.ts",

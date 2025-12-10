@@ -3,3 +3,4 @@ export { EasyWebWorker } from './EasyWebWorker';
 export { StaticEasyWebWorker } from './StaticEasyWebWorker';
 export { createEasyWebWorker } from './createEasyWebWorker';
 export { createStaticEasyWebWorker } from './createStaticEasyWebWorker';
+export type * from './types';
