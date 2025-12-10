@@ -12,3 +12,5 @@ export const getWorkerTemplate = () => {
 
   return template;
 };
+
+export default getWorkerTemplate;

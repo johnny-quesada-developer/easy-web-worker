@@ -321,3 +321,5 @@ export const StaticEasyWebWorker = function <TPayload = null, TResult = void>(
     event: MessageEvent<IMessageData<TPayload>>
   ) => void
 ) => IEasyWorkerInstance<TPayload, TResult>;
+
+export default StaticEasyWebWorker;

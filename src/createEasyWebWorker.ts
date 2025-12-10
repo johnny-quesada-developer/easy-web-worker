@@ -16,3 +16,5 @@ export const createEasyWebWorker = <TPayload = null, TResult = void>(
 ) => {
   return new EasyWebWorker(source, parameters);
 };
+
+export default createEasyWebWorker;

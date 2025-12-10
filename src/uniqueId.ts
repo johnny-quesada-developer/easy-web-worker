@@ -7,3 +7,5 @@ export const uniqueId = (() => {
     return prefix + Date.now().toString(36) + (counter++).toString(36);
   };
 })();
+
+export default uniqueId;

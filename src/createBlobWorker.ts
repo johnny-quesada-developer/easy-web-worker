@@ -39,3 +39,5 @@ export const createBlobWorker = <
     new Blob([worker_content], { type: 'application/javascript' })
   );
 };
+
+export default createBlobWorker;

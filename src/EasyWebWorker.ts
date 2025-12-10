@@ -690,3 +690,5 @@ export class EasyWebWorker<
     this.workers = [];
   }
 }
+
+export default EasyWebWorker;

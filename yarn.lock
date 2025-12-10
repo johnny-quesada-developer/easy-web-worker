@@ -2070,10 +2070,10 @@ domexception@^2.0.1:
   dependencies:
     webidl-conversions "^5.0.0"
 
-easy-cancelable-promise@^1.0.2:
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/easy-cancelable-promise/-/easy-cancelable-promise-1.0.2.tgz#7972d04e67b3b143b4d4f6ace41f91fedd1a60af"
-  integrity sha512-WUNJHf9T+5CTyZvotUvAvo3Fc5PN+aF3JTfb5MtnNmbc3SUzLKwphykaNditdtvPzFHGmTprdePFNyh9rs+odQ==
+easy-cancelable-promise@^1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/easy-cancelable-promise/-/easy-cancelable-promise-1.0.3.tgz#1e8bc14b506f614a145abdffcc25f62133912278"
+  integrity sha512-hPwcwLjDWis8c7xzOYzG1ThuZPIA34VtGCSWIS1G1+rh6oODz3oL5N3rf5FrDBm6p5xe02ismgj6zt/hp4PsjQ==
 
 ejs@^3.1.10:
   version "3.1.10"

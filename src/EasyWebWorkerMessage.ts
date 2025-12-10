@@ -44,3 +44,5 @@ export class EasyWebWorkerMessage<TPayload = null, TResult = void> {
     this.decoupledPromise._cancel = this.decoupledPromise.promise.cancel;
   }
 }
+
+export default EasyWebWorkerMessage;

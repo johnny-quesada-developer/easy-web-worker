@@ -15,6 +15,15 @@ module.exports = {
     types: './src/types.ts',
     uniqueId: './src/uniqueId.ts',
   },
+  externals: {
+    'easy-cancelable-promise': 'easy-cancelable-promise',
+
+    'easy-cancelable-promise/CancelablePromise':
+      'easy-cancelable-promise/CancelablePromise',
+
+    'cancelable-promise/groupAsCancelablePromise':
+      'easy-cancelable-promise/groupAsCancelablePromise',
+  },
   output: {
     path: path.resolve(__dirname),
     filename: ({ chunk: { name } }) => {

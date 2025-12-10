@@ -14,3 +14,5 @@ export const createStaticEasyWebWorker = <TPayload = null, TResult = void>(
 
   return worker;
 };
+
+export default createStaticEasyWebWorker;
