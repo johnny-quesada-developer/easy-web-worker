@@ -72,6 +72,11 @@ for (const arg of rest) {
   passthrough.push(arg);
 }
 
+// Nx hides the output of successful tasks by default, which would hide the test summary.
+if (!passthrough.some((arg) => arg.startsWith('--output-style') || arg.startsWith('--outputStyle'))) {
+  passthrough.push('--output-style=stream-without-prefixes');
+}
+
 const nxArgs = project
   ? ['nx', 'run', `${project}:${task}`, ...passthrough]
   : ['nx', 'run-many', '-t', task, ...passthrough];

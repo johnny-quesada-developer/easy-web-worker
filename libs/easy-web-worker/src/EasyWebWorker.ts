@@ -430,8 +430,8 @@ export class EasyWebWorker<
   public cancelAll(
     reason?: unknown,
     { force = false } = {}
-  ): CancelablePromise<unknown[]> {
-    return new CancelablePromise<unknown[]>(
+  ): CancelablePromise<void> {
+    return new CancelablePromise<void>(
       async (resolve, _, { onCancel, reportProgress }) => {
         const messages = Array.from(this.messagesQueue?.values() ?? []);
         const total = messages.length;
@@ -439,6 +439,11 @@ export class EasyWebWorker<
 
         if (force) {
           return resolve(this.reboot(reason));
+        }
+
+        // groupAsCancelablePromise returns null when there are no promises
+        if (!total) {
+          return resolve();
         }
 
         const resultsPromise = groupAsCancelablePromise(
@@ -459,7 +464,7 @@ export class EasyWebWorker<
           resultsPromise.cancel();
         });
 
-        resolve(resultsPromise);
+        resolve(resultsPromise.then(() => {}));
       }
     );
   }
@@ -544,15 +549,18 @@ export class EasyWebWorker<
     };
 
     if (!this.config.keepAlive) {
-      decoupledPromise.promise?.finally?.(() => {
-        setTimeout(() => {
-          const { messagesQueue } = this;
-          if (messagesQueue.size) return;
+      decoupledPromise.promise
+        ?.finally?.(() => {
+          setTimeout(() => {
+            const { messagesQueue } = this;
+            if (messagesQueue.size) return;
 
-          this.workers.forEach((worker) => worker.terminate());
-          this.workers = [];
-        }, this.config.terminationDelay);
-      });
+            this.workers.forEach((worker) => worker.terminate());
+            this.workers = [];
+          }, this.config.terminationDelay);
+        })
+        // the rejection is handled by the consumer of the message promise
+        .catch(() => {});
     }
 
     this.addMessageToQueue(message as EasyWebWorkerMessage<unknown, unknown>);

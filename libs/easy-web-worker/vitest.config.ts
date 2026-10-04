@@ -20,6 +20,8 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       include: ['src/*.ts'],
+      // only type declarations
+      exclude: ['src/types.ts'],
       reportsDirectory: './coverage',
       reporter: ['text', 'html'],
     },
