@@ -1,0 +1,32 @@
+{
+  "mcpServers": {
+    "chrome-devtools": {
+      "type": "stdio",
+      "command": "/usr/local/bin/npx",
+      "args": [
+        "-y",
+        "chrome-devtools-mcp@latest",
+        "--isolated",
+        "--no-usage-statistics",
+        "--no-performance-crux"
+      ],
+      "env": {
+        "CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS": "1"
+      }
+    },
+    "playwright": {
+      "type": "stdio",
+      "command": "/usr/local/bin/npx",
+      "args": ["-y", "@playwright/mcp@latest", "--browser", "chrome"]
+    },
+    "context7": {
+      "type": "http",
+      "url": "https://mcp.context7.com/mcp"
+    },
+    "github": {
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/",
+      "headersHelper": "/usr/local/bin/node /Users/johnny/.claude/mcp-helpers/github-headers.cjs"
+    }
+  }
+}

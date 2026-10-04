@@ -13,3 +13,4 @@ lib/StaticEasyWebWorker.d.ts
 lib/StaticEasyWebWorker.d.ts.map
 lib/StaticEasyWebWorker.js
 coverage
+/brag-output
