@@ -4,6 +4,8 @@
     "production": [
       "default",
       "!{projectRoot}/__test__/**/*",
+      "!{projectRoot}/e2e/**/*",
+      "!{projectRoot}/playwright.config.ts",
       "!{projectRoot}/vitest.config.ts",
       "!{projectRoot}/vitest.setup.ts"
     ],

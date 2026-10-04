@@ -230,14 +230,14 @@ export class EasyWebWorker<
     const { workerUrl } = this;
     const { workerOptions } = this.config;
 
-    workerOptions.name = (() => {
+    const name = (() => {
       const { length } = this.workers;
       if (length === 0) return workerOptions.name;
 
       return `${workerOptions.name}-${length}`;
     })();
 
-    const worker = new Worker(workerUrl, workerOptions);
+    const worker = new Worker(workerUrl, { ...workerOptions, name });
 
     return this.fillWorkerMethods(worker);
   };
@@ -524,8 +524,27 @@ export class EasyWebWorker<
 
     const worker = this.getWorkerFromPool();
 
+    let isCancelationRequested = false;
+
     decoupledPromise.promise.cancel = (reason) => {
-      decoupledPromise.promise.cancel = decoupledPromise._cancel;
+      // the message was already completed, there is nothing to cancel
+      if (!this.messagesQueue.has(messageId)) {
+        return decoupledPromise.promise;
+      }
+
+      // if the worker was disposed, we need to automatically reject the promise
+      if (!this.workers.length) {
+        this.RemoveMessageFromQueue(messageId);
+
+        return decoupledPromise._cancel(reason);
+      }
+
+      // the worker was already notified, the promise will be canceled once the worker responds
+      if (isCancelationRequested) {
+        return decoupledPromise.promise;
+      }
+
+      isCancelationRequested = true;
 
       // if the message is canceled, we need to send a cancelation message to the worker,
       // once the worker response, the message will be removed from the queue nad the promise will be canceled in the main thread
@@ -538,12 +557,8 @@ export class EasyWebWorker<
         },
       };
 
-      // if the worker was disposed, we need to automatically reject the promise
-      if (!this.workers.length) {
-        return decoupledPromise.cancel(reason);
-      }
-
-      worker.postMessage(data, transfer);
+      // the transferable objects were already transferred with the message
+      worker.postMessage(data);
 
       return decoupledPromise.promise;
     };
@@ -574,7 +589,14 @@ export class EasyWebWorker<
       },
     };
 
-    worker.postMessage(data, transfer);
+    try {
+      worker.postMessage(data, transfer);
+    } catch (error) {
+      // the worker never received the message
+      this.RemoveMessageFromQueue(messageId);
+
+      throw error;
+    }
 
     return decoupledPromise.promise;
   };

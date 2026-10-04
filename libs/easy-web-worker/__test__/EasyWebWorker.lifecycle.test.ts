@@ -170,6 +170,24 @@ describe('EasyWebWorker (pool and life cycle)', () => {
       expect(worker2.postMessage).toHaveBeenCalledTimes(1);
     });
 
+    it('should give a different name to each worker', async () => {
+      const worker = new EasyWebWorker(workerBody, {
+        maxWorkers: 3,
+        warmUpWorkers: true,
+        workerOptions: { name: 'pool' },
+      });
+
+      const names = () => FakeWorker.instances.map(({ name }) => name);
+
+      expect(names()).toEqual(['pool', 'pool-1', 'pool-2']);
+      expect(worker.config.workerOptions.name).toEqual('pool');
+
+      await worker.reboot();
+
+      // the new workers start from the same name
+      expect(names().slice(3)).toEqual(['pool', 'pool-1', 'pool-2']);
+    });
+
     it('should not expose a single worker when there are multiple workers', () => {
       const worker = new EasyWebWorker(workerBody, {
         maxWorkers: 2,
@@ -363,6 +381,128 @@ describe('EasyWebWorker (pool and life cycle)', () => {
       await promise;
 
       expect(errorLogger).toHaveBeenCalledWith('reason');
+    });
+  });
+
+  describe('message cancelation', () => {
+    const getQueueSize = (worker: unknown) =>
+      (worker as { messagesQueue: Map<string, unknown> }).messagesQueue.size;
+
+    it('should only request the cancelation once', async () => {
+      const worker = new EasyWebWorker(workerBody);
+      const [fakeWorker] = FakeWorker.instances;
+      const errorLogger = vi.fn();
+
+      const message = worker.send();
+      const promise = message.catch(errorLogger);
+
+      expect(message.cancel('first')).toBe(message);
+      expect(message.cancel('second')).toBe(message);
+
+      // the message and a single cancelation
+      expect(fakeWorker.received.length).toEqual(2);
+
+      fakeWorker.reply({
+        messageId: fakeWorker.received[0].messageId,
+        worker_cancelation: { reason: 'first' },
+      });
+
+      await promise;
+
+      // already canceled
+      message.cancel('third');
+
+      expect(fakeWorker.received.length).toEqual(2);
+      expect(errorLogger).toHaveBeenCalledTimes(1);
+      expect(errorLogger).toHaveBeenCalledWith('first');
+    });
+
+    it('should do nothing when the message was already completed', async () => {
+      const worker = new EasyWebWorker<null, string>(workerBody);
+      const [fakeWorker] = FakeWorker.instances;
+
+      const message = worker.send();
+
+      fakeWorker.reply({
+        messageId: fakeWorker.received[0].messageId,
+        resolved: { payload: ['result'] },
+      });
+
+      expect(await message).toEqual('result');
+      expect(message.cancel('late')).toBe(message);
+      expect(await message).toEqual('result');
+
+      // only the message, no cancelation
+      expect(fakeWorker.received.length).toEqual(1);
+    });
+
+    it('should not send the transferable objects again', () => {
+      const worker = new EasyWebWorker<ArrayBuffer, void>(workerBody);
+      const [fakeWorker] = FakeWorker.instances;
+      const buffer = new ArrayBuffer(8);
+
+      const message = worker.send(buffer, [buffer]);
+
+      message.catch(() => {});
+      message.cancel('reason');
+
+      const [execution, cancelation] = fakeWorker.postMessage.mock.calls;
+
+      expect(execution[1]).toEqual([buffer]);
+      expect(cancelation.length).toEqual(1);
+    });
+
+    it('should remove from the queue a message that could not be sent', async () => {
+      const worker = new EasyWebWorker(workerBody);
+      const [fakeWorker] = FakeWorker.instances;
+      const postError = new Error('the payload could not be cloned');
+
+      fakeWorker.postMessage.mockImplementationOnce(() => {
+        throw postError;
+      });
+
+      expect(() => worker.send()).toThrow(postError);
+      expect(getQueueSize(worker)).toEqual(0);
+
+      // there is nothing to wait for
+      await worker.cancelAll();
+
+      expect(fakeWorker.postMessage).toHaveBeenCalledTimes(1);
+    });
+
+    it('should clean the queue on reboot', async () => {
+      const worker = new EasyWebWorker(workerBody);
+      const errorLogger = vi.fn();
+
+      const promises = [
+        worker.send().catch(errorLogger),
+        worker.send().catch(errorLogger),
+      ];
+
+      expect(getQueueSize(worker)).toEqual(2);
+
+      await worker.reboot('reason');
+      await Promise.all(promises);
+
+      expect(getQueueSize(worker)).toEqual(0);
+      expect(errorLogger).toHaveBeenCalledTimes(2);
+    });
+
+    it('should cancel on reboot a message that was waiting for the worker cancelation', async () => {
+      const worker = new EasyWebWorker(workerBody);
+      const errorLogger = vi.fn();
+
+      const message = worker.send();
+      const promise = message.catch(errorLogger);
+
+      // the terminated worker will never confirm this cancelation
+      message.cancel('first');
+
+      await worker.reboot('reboot');
+      await promise;
+
+      expect(errorLogger).toHaveBeenCalledWith('reboot');
+      expect(getQueueSize(worker)).toEqual(0);
     });
   });
 

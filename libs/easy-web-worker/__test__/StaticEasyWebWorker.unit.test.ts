@@ -306,6 +306,25 @@ describe('StaticEasyWebWorker (worker scope)', () => {
       );
     });
 
+    it('should ignore the cancelation of a message that is not pending', () => {
+      const onCancel = vi.fn();
+
+      createStaticEasyWebWorker((message) => {
+        message.onCancel(onCancel);
+        message.resolve();
+      });
+
+      send('m1');
+
+      cancelFromMainThread('m1', 'reason');
+      cancelFromMainThread('unknown', 'reason');
+
+      expect(onCancel).not.toHaveBeenCalled();
+
+      // only the resolution of the message
+      expect(selfMock.postMessage).toHaveBeenCalledTimes(1);
+    });
+
     it('should only cancel the requested message', () => {
       const messages = new Map<string, any>();
 

@@ -267,7 +267,8 @@ export const StaticEasyWebWorker = function <TPayload = null, TResult = void>(
 
           const message = workerMessages.get(messageId);
 
-          message.cancel(reason);
+          // the message could be already completed, in that case there is nothing to cancel
+          message?.cancel(reason);
 
           return;
         }

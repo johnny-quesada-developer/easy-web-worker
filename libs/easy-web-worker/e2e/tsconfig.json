@@ -1,0 +1,16 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": "..",
+    "noEmit": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "types": ["node"],
+    "paths": {
+      "easy-web-worker": ["./src/index.ts"],
+      "easy-web-worker/*": ["./src/*"]
+    }
+  },
+  "include": ["./**/*.ts", "../playwright.config.ts", "../src/**/*"],
+  "exclude": ["./.harness", "./.results"]
+}

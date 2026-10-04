@@ -4,7 +4,10 @@ import { EasyWebWorkerBody } from './types';
 const getImportScriptsTemplate = (scripts: string[] = []) => {
   if (!scripts.length) return '';
 
-  return `self.importScripts(["${scripts.join('","')}"]);`;
+  // importScripts receives each script as an argument, not as a collection
+  return `self.importScripts(${scripts
+    .map((script) => JSON.stringify(script))
+    .join(',')});`;
 };
 
 export const createBlobWorker = <

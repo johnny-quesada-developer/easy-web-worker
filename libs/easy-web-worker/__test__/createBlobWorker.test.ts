@@ -96,6 +96,20 @@ describe('createBlobWorker', () => {
     expect(content.indexOf(script)).toBeLessThan(content.indexOf('let ew$='));
   });
 
+  it('should import each script as an argument', () => {
+    const scripts = ['https://example.com/a.js', 'https://example.com/b.js'];
+
+    const content = getWorkerContent(() =>
+      createBlobWorker(workerBody, scripts)
+    );
+
+    expect(
+      content.startsWith(
+        'self.importScripts("https://example.com/a.js","https://example.com/b.js");'
+      )
+    ).toEqual(true);
+  });
+
   it('should include the primitive parameters', () => {
     const primitiveParameters = [1, 'text', true];
 
@@ -159,6 +173,60 @@ describe('getWorkerTemplate', () => {
     expect(typeof easyWorker.close).toEqual('function');
     expect(typeof easyWorker.importScripts).toEqual('function');
     expect(typeof selfMock.onmessage).toEqual('function');
+  });
+});
+
+describe('getWorkerTemplate (worker scope)', () => {
+  // the template is a minified copy of StaticEasyWebWorker, this covers that copy
+  const createWorker = () => {
+    const selfMock = {
+      onmessage: null as (event: unknown) => void,
+      postMessage: vi.fn(),
+    };
+
+    const easyWorker = new Function(
+      'self',
+      `return ${getWorkerTemplate()}`
+    )(selfMock);
+
+    return { selfMock, easyWorker };
+  };
+
+  it('should resolve a message', () => {
+    const { selfMock, easyWorker } = createWorker();
+
+    easyWorker.onMessage((message) => message.resolve('result'));
+
+    selfMock.onmessage({
+      data: {
+        messageId: 'm1',
+        __is_easy_web_worker_message__: true,
+        execution: { payload: null },
+      },
+    });
+
+    expect(selfMock.postMessage).toHaveBeenCalledWith(
+      { messageId: 'm1', resolved: { payload: ['result'] } },
+      []
+    );
+  });
+
+  it('should ignore the cancelation of a message that is not pending', () => {
+    const { selfMock, easyWorker } = createWorker();
+
+    easyWorker.onMessage(() => {});
+
+    expect(() =>
+      selfMock.onmessage({
+        data: {
+          messageId: 'unknown',
+          __is_easy_web_worker_message__: true,
+          cancelation: { reason: 'reason' },
+        },
+      })
+    ).not.toThrow();
+
+    expect(selfMock.postMessage).not.toHaveBeenCalled();
   });
 });
 

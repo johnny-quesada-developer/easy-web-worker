@@ -8,6 +8,9 @@ artifacts/
 
 # test / coverage output
 coverage/
+e2e/.harness/
+e2e/.results/
+playwright-report/
 
 # Nx cache and workspace data
 .nx/cache
@@ -22,3 +25,4 @@ coverage/
 .DS_Store
 
 /brag-output
+libs/easy-web-worker/e2e/.results

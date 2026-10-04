@@ -84,15 +84,19 @@
     "test:debug:no-watch": "vitest run --inspect-brk --no-file-parallelism",
     "test:coverage": "vitest run --coverage",
     "test:interop": "yarn build && tsx scripts/test-interop.ts",
+    "test:e2e": "yarn ts-check:e2e && playwright test",
+    "test:e2e:dist": "yarn build && EASY_WEB_WORKER_TEST_TARGET=dist playwright test",
+    "test:e2e:ui": "playwright test --ui",
     "build": "yarn ts-check && yarn clean && tsc -p tsconfig.build.json && tsx esbuild.config.ts && tsx ../../scripts/prepare-dist.ts",
-    "validate": "yarn test && yarn test:dist && tsx scripts/test-interop.ts",
+    "validate": "yarn test && yarn test:dist && tsx scripts/test-interop.ts && yarn test:e2e && EASY_WEB_WORKER_TEST_TARGET=dist playwright test",
     "npm-publish": "node ../../scripts/assert-publish-version.mjs latest && cd dist && npm publish --tag latest --registry https://registry.npmjs.org/ ${NPM_OTP:+--otp=$NPM_OTP} ${NPM_DRY_RUN:+--dry-run}",
     "npm-publish:beta": "node ../../scripts/assert-publish-version.mjs beta && cd dist && npm publish --tag beta --registry https://registry.npmjs.org/ ${NPM_OTP:+--otp=$NPM_OTP} ${NPM_DRY_RUN:+--dry-run}",
     "publish:pkg": "yarn npm-publish",
     "publish:beta": "yarn npm-publish:beta",
-    "clean": "rm -rf dist coverage",
+    "clean": "rm -rf dist coverage e2e/.harness e2e/.results",
     "ts-check": "tsc -p tsconfig.json --noEmit",
-    "ts-check:tests": "tsc -p __test__/tsconfig.json --noEmit"
+    "ts-check:tests": "tsc -p __test__/tsconfig.json --noEmit",
+    "ts-check:e2e": "tsc -p e2e/tsconfig.json --noEmit"
   },
   "repository": {
     "type": "git",
