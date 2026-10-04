@@ -46,7 +46,15 @@ const { URL_MOCK, BLOB_MOCK, WINDOW_MOCK } = require(path.resolve(
   });
 })();
 
-const easyWebWorkers = require(path.resolve(__dirname, '../bundle.js'));
+// same switch as jest.config.cjs: the worker loads the source or the built package
+const isDistTarget = process.env.EASY_WEB_WORKER_TEST_TARGET === 'dist';
+
+if (!isDistTarget) require('tsx/cjs');
+
+const easyWebWorkers = require(path.resolve(
+  __dirname,
+  isDistTarget ? '../dist/bundle.cjs' : '../src/index.ts'
+));
 const { createStaticEasyWebWorker } = easyWebWorkers;
 
 const worker = createStaticEasyWebWorker((message) => {

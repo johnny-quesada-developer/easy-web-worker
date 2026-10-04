@@ -1,0 +1,14 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": "..",
+    "noEmit": true,
+    "types": ["jest", "node"],
+    "paths": {
+      "easy-web-worker": ["./src/index.ts"],
+      "easy-web-worker/*": ["./src/*"]
+    }
+  },
+  "include": ["../src/**/*", "../types/**/*", "./**/*.ts", "../jest.setup.ts"],
+  "exclude": []
+}

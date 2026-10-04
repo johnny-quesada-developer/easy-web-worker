@@ -1,0 +1,135 @@
+{
+  "name": "easy-web-worker",
+  "version": "7.0.6",
+  "description": "This is a library to easily handle and create web-workers, if you are a web developer and never tried this... do not wait any longer! Workers are an amazing option to improve user experience and make your webpages even greater",
+  "main": "./bundle.cjs",
+  "module": "./bundle.mjs",
+  "types": "./index.d.ts",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "node": "./bundle.cjs",
+      "import": "./bundle.mjs",
+      "require": "./bundle.cjs"
+    },
+    "./createBlobWorker": {
+      "types": "./createBlobWorker.d.ts",
+      "node": "./createBlobWorker.cjs",
+      "import": "./createBlobWorker.mjs",
+      "require": "./createBlobWorker.cjs"
+    },
+    "./createEasyWebWorker": {
+      "types": "./createEasyWebWorker.d.ts",
+      "node": "./createEasyWebWorker.cjs",
+      "import": "./createEasyWebWorker.mjs",
+      "require": "./createEasyWebWorker.cjs"
+    },
+    "./createStaticEasyWebWorker": {
+      "types": "./createStaticEasyWebWorker.d.ts",
+      "node": "./createStaticEasyWebWorker.cjs",
+      "import": "./createStaticEasyWebWorker.mjs",
+      "require": "./createStaticEasyWebWorker.cjs"
+    },
+    "./EasyWebWorker": {
+      "types": "./EasyWebWorker.d.ts",
+      "node": "./EasyWebWorker.cjs",
+      "import": "./EasyWebWorker.mjs",
+      "require": "./EasyWebWorker.cjs"
+    },
+    "./EasyWebWorkerMessage": {
+      "types": "./EasyWebWorkerMessage.d.ts",
+      "node": "./EasyWebWorkerMessage.cjs",
+      "import": "./EasyWebWorkerMessage.mjs",
+      "require": "./EasyWebWorkerMessage.cjs"
+    },
+    "./getWorkerTemplate": {
+      "types": "./getWorkerTemplate.d.ts",
+      "node": "./getWorkerTemplate.cjs",
+      "import": "./getWorkerTemplate.mjs",
+      "require": "./getWorkerTemplate.cjs"
+    },
+    "./StaticEasyWebWorker": {
+      "types": "./StaticEasyWebWorker.d.ts",
+      "node": "./StaticEasyWebWorker.cjs",
+      "import": "./StaticEasyWebWorker.mjs",
+      "require": "./StaticEasyWebWorker.cjs"
+    },
+    "./types": {
+      "types": "./types.d.ts",
+      "node": "./types.cjs",
+      "import": "./types.mjs",
+      "require": "./types.cjs"
+    },
+    "./uniqueId": {
+      "types": "./uniqueId.d.ts",
+      "node": "./uniqueId.cjs",
+      "import": "./uniqueId.mjs",
+      "require": "./uniqueId.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "*.js",
+    "*.cjs",
+    "*.mjs",
+    "*.d.ts"
+  ],
+  "scripts": {
+    "test": "yarn ts-check:tests && jest",
+    "test:quick": "jest",
+    "test:dist": "yarn build && EASY_WEB_WORKER_TEST_TARGET=dist jest",
+    "test:debug": "node --inspect-brk ../../node_modules/.bin/jest --watch --runInBand",
+    "test:coverage": "jest --coverage",
+    "test:interop": "yarn build && tsx scripts/test-interop.ts",
+    "build": "yarn ts-check && yarn clean && tsc -p tsconfig.build.json && tsx esbuild.config.ts && tsx ../../scripts/prepare-dist.ts",
+    "validate": "yarn test && yarn test:dist && tsx scripts/test-interop.ts",
+    "npm-publish": "node ../../scripts/assert-publish-version.mjs latest && cd dist && npm publish --tag latest --registry https://registry.npmjs.org/ ${NPM_OTP:+--otp=$NPM_OTP} ${NPM_DRY_RUN:+--dry-run}",
+    "npm-publish:beta": "node ../../scripts/assert-publish-version.mjs beta && cd dist && npm publish --tag beta --registry https://registry.npmjs.org/ ${NPM_OTP:+--otp=$NPM_OTP} ${NPM_DRY_RUN:+--dry-run}",
+    "publish:pkg": "yarn npm-publish",
+    "publish:beta": "yarn npm-publish:beta",
+    "clean": "rm -rf dist coverage",
+    "ts-check": "tsc -p tsconfig.json --noEmit",
+    "ts-check:tests": "tsc -p __test__/tsconfig.json --noEmit"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/johnny-quesada-developer/easy-web-worker.git"
+  },
+  "keywords": [
+    "react",
+    "web",
+    "worker",
+    "workers",
+    "threads",
+    "thread",
+    "typescript"
+  ],
+  "author": "johnny quesada",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/johnny-quesada-developer/easy-web-worker/issues"
+  },
+  "homepage": "https://github.com/johnny-quesada-developer/easy-web-worker#readme",
+  "dependencies": {
+    "easy-cancelable-promise": "^1.0.3"
+  },
+  "peerDependencies": {
+    "easy-cancelable-promise": "^1.0.3"
+  },
+  "peerDependenciesMeta": {
+    "easy-cancelable-promise": {
+      "optional": false
+    }
+  },
+  "contributors": [
+    {
+      "name": "Johnny Quesada",
+      "url": "https://github.com/johnny-quesada-developer"
+    },
+    {
+      "name": "Gabriele Cirulli",
+      "url": "https://github.com/gabrielecirulli"
+    }
+  ]
+}

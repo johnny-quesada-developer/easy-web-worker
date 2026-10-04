@@ -1,6 +1,6 @@
 import path from 'path';
 import url from 'url';
-import EasyWebWorker from '../src';
+import EasyWebWorker from 'easy-web-worker';
 import { createDecoupledPromise } from 'easy-cancelable-promise/createDecoupledPromise';
 
 describe('StaticEasyWebWorker', () => {
@@ -9,7 +9,7 @@ describe('StaticEasyWebWorker', () => {
   beforeEach(() => {
     worker = new EasyWebWorker<null, string>(
       url.pathToFileURL(
-        path.resolve(__dirname, '../@tests/StaticEasyWebWorker.worker.js')
+        path.resolve(__dirname, '../__test__/StaticEasyWebWorker.worker.js')
       ),
       {
         workerOptions: {

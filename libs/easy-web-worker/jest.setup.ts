@@ -1,5 +1,5 @@
 import { Worker } from 'node:worker_threads';
-import { URL_MOCK, BLOB_MOCK, WINDOW_MOCK } from './@tests/fixtures';
+import { URL_MOCK, BLOB_MOCK, WINDOW_MOCK } from './__test__/fixtures';
 
 export class WORKER_MOCK extends Worker {
   constructor(source: string) {

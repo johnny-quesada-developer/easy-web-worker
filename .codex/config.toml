@@ -21,3 +21,14 @@ url = "https://mcp.context7.com/mcp"
 [mcp_servers.github]
 url = "https://api.githubcopilot.com/mcp/"
 http_headers_helper = "/usr/local/bin/node /Users/johnny/.claude/mcp-helpers/github-headers.cjs"
+
+[mcp_servers.nx]
+command = "/usr/local/bin/npx"
+args = ["-y", "nx-mcp@latest", "/Users/johnny/Documents/github/personal/easy-web-worker", "--no-minimal", "--disableTelemetry"]
+startup_timeout_sec = 60
+tool_timeout_sec = 60
+
+[mcp_servers.nx.env]
+PATH = "/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+NX_DAEMON = "false"
+NX_NO_CLOUD = "true"

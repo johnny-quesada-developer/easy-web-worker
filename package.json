@@ -1,93 +1,33 @@
 {
-  "name": "easy-web-worker",
+  "name": "easy-web-worker-monorepo",
   "version": "7.0.6",
-  "description": "This is a library to easily handle and create web-workers, if you are a web developer and never tried this... do not wait any longer! Workers are an amazing option to improve user experience and make your webpages even greater",
-  "main": "./bundle.js",
-  "types": "./index.d.ts",
-  "sideEffects": false,
-  "exports": {
-    ".": {
-      "import": "./bundle.js",
-      "require": "./bundle.js",
-      "types": "./index.d.ts"
-    },
-    "./createBlobWorker": {
-      "import": "./createBlobWorker.js",
-      "require": "./createBlobWorker.js",
-      "types": "./createBlobWorker.d.ts"
-    },
-    "./createEasyWebWorker": {
-      "import": "./createEasyWebWorker.js",
-      "require": "./createEasyWebWorker.js",
-      "types": "./createEasyWebWorker.d.ts"
-    },
-    "./createStaticEasyWebWorker": {
-      "import": "./createStaticEasyWebWorker.js",
-      "require": "./createStaticEasyWebWorker.js",
-      "types": "./createStaticEasyWebWorker.d.ts"
-    },
-    "./EasyWebWorker": {
-      "import": "./EasyWebWorker.js",
-      "require": "./EasyWebWorker.js",
-      "types": "./EasyWebWorker.d.ts"
-    },
-    "./EasyWebWorkerMessage": {
-      "import": "./EasyWebWorkerMessage.js",
-      "require": "./EasyWebWorkerMessage.js",
-      "types": "./EasyWebWorkerMessage.d.ts"
-    },
-    "./getWorkerTemplate": {
-      "import": "./getWorkerTemplate.js",
-      "require": "./getWorkerTemplate.js",
-      "types": "./getWorkerTemplate.d.ts"
-    },
-    "./StaticEasyWebWorker": {
-      "import": "./StaticEasyWebWorker.js",
-      "require": "./StaticEasyWebWorker.js",
-      "types": "./StaticEasyWebWorker.d.ts"
-    },
-    "./types": {
-      "import": "./types.js",
-      "require": "./types.js",
-      "types": "./types.d.ts"
-    },
-    "./uniqueId": {
-      "import": "./uniqueId.js",
-      "require": "./uniqueId.js",
-      "types": "./uniqueId.d.ts"
-    }
-  },
-  "files": [
-    "*.js",
-    "*.d.ts"
+  "private": true,
+  "description": "Monorepo for the easy-web-worker package.",
+  "workspaces": [
+    "libs/*"
   ],
   "scripts": {
-    "test": "npm run build && jest --maxWorkers=4 -c --no-watchman -u",
-    "test:debug": "npm run build && node --inspect-brk node_modules/.bin/jest --watch --runInBand",
-    "test:debug:quick": "node --inspect-brk node_modules/.bin/jest --watch --runInBand",
-    "test:quick": "jest --maxWorkers=4 -c --no-watchman -u",
-    "test:coverage": "npm run build && jest --maxWorkers=4 -c --colors --no-watchman --verbose --coverage",
-    "build": "webpack --config webpack.config.js",
-    "prepare": "npm run build",
-    "version": "npm run format && git add -A src",
-    "postversion": "git push && git push --tags",
-    "lint": "eslint src --ext .js,.jsx,.ts,.tsx --max-warnings=0",
-    "lint:fix": "eslint --fix src  --ext .js,.jsx,.ts,.tsx --max-warnings=0",
-    "clean": "find . -maxdepth 1 -type f \\( -name '*.js' -o -name '*.d.ts' \\) ! -name 'webpack.config.js' -exec rm {} +"
+    "test": "node scripts/run.mjs test",
+    "test:quick": "node scripts/run.mjs test:quick",
+    "test:dist": "node scripts/run.mjs test:dist",
+    "test:debug": "node scripts/run.mjs test:debug",
+    "test:coverage": "node scripts/run.mjs test:coverage",
+    "test:interop": "node scripts/run.mjs test:interop",
+    "build": "node scripts/run.mjs build",
+    "clean": "node scripts/run.mjs clean",
+    "ts-check": "node scripts/run.mjs ts-check",
+    "ts-check:tests": "node scripts/run.mjs ts-check:tests",
+    "prepare-packages": "node scripts/run.mjs validate",
+    "tarball": "node scripts/tarball.mjs",
+    "publish:pkg": "node scripts/run.mjs publish:pkg",
+    "publish:beta": "node scripts/run.mjs publish:beta",
+    "publish:dry-run": "NPM_DRY_RUN=1 node scripts/run.mjs publish:pkg",
+    "graph": "nx graph"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/johnny-quesada-developer/easy-web-worker.git"
   },
-  "keywords": [
-    "react",
-    "web",
-    "worker",
-    "workers",
-    "threads",
-    "thread",
-    "typescript"
-  ],
   "author": "johnny quesada",
   "license": "ISC",
   "bugs": {
@@ -95,43 +35,16 @@
   },
   "homepage": "https://github.com/johnny-quesada-developer/easy-web-worker#readme",
   "devDependencies": {
-    "@babel/core": "^7.21.3",
-    "@babel/plugin-proposal-class-properties": "^7.18.6",
-    "@babel/plugin-proposal-export-namespace-from": "^7.18.9",
-    "@babel/plugin-transform-modules-commonjs": "^7.21.2",
-    "@babel/preset-env": "^7.20.2",
-    "@babel/preset-typescript": "^7.21.0",
     "@types/jest": "^29.2.4",
     "@types/node": "^20.11.0",
-    "babel-loader": "^9.1.2",
+    "esbuild": "^0.24.0",
     "jest": "^29.3.1",
     "jsdom": "^16.4.0",
+    "nx": "^23.0.0",
+    "semver": "^7.6.0",
     "ts-jest": "^29.1.1",
-    "ts-loader": "^9.4.2",
     "tslib": "^2.4.1",
-    "typescript": "^5.3.3",
-    "webpack": "^5.76.3",
-    "webpack-cli": "^5.0.1"
-  },
-  "dependencies": {
-    "easy-cancelable-promise": "^1.0.3"
-  },
-  "peerDependencies": {
-    "easy-cancelable-promise": "^1.0.3"
-  },
-  "peerDependenciesMeta": {
-    "easy-cancelable-promise": {
-      "optional": false
-    }
-  },
-  "contributors": [
-    {
-      "name": "Johnny Quesada",
-      "url": "https://github.com/johnny-quesada-developer"
-    },
-    {
-      "name": "Gabriele Cirulli",
-      "url": "https://github.com/gabrielecirulli"
-    }
-  ]
+    "tsx": "^4.19.0",
+    "typescript": "^5.3.3"
+  }
 }

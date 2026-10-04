@@ -1,0 +1,64 @@
+{
+  "name": "easy-web-worker",
+  "sourceRoot": "libs/easy-web-worker/src",
+  "projectType": "library",
+  "tags": ["type:lib"],
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "outputs": ["{projectRoot}/dist"],
+      "options": { "command": "yarn build", "cwd": "libs/easy-web-worker" }
+    },
+    "validate": {
+      "executor": "nx:run-commands",
+      "outputs": ["{projectRoot}/dist"],
+      "options": { "command": "yarn validate", "cwd": "libs/easy-web-worker" }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": { "command": "yarn test", "cwd": "libs/easy-web-worker" }
+    },
+    "test:quick": {
+      "executor": "nx:run-commands",
+      "options": { "command": "yarn test:quick", "cwd": "libs/easy-web-worker" }
+    },
+    "test:dist": {
+      "executor": "nx:run-commands",
+      "outputs": ["{projectRoot}/dist"],
+      "options": { "command": "yarn test:dist", "cwd": "libs/easy-web-worker" }
+    },
+    "test:debug": {
+      "executor": "nx:run-commands",
+      "options": { "command": "yarn test:debug", "cwd": "libs/easy-web-worker" }
+    },
+    "test:coverage": {
+      "executor": "nx:run-commands",
+      "outputs": ["{projectRoot}/coverage"],
+      "options": { "command": "yarn test:coverage", "cwd": "libs/easy-web-worker" }
+    },
+    "test:interop": {
+      "executor": "nx:run-commands",
+      "options": { "command": "yarn test:interop", "cwd": "libs/easy-web-worker" }
+    },
+    "clean": {
+      "executor": "nx:run-commands",
+      "options": { "command": "yarn clean", "cwd": "libs/easy-web-worker" }
+    },
+    "ts-check": {
+      "executor": "nx:run-commands",
+      "options": { "command": "yarn ts-check", "cwd": "libs/easy-web-worker" }
+    },
+    "ts-check:tests": {
+      "executor": "nx:run-commands",
+      "options": { "command": "yarn ts-check:tests", "cwd": "libs/easy-web-worker" }
+    },
+    "publish:pkg": {
+      "executor": "nx:run-commands",
+      "options": { "command": "yarn publish:pkg", "cwd": "libs/easy-web-worker" }
+    },
+    "publish:beta": {
+      "executor": "nx:run-commands",
+      "options": { "command": "yarn publish:beta", "cwd": "libs/easy-web-worker" }
+    }
+  }
+}

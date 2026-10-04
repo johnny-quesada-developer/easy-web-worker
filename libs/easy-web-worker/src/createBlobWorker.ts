@@ -10,7 +10,7 @@ const getImportScriptsTemplate = (scripts: string[] = []) => {
 export const createBlobWorker = <
   IPayload = null,
   IResult = void,
-  TPrimitiveParameters extends any[] = unknown[]
+  TPrimitiveParameters extends any[] = unknown[],
 >(
   source:
     | EasyWebWorkerBody<IPayload, IResult>

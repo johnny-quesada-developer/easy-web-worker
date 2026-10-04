@@ -1,16 +1,24 @@
-node_modules
+# dependencies
+node_modules/
 
-/lib
-*.js
-*.d.ts
-/coverage
+# build output
+dist/
+artifacts/
+*.tsbuildinfo
+
+# test / coverage output
+coverage/
+
+# Nx cache and workspace data
+.nx/cache
+.nx/workspace-data
+
+# local environment
+.npmrc
+.env
+.env.local
+
+# os noise
 .DS_Store
 
-lib/EasyWebWorker.d.ts
-lib/EasyWebWorker.d.ts.map
-lib/EasyWebWorker.js
-lib/StaticEasyWebWorker.d.ts
-lib/StaticEasyWebWorker.d.ts.map
-lib/StaticEasyWebWorker.js
-coverage
 /brag-output
