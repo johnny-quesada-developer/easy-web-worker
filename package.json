@@ -17,6 +17,7 @@
     "test:e2e:dist": "node scripts/run.mjs test:e2e:dist",
     "test:e2e:ui": "node scripts/run.mjs test:e2e:ui",
     "build": "node scripts/run.mjs build",
+    "build:template": "node scripts/run.mjs build:template",
     "clean": "node scripts/run.mjs clean",
     "ts-check": "node scripts/run.mjs ts-check",
     "ts-check:tests": "node scripts/run.mjs ts-check:tests",

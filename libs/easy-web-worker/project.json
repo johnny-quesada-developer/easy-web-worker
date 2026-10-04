@@ -16,6 +16,13 @@
         "cwd": "libs/easy-web-worker"
       }
     },
+    "build:template": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "yarn build:template",
+        "cwd": "libs/easy-web-worker"
+      }
+    },
     "validate": {
       "executor": "nx:run-commands",
       "outputs": [

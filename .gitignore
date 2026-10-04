@@ -8,8 +8,8 @@ artifacts/
 
 # test / coverage output
 coverage/
-e2e/.harness/
-e2e/.results/
+**/e2e/.harness/
+**/e2e/.results/
 playwright-report/
 
 # Nx cache and workspace data

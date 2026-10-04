@@ -7,6 +7,10 @@ import getWorkerTemplateDefault, {
 } from 'easy-web-worker/getWorkerTemplate';
 
 import uniqueIdDefault, { uniqueId } from 'easy-web-worker/uniqueId';
+import {
+  buildWorkerTemplate,
+  getTemplateModuleStatus,
+} from '../scripts/workerTemplate';
 import { EasyWebWorkerBody } from 'easy-web-worker/types';
 
 describe('createBlobWorker', () => {
@@ -176,8 +180,21 @@ describe('getWorkerTemplate', () => {
   });
 });
 
+describe('getWorkerTemplate (generated file)', () => {
+  it('should be generated from the current StaticEasyWebWorker', async () => {
+    const { isUpToDate } = await getTemplateModuleStatus();
+
+    expect(
+      isUpToDate,
+      'src/getWorkerTemplate.ts is outdated, run `yarn build:template`'
+    ).toEqual(true);
+
+    expect(getWorkerTemplate()).toEqual(await buildWorkerTemplate());
+  });
+});
+
 describe('getWorkerTemplate (worker scope)', () => {
-  // the template is a minified copy of StaticEasyWebWorker, this covers that copy
+  // the template is a minified build of StaticEasyWebWorker, this covers that build
   const createWorker = () => {
     const selfMock = {
       onmessage: null as (event: unknown) => void,
