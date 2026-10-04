@@ -16,8 +16,10 @@ const outdir = path.resolve(harness, '../.harness');
 const target = process.env.EASY_WEB_WORKER_TEST_TARGET === 'dist' ? 'dist' : 'src';
 const port = Number(process.env.EASY_WEB_WORKER_E2E_PORT ?? 4319);
 
-const subject =
-  target === 'dist' ? path.join(root, 'dist/bundle.mjs') : path.join(root, 'src/index.ts');
+const resolveSubject = (name: string) =>
+  target === 'dist' ? path.join(root, `dist/${name}.mjs`) : path.join(root, `src/${name}.ts`);
+
+const subject = target === 'dist' ? resolveSubject('bundle') : resolveSubject('index');
 
 const contentTypes: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
@@ -35,13 +37,17 @@ async function build(): Promise<void> {
     entryPoints: {
       main: path.join(harness, 'main.ts'),
       'static.worker': path.join(harness, 'static.worker.ts'),
+      'define.worker': path.join(harness, 'define.worker.ts'),
     },
     outdir,
     bundle: true,
     format: 'iife',
     platform: 'browser',
     target: ['es2020'],
-    alias: { 'easy-web-worker': subject },
+    alias: {
+      'easy-web-worker': subject,
+      'easy-web-worker/defineWorker': resolveSubject('defineWorker'),
+    },
     logLevel: 'warning',
   });
 }

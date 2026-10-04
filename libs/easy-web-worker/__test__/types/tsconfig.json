@@ -1,0 +1,20 @@
+{
+  // Type-checks the published declarations (./dist) the way a consumer with strict settings would.
+  // Run `yarn build` first.
+  "compilerOptions": {
+    "strict": true,
+    "noEmit": true,
+    "target": "ES2020",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "lib": ["es2020", "dom"],
+    "skipLibCheck": true,
+    "types": [],
+    "baseUrl": ".",
+    "paths": {
+      "easy-web-worker": ["../../dist/index.d.ts"],
+      "easy-web-worker/*": ["../../dist/*"]
+    }
+  },
+  "include": ["./*.ts"]
+}

@@ -19,5 +19,5 @@
     }
   },
   "include": ["../src/**/*", "../types/**/*", "./**/*.ts", "../vitest.setup.ts"],
-  "exclude": []
+  "exclude": ["./types"]
 }

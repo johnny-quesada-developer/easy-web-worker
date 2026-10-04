@@ -10,6 +10,7 @@
     "test": "node scripts/run.mjs test",
     "test:quick": "node scripts/run.mjs test:quick",
     "test:dist": "node scripts/run.mjs test:dist",
+    "test:types": "node scripts/run.mjs test:types",
     "test:debug": "node scripts/run.mjs test:debug",
     "test:coverage": "node scripts/run.mjs test:coverage",
     "test:interop": "node scripts/run.mjs test:interop",

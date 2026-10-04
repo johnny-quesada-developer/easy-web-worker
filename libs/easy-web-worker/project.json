@@ -57,6 +57,13 @@
         "cwd": "libs/easy-web-worker"
       }
     },
+    "test:types": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "yarn test:types",
+        "cwd": "libs/easy-web-worker"
+      }
+    },
     "test:debug": {
       "executor": "nx:run-commands",
       "options": {

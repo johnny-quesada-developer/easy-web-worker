@@ -1,3 +1,7 @@
+import type { CancelablePromise } from 'easy-cancelable-promise/CancelablePromise';
+import type { EasyWebWorker } from './EasyWebWorker';
+import type { workerInstance$ } from './unwrap';
+
 export type Subscription = () => void;
 
 /**
@@ -298,3 +302,136 @@ export interface IEasyWebWorkerMessage<TPayload = null, TResult = void> {
    */
   readonly onFinalize: (callback: TMessageCallback) => Subscription;
 }
+
+/**
+ * Message received by the methods of defineWorker as second parameter.
+ * The result of these methods is the value they return, that is why resolve is not typed with the result here.
+ * Use onMessage<TPayload, TResult>().handle(...) to get a message with a typed resolve.
+ */
+export type WorkerMethodMessage<TPayload = null> = Omit<
+  IEasyWebWorkerMessage<TPayload, unknown>,
+  'resolve'
+> & {
+  /**
+   * This method is used to resolve the message from inside the worker
+   * */
+  readonly resolve: (result?: unknown, transfer?: Transferable[]) => void;
+};
+
+/**
+ * Method of a worker created with defineWorker: the value it returns resolves the message, the error it throws rejects it
+ */
+export type WorkerMethodHandler<TPayload = null, TResult = void> = (
+  payload: TPayload,
+  message: WorkerMethodMessage<TPayload>,
+  event: MessageEvent<IMessageData<TPayload>>
+) => TResult | Promise<TResult>;
+
+/**
+ * Method of a worker created with onMessage<TPayload, TResult>().handle(...),
+ * the message is completed by the callback whenever it calls resolve, reject or cancel
+ */
+export type WorkerDeferredHandler<TPayload = null, TResult = void> = {
+  readonly handle: (
+    message: IEasyWebWorkerMessage<TPayload, TResult>,
+    event: MessageEvent<IMessageData<TPayload>>
+  ) => void;
+};
+
+export type WorkerMethods = Record<
+  string,
+  WorkerMethodHandler<any, any> | WorkerDeferredHandler<any, any>
+>;
+
+/**
+ * Helper of defineWorker to create the methods of the worker with the types inferred
+ */
+export type WorkerOnMessage = {
+  /**
+   * The value returned by the handler resolves the message, the error it throws rejects it.
+   * The payload type is taken from the first parameter and the result type from the returned value.
+   */
+  <TPayload = null, TResult = void>(
+    handler: WorkerMethodHandler<TPayload, TResult>
+  ): WorkerMethodHandler<TPayload, TResult>;
+
+  /**
+   * Creates a method that receives only the message and completes it whenever it wants
+   */
+  <TPayload = null, TResult = void>(): {
+    handle: (
+      callback: WorkerDeferredHandler<TPayload, TResult>['handle']
+    ) => WorkerDeferredHandler<TPayload, TResult>;
+  };
+};
+
+export type WorkerHelpers = {
+  onMessage: WorkerOnMessage;
+};
+
+/**
+ * Result of defineWorker, export its type to use the worker from the main thread:
+ * export type MyWorker = typeof worker;
+ */
+export type WorkerDefinition<TMethods extends WorkerMethods = WorkerMethods> = {
+  readonly [workerInstance$]: IEasyWorkerInstance;
+
+  /**
+   * Only carries the type of the methods, it does not exist at runtime
+   */
+  readonly __methods?: TMethods;
+};
+
+type IsAny<T> = 0 extends 1 & T ? true : false;
+
+/**
+ * How a method of the worker is called from the main thread
+ */
+export type WorkerMethodCaller<TPayload, TResult> = IsAny<TPayload> extends true
+  ? (payload?: TPayload, transfer?: Transferable[]) => CancelablePromise<TResult>
+  : [TPayload] extends [null | undefined | void]
+    ? () => CancelablePromise<TResult>
+    : undefined extends TPayload
+      ? (
+          payload?: TPayload,
+          transfer?: Transferable[]
+        ) => CancelablePromise<TResult>
+      : (
+          payload: TPayload,
+          transfer?: Transferable[]
+        ) => CancelablePromise<TResult>;
+
+/**
+ * The methods of a worker as they are called from the main thread
+ */
+export type WorkerApi<TMethods> = {
+  readonly [TName in keyof TMethods]: TMethods[TName] extends WorkerDeferredHandler<
+    infer TPayload,
+    infer TResult
+  >
+    ? WorkerMethodCaller<TPayload, TResult>
+    : TMethods[TName] extends (...parameters: infer TParameters) => infer TReturn
+      ? WorkerMethodCaller<
+          TParameters extends [] ? null : TParameters[0],
+          Awaited<TReturn>
+        >
+      : never;
+};
+
+/**
+ * Extracts the methods from the type of a worker definition: typeof worker
+ */
+export type InferWorkerMethods<TWorker> =
+  TWorker extends WorkerDefinition<infer TMethods>
+    ? TMethods
+    : TWorker extends WorkerMethods
+      ? TWorker
+      : never;
+
+/**
+ * Result of createWorker: only the methods of the worker.
+ * Use unwrap(worker) to reach the EasyWebWorker instance behind it.
+ */
+export type WorkerProxy<TWorker> = WorkerApi<InferWorkerMethods<TWorker>> & {
+  readonly [workerInstance$]: EasyWebWorker<unknown, unknown>;
+};

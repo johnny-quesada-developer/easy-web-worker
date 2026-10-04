@@ -19,6 +19,10 @@ const entryPoints: Record<string, string> = {
   StaticEasyWebWorker: 'src/StaticEasyWebWorker.ts',
   types: 'src/types.ts',
   uniqueId: 'src/uniqueId.ts',
+  createWorker: 'src/createWorker.ts',
+  defineWorker: 'src/defineWorker.ts',
+  // internal module shared by createWorker and defineWorker (kept as a sibling file, not a public subpath)
+  unwrap: 'src/unwrap.ts',
 };
 
 // Resolve runtime dependencies from the consumer's installation.

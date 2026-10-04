@@ -1,6 +1,9 @@
 import { EasyWebWorkerBody, IWorkerConfig } from './types';
 import { EasyWebWorker } from './EasyWebWorker';
 
+/**
+ * @deprecated use createWorker, or new EasyWebWorker(...) to keep working with send and sendToMethod
+ */
 export const createEasyWebWorker = <TPayload = null, TResult = void>(
   source:
     | EasyWebWorkerBody<TPayload, TResult>

@@ -67,6 +67,18 @@
       "import": "./uniqueId.mjs",
       "require": "./uniqueId.cjs"
     },
+    "./createWorker": {
+      "types": "./createWorker.d.ts",
+      "node": "./createWorker.cjs",
+      "import": "./createWorker.mjs",
+      "require": "./createWorker.cjs"
+    },
+    "./defineWorker": {
+      "types": "./defineWorker.d.ts",
+      "node": "./defineWorker.cjs",
+      "import": "./defineWorker.mjs",
+      "require": "./defineWorker.cjs"
+    },
     "./package.json": "./package.json"
   },
   "files": [
@@ -79,7 +91,8 @@
     "test": "yarn ts-check:tests && vitest run",
     "test:watch": "vitest",
     "test:quick": "vitest run",
-    "test:dist": "yarn build && EASY_WEB_WORKER_TEST_TARGET=dist vitest run",
+    "test:dist": "yarn build && yarn test:types && EASY_WEB_WORKER_TEST_TARGET=dist vitest run",
+    "test:types": "tsc -p __test__/types/tsconfig.json",
     "test:debug": "vitest --inspect-brk --no-file-parallelism",
     "test:debug:no-watch": "vitest run --inspect-brk --no-file-parallelism",
     "test:coverage": "vitest run --coverage",

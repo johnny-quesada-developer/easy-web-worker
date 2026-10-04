@@ -46,6 +46,7 @@ const e2e = {
   settleWithin,
   describeError,
   staticWorkerUrl: `${location.origin}/static.worker.js`,
+  defineWorkerUrl: `${location.origin}/define.worker.js`,
   scriptUrl: (name: string) => `${location.origin}/scripts/${name}.js`,
 };
 

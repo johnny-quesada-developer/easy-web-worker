@@ -4,10 +4,9 @@ Object.defineProperty(exports, '__esModule', { value: true });
 const path = require('path');
 const { parentPort, isMainThread, workerData } = require('node:worker_threads');
 
-const { URL_MOCK, BLOB_MOCK, WINDOW_MOCK } = require(path.resolve(
-  __dirname,
-  './fixtures.js'
-));
+const { URL_MOCK, BLOB_MOCK, WINDOW_MOCK } = require(
+  path.resolve(__dirname, './fixtures.js')
+);
 
 /**
  * Mocking environment for static easy web worker
@@ -51,10 +50,12 @@ const isDistTarget = process.env.EASY_WEB_WORKER_TEST_TARGET === 'dist';
 
 if (!isDistTarget) require('tsx/cjs');
 
-const easyWebWorkers = require(path.resolve(
-  __dirname,
-  isDistTarget ? '../dist/bundle.cjs' : '../src/index.ts'
-));
+const easyWebWorkers = require(
+  path.resolve(
+    __dirname,
+    isDistTarget ? '../dist/bundle.cjs' : '../src/index.ts'
+  )
+);
 const { createStaticEasyWebWorker } = easyWebWorkers;
 
 const worker = createStaticEasyWebWorker((message) => {

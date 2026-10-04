@@ -74,13 +74,27 @@ try {
   run('npm', ['install', tarballPath, '--no-audit', '--no-fund'], work);
   fs.rmSync(tarballPath, { force: true });
 
-  const namedExports = ['EasyWebWorker', 'StaticEasyWebWorker', 'createEasyWebWorker', 'createStaticEasyWebWorker'];
+  const namedExports = [
+    'EasyWebWorker',
+    'StaticEasyWebWorker',
+    'createEasyWebWorker',
+    'createStaticEasyWebWorker',
+    'createWorker',
+    'defineWorker',
+    'unwrap',
+  ];
 
   // 3) ESM probes: root entry + a subpath.
   const esmProbeLines = (withDefaultImport: boolean) => [
     "import * as root from 'easy-web-worker';",
     "import { EasyWebWorker } from 'easy-web-worker';",
     "import { uniqueId } from 'easy-web-worker/uniqueId';",
+    "import { defineWorker, unwrap as unwrapFromDefine } from 'easy-web-worker/defineWorker';",
+    "import { createWorker, unwrap as unwrapFromCreate } from 'easy-web-worker/createWorker';",
+    "for (const fn of [defineWorker, createWorker, unwrapFromDefine, unwrapFromCreate]) {",
+    "  if (typeof fn !== 'function') { console.error('subpath export not callable'); process.exit(12); }",
+    '}',
+    "if (unwrapFromDefine !== unwrapFromCreate) { console.error('unwrap is not shared between the entries'); process.exit(13); }",
     withDefaultImport ? "import defaultUniqueId from 'easy-web-worker/uniqueId';" : 'const defaultUniqueId = uniqueId;',
     `for (const name of ${JSON.stringify(namedExports)}) {`,
     "  if (typeof root[name] !== 'function') { console.error('root export not callable: ' + name); process.exit(3); }",
@@ -123,10 +137,33 @@ try {
   if (!browserOut.includes('ok:')) fail(`browser bundle probe unexpected output: ${browserOut}`);
   console.log(`[interop] browser bundle: ${browserOut}`);
 
+  // 3d) A worker file only needs defineWorker: the main thread code must stay out of its bundle.
+  const workerEntry = path.join(work, 'worker-entry.mjs');
+  fs.writeFileSync(
+    workerEntry,
+    "import { defineWorker } from 'easy-web-worker/defineWorker';\ndefineWorker(() => ({ ping: () => 'pong' }));"
+  );
+  run(
+    esbuildBin,
+    [workerEntry, '--bundle', '--platform=browser', '--format=iife', '--metafile=worker-meta.json', '--outfile=worker-bundle.js'],
+    work
+  );
+  const workerInputs = Object.keys(
+    (JSON.parse(fs.readFileSync(path.join(work, 'worker-meta.json'), 'utf8')) as { inputs: Record<string, unknown> }).inputs
+  );
+  const mainThreadOnly = ['EasyWebWorker.mjs', 'createBlobWorker.mjs', 'getWorkerTemplate.mjs', 'createWorker.mjs'];
+  const leaked = workerInputs.filter(
+    (input) => mainThreadOnly.includes(path.basename(input)) || input.includes('easy-cancelable-promise')
+  );
+  if (leaked.length) fail(`the worker bundle includes main thread code: ${leaked.join(', ')}`);
+  console.log(`[interop] worker bundle:  ok:${JSON.stringify(workerInputs.map((input) => path.basename(input)))}`);
+
   // 4) CJS probe.
   const cjsProbe = [
     "const root = require('easy-web-worker');",
     "const u = require('easy-web-worker/uniqueId');",
+    "if (typeof require('easy-web-worker/defineWorker').defineWorker !== 'function') { console.error('cjs defineWorker not callable'); process.exit(14); }",
+    "if (typeof require('easy-web-worker/createWorker').createWorker !== 'function') { console.error('cjs createWorker not callable'); process.exit(15); }",
     `for (const name of ${JSON.stringify(namedExports)}) {`,
     "  if (typeof root[name] !== 'function') { console.error('cjs root export not callable: ' + name); process.exit(7); }",
     '}',

@@ -1,10 +1,31 @@
 import { afterEach, beforeEach, vi } from 'vitest';
+import path from 'node:path';
 import { Worker } from 'node:worker_threads';
 import { URL_MOCK, BLOB_MOCK, WINDOW_MOCK } from './__test__/fixtures';
 
+const isDistTarget = process.env.EASY_WEB_WORKER_TEST_TARGET === 'dist';
+
+/**
+ * The worker files written in typescript are loaded with tsx,
+ * its tsconfig resolves `easy-web-worker` to the source or to the built package, same switch as vitest.config.ts
+ */
+const typescriptWorkerOptions = {
+  execArgv: ['--import', 'tsx'],
+  env: {
+    ...process.env,
+    TSX_TSCONFIG_PATH: path.resolve(
+      __dirname,
+      isDistTarget ? '__test__/tsconfig.dist.json' : '__test__/tsconfig.json'
+    ),
+  },
+};
+
 export class WORKER_MOCK extends Worker {
-  constructor(source: string) {
-    super(source);
+  constructor(source: string | URL) {
+    super(
+      source,
+      String(source).endsWith('.ts') ? typescriptWorkerOptions : undefined
+    );
 
     this.addListener('message', (message) => {
       this.onmessage?.(message);

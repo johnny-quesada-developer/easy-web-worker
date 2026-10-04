@@ -1,0 +1,10 @@
+{
+  // Used by the worker threads when the tests run against the built package (./dist)
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "easy-web-worker": ["./dist/bundle.cjs"],
+      "easy-web-worker/*": ["./dist/*"]
+    }
+  }
+}
