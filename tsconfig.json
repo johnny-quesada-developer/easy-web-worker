@@ -3,11 +3,7 @@
     "target": "ES2016",
     "module": "commonjs",
     "moduleResolution": "node",
-    "lib": [
-      "es2016",
-      "dom",
-      "webworker",
-    ],
+    "lib": ["es2016", "dom", "webworker"],
     "declaration": true,
     "outDir": "./",
     "strict": true,
@@ -28,23 +24,12 @@
     "sourceMap": true,
     "allowJs": true,
     "declarationDir": "./",
-    "typeRoots": [
-      "node_modules/@types",
-      "./types"
-    ],
+    "typeRoots": ["node_modules/@types", "./types"],
     "baseUrl": ".",
     "paths": {
-      "*": [
-        "src/*"
-      ]
+      "*": ["easy-web-worker/*"]
     }
   },
-  "include": [
-    "src/**/*",
-    "types/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "lib"
-  ]
+  "include": ["easy-web-worker/**/*", "types/**/*"],
+  "exclude": ["node_modules", "lib"]
 }
