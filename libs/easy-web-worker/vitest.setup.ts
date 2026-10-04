@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, vi } from 'vitest';
 import { Worker } from 'node:worker_threads';
 import { URL_MOCK, BLOB_MOCK, WINDOW_MOCK } from './__test__/fixtures';
 
@@ -33,6 +34,6 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  jest.restoreAllMocks();
-  jest.clearAllMocks();
+  vi.restoreAllMocks();
+  vi.clearAllMocks();
 });

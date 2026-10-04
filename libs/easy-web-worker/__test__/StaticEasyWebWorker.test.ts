@@ -54,7 +54,7 @@ describe('StaticEasyWebWorker', () => {
       it('should correctly report progress on children promises', async () => {
         expect.assertions(2);
 
-        const progressLogger = jest.fn();
+        const progressLogger = vi.fn();
 
         const numericResult = await worker
           .sendToMethod<number>('progressTest')
@@ -136,7 +136,7 @@ describe('StaticEasyWebWorker', () => {
         });
 
         // Cancel the operation and check for errors
-        const errorLogger = jest.fn();
+        const errorLogger = vi.fn();
         await asyncOperation.cancel('cancel').catch(errorLogger);
         expect(errorLogger).toHaveBeenCalledTimes(1);
 
@@ -155,10 +155,10 @@ describe('StaticEasyWebWorker', () => {
         it('Worker should correctly invalid previous messages', () => {
           expect.assertions(4);
 
-          const callback1 = jest.fn();
-          const callback2 = jest.fn();
-          const callback3 = jest.fn();
-          const errorLogger = jest.fn();
+          const callback1 = vi.fn();
+          const callback2 = vi.fn();
+          const callback3 = vi.fn();
+          const errorLogger = vi.fn();
 
           worker
             .sendToMethod('asyncOperation')
@@ -186,11 +186,11 @@ describe('StaticEasyWebWorker', () => {
         it('Worker should correctly invalid previous messages after current execution', async () => {
           expect.assertions(5);
 
-          const callback1 = jest.fn();
-          const callback2 = jest.fn();
-          const callback3 = jest.fn();
-          const errorLogger = jest.fn();
-          const onProgressLogger = jest.fn();
+          const callback1 = vi.fn();
+          const callback2 = vi.fn();
+          const callback3 = vi.fn();
+          const errorLogger = vi.fn();
+          const onProgressLogger = vi.fn();
 
           worker.send().then(callback1);
 
@@ -218,8 +218,8 @@ describe('StaticEasyWebWorker', () => {
         it('Worker stop reporting progress after cancel', async () => {
           // expect.assertions(2);
 
-          const progressLogger = jest.fn();
-          const errorLogger = jest.fn();
+          const progressLogger = vi.fn();
+          const errorLogger = vi.fn();
 
           let onProgressSpy = createDecoupledPromise();
 
@@ -256,9 +256,9 @@ describe('StaticEasyWebWorker', () => {
         it('should correctly dispose worker (remove worker and revokeObjectURL)', async () => {
           expect.assertions(4);
 
-          const callback1 = jest.fn();
-          const callback2 = jest.fn();
-          const errorLogger = jest.fn();
+          const callback1 = vi.fn();
+          const callback2 = vi.fn();
+          const errorLogger = vi.fn();
 
           worker
             .sendToMethod('asyncOperation')
@@ -283,8 +283,8 @@ describe('StaticEasyWebWorker', () => {
         it('should correctly cancel worker', async () => {
           expect.assertions(2);
 
-          const callback1 = jest.fn();
-          const errorLogger = jest.fn();
+          const callback1 = vi.fn();
+          const errorLogger = vi.fn();
 
           await worker
             .sendToMethod('asyncOperation')
@@ -299,8 +299,8 @@ describe('StaticEasyWebWorker', () => {
         it('should cancel the message from inside the worker', async () => {
           expect.assertions(2);
 
-          const callback1 = jest.fn();
-          const errorLogger = jest.fn();
+          const callback1 = vi.fn();
+          const errorLogger = vi.fn();
 
           await worker
             .sendToMethod('cancelTest')
@@ -320,8 +320,8 @@ describe('StaticEasyWebWorker', () => {
             it(`should correctly subscribe to ${callbackKey}`, async () => {
               expect.assertions(5);
 
-              const callback1 = jest.fn();
-              const errorLogger = jest.fn();
+              const callback1 = vi.fn();
+              const errorLogger = vi.fn();
 
               worker
                 .sendToMethod('sendOpenMessage', callbackKey)
@@ -368,8 +368,8 @@ describe('StaticEasyWebWorker', () => {
           it(`should transfer a big array buffer when ${action}`, async () => {
             expect.assertions(4);
 
-            const errorLogger = jest.fn();
-            const progressLogger = jest.fn();
+            const errorLogger = vi.fn();
+            const progressLogger = vi.fn();
             const bigArrayBuffer = new ArrayBuffer(1000000);
 
             type TPayload = {

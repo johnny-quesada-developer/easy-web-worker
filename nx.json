@@ -4,8 +4,8 @@
     "production": [
       "default",
       "!{projectRoot}/__test__/**/*",
-      "!{projectRoot}/jest.config.cjs",
-      "!{projectRoot}/jest.setup.ts"
+      "!{projectRoot}/vitest.config.ts",
+      "!{projectRoot}/vitest.setup.ts"
     ],
     "sharedGlobals": ["{workspaceRoot}/tsconfig.base.json", "{workspaceRoot}/.prettierrc"]
   },

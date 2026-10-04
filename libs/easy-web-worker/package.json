@@ -76,11 +76,13 @@
     "*.d.ts"
   ],
   "scripts": {
-    "test": "yarn ts-check:tests && jest",
-    "test:quick": "jest",
-    "test:dist": "yarn build && EASY_WEB_WORKER_TEST_TARGET=dist jest",
-    "test:debug": "node --inspect-brk ../../node_modules/.bin/jest --watch --runInBand",
-    "test:coverage": "jest --coverage",
+    "test": "yarn ts-check:tests && vitest run",
+    "test:watch": "vitest",
+    "test:quick": "vitest run",
+    "test:dist": "yarn build && EASY_WEB_WORKER_TEST_TARGET=dist vitest run",
+    "test:debug": "vitest --inspect-brk --no-file-parallelism",
+    "test:debug:no-watch": "vitest run --inspect-brk --no-file-parallelism",
+    "test:coverage": "vitest run --coverage",
     "test:interop": "yarn build && tsx scripts/test-interop.ts",
     "build": "yarn ts-check && yarn clean && tsc -p tsconfig.build.json && tsx esbuild.config.ts && tsx ../../scripts/prepare-dist.ts",
     "validate": "yarn test && yarn test:dist && tsx scripts/test-interop.ts",

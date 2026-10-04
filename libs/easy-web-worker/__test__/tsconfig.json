@@ -3,12 +3,21 @@
   "compilerOptions": {
     "baseUrl": "..",
     "noEmit": true,
-    "types": ["jest", "node"],
+    // `bundler` resolution lets TS read vitest's `exports` map for its `globals` types; it
+    // requires an ES module setting. This config only type-checks (noEmit), so overriding
+    // `module` here is safe and does not affect the build.
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    // The parent config's `typeRoots` only covers `@types` + local `./types`, which prevents
+    // TS from finding `vitest/globals` (it lives at `node_modules/vitest`). Include the plain
+    // `node_modules` root here so the vitest globals types resolve.
+    "typeRoots": ["../../../node_modules/@types", "../../../node_modules", "../types"],
+    "types": ["vitest/globals", "node"],
     "paths": {
       "easy-web-worker": ["./src/index.ts"],
       "easy-web-worker/*": ["./src/*"]
     }
   },
-  "include": ["../src/**/*", "../types/**/*", "./**/*.ts", "../jest.setup.ts"],
+  "include": ["../src/**/*", "../types/**/*", "./**/*.ts", "../vitest.setup.ts"],
   "exclude": []
 }

@@ -1,5 +1,4 @@
 {
-    "cSpell.words": [
-        "cancelation"
-    ]
+  "cSpell.words": ["cancelation"],
+  "js/ts.tsdk.path": "node_modules/typescript/lib"
 }

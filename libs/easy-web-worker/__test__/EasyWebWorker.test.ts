@@ -102,7 +102,7 @@ describe('EasyWebWorker', () => {
           });
         });
 
-        const progressLogger = jest.fn();
+        const progressLogger = vi.fn();
 
         return worker
           .send(1)
@@ -119,7 +119,7 @@ describe('EasyWebWorker', () => {
       it('worker should correctly report progress', async () => {
         expect.assertions(2);
 
-        const onProgressSpy = jest.fn();
+        const onProgressSpy = vi.fn();
 
         const worker = createEasyWebWorker<null, number>((easyWorker) => {
           const countTo100 = (message: IEasyWebWorkerMessage<null, number>) => {
@@ -146,7 +146,7 @@ describe('EasyWebWorker', () => {
       it('worker content should run correctly messages workerBody[] (multiple body sources)', async () => {
         expect.assertions(2);
 
-        const onProgressSpy = jest.fn(() => {});
+        const onProgressSpy = vi.fn(() => {});
 
         const worker = createEasyWebWorker<null, number>([
           (_easyWorker, context) => {
@@ -217,7 +217,7 @@ describe('EasyWebWorker', () => {
           });
         });
 
-        const errorLogger = jest.fn();
+        const errorLogger = vi.fn();
 
         await worker
           .sendToMethod('doSomething', 2)
@@ -284,10 +284,10 @@ describe('EasyWebWorker', () => {
             easyWorker.onMessage(countTo100);
           });
 
-          const callback1 = jest.fn();
-          const callback2 = jest.fn();
-          const callback3 = jest.fn();
-          const errorLogger = jest.fn();
+          const callback1 = vi.fn();
+          const callback2 = vi.fn();
+          const callback3 = vi.fn();
+          const errorLogger = vi.fn();
 
           worker.send().then(callback1).catch(errorLogger);
           worker.send().then(callback2).catch(errorLogger);
@@ -330,10 +330,10 @@ describe('EasyWebWorker', () => {
             easyWorker.onMessage(countTo100);
           });
 
-          const callback1 = jest.fn();
-          const callback2 = jest.fn();
-          const callback3 = jest.fn();
-          const errorLogger = jest.fn();
+          const callback1 = vi.fn();
+          const callback2 = vi.fn();
+          const callback3 = vi.fn();
+          const errorLogger = vi.fn();
 
           worker.send().then(callback1);
           worker.send().then(callback2).catch(errorLogger);
@@ -374,10 +374,10 @@ describe('EasyWebWorker', () => {
             easyWorker.onMessage(countTo100);
           });
 
-          const callback1 = jest.fn();
-          const callback2 = jest.fn();
-          const callback3 = jest.fn();
-          const errorLogger = jest.fn();
+          const callback1 = vi.fn();
+          const callback2 = vi.fn();
+          const callback3 = vi.fn();
+          const errorLogger = vi.fn();
 
           worker.send().then(callback1);
           worker.send().then(callback2).catch(errorLogger);
@@ -422,9 +422,9 @@ describe('EasyWebWorker', () => {
             easyWorker.onMessage(countTo100);
           });
 
-          const callback1 = jest.fn();
-          const callback2 = jest.fn();
-          const errorLogger = jest.fn();
+          const callback1 = vi.fn();
+          const callback2 = vi.fn();
+          const errorLogger = vi.fn();
 
           worker.send().then(callback1).catch(errorLogger);
           worker.send().then(callback2).catch(errorLogger);
@@ -452,8 +452,8 @@ describe('EasyWebWorker', () => {
             });
           });
 
-          const callback1 = jest.fn();
-          const errorLogger = jest.fn();
+          const callback1 = vi.fn();
+          const errorLogger = vi.fn();
 
           await worker
             .send()
@@ -475,8 +475,8 @@ describe('EasyWebWorker', () => {
           });
         });
 
-        const callback1 = jest.fn();
-        const errorLogger = jest.fn();
+        const callback1 = vi.fn();
+        const errorLogger = vi.fn();
 
         await worker.send().then(callback1).catch(errorLogger);
 
@@ -530,8 +530,8 @@ describe('EasyWebWorker', () => {
               }
             );
 
-            const callback1 = jest.fn();
-            const errorLogger = jest.fn();
+            const callback1 = vi.fn();
+            const errorLogger = vi.fn();
 
             worker.send().then(callback1).catch(errorLogger);
 
@@ -605,8 +605,8 @@ describe('EasyWebWorker', () => {
           it(`should transfer a big array buffer when action is ${action}`, async () => {
             expect.assertions(4);
 
-            const errorLogger = jest.fn();
-            const progressLogger = jest.fn();
+            const errorLogger = vi.fn();
+            const progressLogger = vi.fn();
             const bigArrayBuffer = new ArrayBuffer(1000000);
 
             type TPayload = {

@@ -46,7 +46,7 @@ const { URL_MOCK, BLOB_MOCK, WINDOW_MOCK } = require(path.resolve(
   });
 })();
 
-// same switch as jest.config.cjs: the worker loads the source or the built package
+// same switch as vitest.config.ts: the worker loads the source or the built package
 const isDistTarget = process.env.EASY_WEB_WORKER_TEST_TARGET === 'dist';
 
 if (!isDistTarget) require('tsx/cjs');
