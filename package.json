@@ -1,6 +1,6 @@
 {
   "name": "easy-web-worker-monorepo",
-  "version": "8.0.2",
+  "version": "8.0.3",
   "private": true,
   "description": "Monorepo for the easy-web-worker package.",
   "workspaces": [
@@ -47,7 +47,7 @@
   "bugs": {
     "url": "https://github.com/johnny-quesada-developer/easy-web-worker/issues"
   },
-  "homepage": "https://github.com/johnny-quesada-developer/easy-web-worker#readme",
+  "homepage": "https://johnny-quesada-developer.github.io/easy-web-worker/",
   "devDependencies": {
     "@eslint/js": "^9.39.1",
     "@playwright/test": "^1.63.0",
