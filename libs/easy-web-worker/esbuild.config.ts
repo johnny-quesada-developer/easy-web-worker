@@ -21,8 +21,10 @@ const entryPoints: Record<string, string> = {
   uniqueId: 'src/uniqueId.ts',
   createWorker: 'src/createWorker.ts',
   defineWorker: 'src/defineWorker.ts',
-  // internal module shared by createWorker and defineWorker (kept as a sibling file, not a public subpath)
+  // internal modules (kept as sibling files, not public subpaths)
   unwrap: 'src/unwrap.ts',
+  buildWorker: 'src/buildWorker.ts',
+  getDefineWorkerTemplate: 'src/getDefineWorkerTemplate.ts',
 };
 
 // Resolve runtime dependencies from the consumer's installation.

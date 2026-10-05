@@ -370,6 +370,43 @@ export type WorkerHelpers = {
 };
 
 /**
+ * Global scope of the worker
+ */
+export type WorkerScope<TPrimitiveParameters extends any[] = unknown[]> =
+  DedicatedWorkerGlobalScope & {
+    /**
+     * Values of the primitiveParameters option, only for the workers created from a function
+     */
+    primitiveParameters: TPrimitiveParameters;
+  } & Record<string, unknown>;
+
+/**
+ * Function used by createWorker as the source of a worker, it returns the methods of the worker.
+ * It becomes the source of a real worker, so it can not use variables from outside of it.
+ */
+export type WorkerBuilder<
+  TMethods extends WorkerMethods | void = WorkerMethods,
+  TPrimitiveParameters extends any[] = unknown[]
+> = (
+  /**
+   * onMessage to create the methods with the types inferred, and easyWorker to keep using the message api
+   */
+  helpers: WorkerHelpers & {
+    /**
+     * This is the instance of the worker, the message api is still available through it:
+     * easyWorker.onMessage('method', (message) => { ... }), easyWorker.onMessage((message) => { ... }),
+     * easyWorker.importScripts(...) and easyWorker.close()
+     */
+    easyWorker: IEasyWorkerInstance;
+  },
+
+  /**
+   * This is the context of the worker, you can use it to access to the global scope of the worker
+   * */
+  context: WorkerScope<TPrimitiveParameters>
+) => TMethods;
+
+/**
  * Result of defineWorker, export its type to use the worker from the main thread:
  * export type MyWorker = typeof worker;
  */

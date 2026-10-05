@@ -146,3 +146,94 @@ const described = createWorker<{ ping: (value: string) => number }>(
 );
 
 expectType<Equal<typeof described.ping, Caller<string, number>>>();
+
+// ---- function as source: createWorker(builder)
+
+const runtime = createWorker(
+  ({ onMessage }, context) => {
+    expectType<Equal<typeof context.primitiveParameters, [string, number]>>();
+
+    return {
+      double: (value: number) => value * 2,
+      hello: () => 'hello',
+      sum: async (values: number[]) => values.length,
+
+      count: onMessage(async (to: number, message) => {
+        message.reportProgress(50);
+
+        return `${to}`;
+      }),
+
+      later: onMessage<number, boolean>().handle((message) => {
+        message.resolve(true);
+      }),
+    };
+  },
+  {
+    maxWorkers: 2,
+    primitiveParameters: ['text', 1] as [string, number],
+  }
+);
+
+expectType<Equal<typeof runtime.double, Caller<number, number>>>();
+expectType<Equal<typeof runtime.hello, () => CancelablePromise<string>>>();
+expectType<Equal<typeof runtime.sum, Caller<number[], number>>>();
+expectType<Equal<typeof runtime.count, Caller<number, string>>>();
+expectType<Equal<typeof runtime.later, Caller<number, boolean>>>();
+
+// @ts-expect-error the payload is a number
+runtime.double('1');
+
+// @ts-expect-error the function does not return this method
+runtime.unknownMethod();
+
+unwrap(runtime).dispose();
+
+// @ts-expect-error a collection of functions is not supported as source
+createWorker([() => ({ hello: () => 'hello' })]);
+
+// ---- easyWorker and the scope of the worker inside a function used as source
+
+const mixedRuntime = createWorker(({ onMessage, easyWorker }, context) => {
+  expectType<Equal<typeof easyWorker, IEasyWorkerInstance>>();
+
+  easyWorker.onMessage<number, number>('legacy', (message) => {
+    message.resolve(message.payload * 2);
+  });
+
+  easyWorker.onMessage((message) => {
+    message.resolve();
+  });
+
+  easyWorker.importScripts('script.js');
+
+  context.shared = 1;
+
+  return {
+    typed: onMessage((value: number) => value * 2),
+    close: () => easyWorker.close(),
+  };
+});
+
+expectType<Equal<typeof mixedRuntime.typed, Caller<number, number>>>();
+
+// @ts-expect-error methods registered with the message api are not in the inferred type
+mixedRuntime.legacy(1);
+
+// the methods can be described when they are registered with the message api
+const describedRuntime = createWorker<{ uppercase: (text: string) => string }>(
+  ({ easyWorker }) => {
+    easyWorker.onMessage<string, string>('uppercase', (message) => {
+      message.resolve(message.payload.toUpperCase());
+    });
+  }
+);
+
+expectType<Equal<typeof describedRuntime.uppercase, Caller<string, string>>>();
+
+// defineWorker only receives onMessage, the worker is reached with unwrap
+defineWorker((helpers) => {
+  expectType<Equal<keyof typeof helpers, 'onMessage'>>();
+
+  return {};
+});

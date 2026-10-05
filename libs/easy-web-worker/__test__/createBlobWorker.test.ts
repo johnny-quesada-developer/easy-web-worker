@@ -7,9 +7,11 @@ import getWorkerTemplateDefault, {
 } from 'easy-web-worker/getWorkerTemplate';
 
 import uniqueIdDefault, { uniqueId } from 'easy-web-worker/uniqueId';
+import { getDefineWorkerTemplate } from 'easy-web-worker/getDefineWorkerTemplate';
 import {
-  buildWorkerTemplate,
-  getTemplateModuleStatus,
+  buildTemplate,
+  getTemplatesStatus,
+  templates,
 } from '../scripts/workerTemplate';
 import { EasyWebWorkerBody } from 'easy-web-worker/types';
 
@@ -180,16 +182,29 @@ describe('getWorkerTemplate', () => {
   });
 });
 
-describe('getWorkerTemplate (generated file)', () => {
-  it('should be generated from the current StaticEasyWebWorker', async () => {
-    const { isUpToDate } = await getTemplateModuleStatus();
+describe('worker templates (generated files)', () => {
+  it('should be generated from the current source', async () => {
+    const statuses = await getTemplatesStatus();
 
-    expect(
-      isUpToDate,
-      'src/getWorkerTemplate.ts is outdated, run `yarn build:template`'
-    ).toEqual(true);
+    statuses.forEach(({ name, isUpToDate }) => {
+      expect(
+        isUpToDate,
+        `src/${name}.ts is outdated, run \`yarn build:template\``
+      ).toEqual(true);
+    });
 
-    expect(getWorkerTemplate()).toEqual(await buildWorkerTemplate());
+    expect(statuses.map(({ name }) => name)).toEqual([
+      'getWorkerTemplate',
+      'getDefineWorkerTemplate',
+    ]);
+  });
+
+  it('should match the templates used by the library', async () => {
+    expect(getWorkerTemplate()).toEqual(await buildTemplate(templates.worker));
+
+    expect(getDefineWorkerTemplate()).toEqual(
+      await buildTemplate(templates.defineWorker)
+    );
   });
 });
 

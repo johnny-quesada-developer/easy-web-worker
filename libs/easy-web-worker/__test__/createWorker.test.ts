@@ -1,5 +1,6 @@
 import { EasyWebWorker } from 'easy-web-worker';
 import { unwrap, createWorker } from 'easy-web-worker/createWorker';
+import { getDefineWorkerTemplate } from 'easy-web-worker/getDefineWorkerTemplate';
 
 class FakeWorker {
   public static instances: FakeWorker[] = [];
@@ -67,14 +68,91 @@ describe('createWorker (proxy)', () => {
     const fromCollection = createWorker<TestMethods>([nativeWorker]);
     const fromUrl = createWorker<TestMethods>(new URL('https://example.com'));
 
-    const fromBody = createWorker<TestMethods>((easyWorker) => {
-      easyWorker.onMessage('hello', (message) => message.resolve());
-    });
-
     expect(unwrap(fromInstance).workers).toEqual([nativeWorker]);
     expect(unwrap(fromCollection).workers).toEqual([nativeWorker]);
     expect(unwrap(fromUrl).workerUrl).toBeInstanceOf(URL);
-    expect(String(unwrap(fromBody).workerUrl)).toContain('data:');
+  });
+
+  describe('function as source', () => {
+    const getWorkerContent = (callback: () => unknown): string => {
+      const createObjectURL = vi.spyOn(globalAny.window.URL, 'createObjectURL');
+
+      callback();
+
+      const [blob] = createObjectURL.mock.calls[0] as [{ content: string[] }];
+
+      return blob.content[0];
+    };
+
+    it('should create the file of the worker from the function', () => {
+      const builder = () => ({
+        double: (value: number) => value * 2,
+      });
+
+      let worker: ReturnType<typeof createWorker<{ double: (value: number) => number }>>;
+
+      const content = getWorkerContent(() => {
+        worker = createWorker(builder);
+      });
+
+      // the worker is created from the generated file
+      expect(String(unwrap(worker).workerUrl)).toContain('data:');
+      expect(FakeWorker.instances.length).toEqual(1);
+      expect(FakeWorker.instances[0].url).toBe(unwrap(worker).workerUrl);
+
+      // defineWorker is executed inside the worker with the function as builder
+      expect(content).toContain(`let dw$=${getDefineWorkerTemplate()};`);
+      expect(content).toContain(`dw$(${builder.toString().trim()});`);
+      expect(content.startsWith('self.primitiveParameters=JSON.parse(`[]`);')).toEqual(true);
+    });
+
+    it('should include the scripts and the primitive parameters', () => {
+      const content = getWorkerContent(() => {
+        createWorker(() => ({ hello: () => 'hello' }), {
+          scripts: ['https://example.com/a.js', 'https://example.com/b.js'],
+          primitiveParameters: [1, 'text'],
+        });
+      });
+
+      expect(
+        content.startsWith(
+          'self.importScripts("https://example.com/a.js","https://example.com/b.js");self.primitiveParameters=JSON.parse(`[1,"text"]`);'
+        )
+      ).toEqual(true);
+    });
+
+    it('should reuse the file of the worker for every worker of the pool', async () => {
+      const worker = createWorker(() => ({ hello: () => 'hello' }), {
+        maxWorkers: 2,
+        warmUpWorkers: true,
+      });
+
+      const { workerUrl } = unwrap(worker);
+
+      await unwrap(worker).reboot();
+
+      expect(FakeWorker.instances.length).toEqual(4);
+      expect(FakeWorker.instances.every(({ url }) => url === workerUrl)).toEqual(true);
+    });
+
+    it('should revoke the file of the worker on dispose', async () => {
+      const revokeObjectURL = vi.spyOn(globalAny.window.URL, 'revokeObjectURL');
+
+      const worker = createWorker(() => ({ hello: () => 'hello' }));
+      const { workerUrl } = unwrap(worker);
+
+      await unwrap(worker).dispose();
+
+      expect(revokeObjectURL).toHaveBeenCalledWith(String(workerUrl));
+    });
+
+    it('should not accept a collection of functions', () => {
+      const builder = () => ({ hello: () => 'hello' });
+
+      expect(() => createWorker([builder, builder] as never)).toThrow(
+        'createWorker does not support a collection of functions as source, use a single function'
+      );
+    });
   });
 
   it('should send a message to the method of the worker', async () => {

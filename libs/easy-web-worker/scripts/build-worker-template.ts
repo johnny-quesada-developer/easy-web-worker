@@ -1,31 +1,42 @@
 /**
- * Generates src/getWorkerTemplate.ts from src/StaticEasyWebWorker.ts.
+ * Generates the templates used to create workers from functions:
+ *   src/getWorkerTemplate.ts        from src/StaticEasyWebWorker.ts
+ *   src/getDefineWorkerTemplate.ts  from src/buildWorker.ts
  *
- *   tsx scripts/build-worker-template.ts          # writes the file
- *   tsx scripts/build-worker-template.ts --check  # fails if the file is outdated, writes nothing
+ *   tsx scripts/build-worker-template.ts          # writes the files
+ *   tsx scripts/build-worker-template.ts --check  # fails if a file is outdated, writes nothing
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { getTemplateModuleStatus, templateFile } from './workerTemplate';
+import { getTemplatesStatus } from './workerTemplate';
 
 const isCheck = process.argv.includes('--check');
-const fileName = path.relative(process.cwd(), templateFile);
 
-getTemplateModuleStatus()
-  .then(({ expected, isUpToDate }) => {
-    if (isUpToDate) {
-      console.log(`[template] ${fileName} is up to date.`);
-      return;
-    }
+getTemplatesStatus()
+  .then((statuses) => {
+    let isOutdated = false;
 
-    if (isCheck) {
-      console.error(`[template] ${fileName} is outdated. Run \`yarn build:template\`.`);
-      process.exit(1);
-    }
+    statuses.forEach(({ file, expected, isUpToDate }) => {
+      const fileName = path.relative(process.cwd(), file);
 
-    fs.writeFileSync(templateFile, expected);
+      if (isUpToDate) {
+        console.log(`[template] ${fileName} is up to date.`);
+        return;
+      }
 
-    console.log(`[template] ${fileName} updated.`);
+      if (isCheck) {
+        isOutdated = true;
+
+        console.error(`[template] ${fileName} is outdated. Run \`yarn build:template\`.`);
+        return;
+      }
+
+      fs.writeFileSync(file, expected);
+
+      console.log(`[template] ${fileName} updated.`);
+    });
+
+    if (isOutdated) process.exit(1);
   })
   .catch((error) => {
     console.error(error);

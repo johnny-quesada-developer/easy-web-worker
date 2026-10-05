@@ -1,7 +1,7 @@
 import { getWorkerTemplate } from './getWorkerTemplate';
 import { EasyWebWorkerBody } from './types';
 
-const getImportScriptsTemplate = (scripts: string[] = []) => {
+export const getImportScriptsTemplate = (scripts: string[] = []) => {
   if (!scripts.length) return '';
 
   // importScripts receives each script as an argument, not as a collection

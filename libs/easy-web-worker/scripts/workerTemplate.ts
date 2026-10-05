@@ -3,19 +3,64 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const root = path.resolve(__dirname, '..');
-
-export const sourceFile = path.join(root, 'src/StaticEasyWebWorker.ts');
-export const templateFile = path.join(root, 'src/getWorkerTemplate.ts');
-
 const globalName = 'm$';
 
+type WorkerTemplate = {
+  /** Name of the generated module and of the function it exports */
+  name: string;
+
+  /** File bundled into the template */
+  sourceFile: string;
+
+  /** What the generated file contains, added to its header */
+  description: string;
+
+  /** Expression returned by the template, it receives the name that holds the exports of the source */
+  result: (exports: string) => string;
+
+  /** The template is evaluated inside the worker, so it must be a valid expression */
+  isValid: (value: any, self: { onmessage: unknown }) => boolean;
+};
+
 /**
- * Bundles StaticEasyWebWorker into a single JavaScript expression that returns a new instance of it.
- * That expression is what createBlobWorker injects into the workers created from functions.
+ * Code injected into the workers created from functions.
+ * Each template is the minified bundle of a source file, generated so it never gets out of date.
  */
-export const buildWorkerTemplate = async (): Promise<string> => {
+export const templates = {
+  /** createEasyWebWorker(body): an instance of the static worker */
+  worker: {
+    name: 'getWorkerTemplate',
+    sourceFile: path.join(root, 'src/StaticEasyWebWorker.ts'),
+    description:
+      'It contains the minified version of ./StaticEasyWebWorker.ts, used to create workers from functions.',
+    result: (exports) => `new ${exports}.StaticEasyWebWorker()`,
+    isValid: (instance, self) =>
+      typeof instance?.onMessage === 'function' &&
+      typeof instance?.close === 'function' &&
+      typeof instance?.importScripts === 'function' &&
+      typeof self.onmessage === 'function',
+  },
+
+  /** createWorker(builder): the function that builds the worker from the builder */
+  defineWorker: {
+    name: 'getDefineWorkerTemplate',
+    sourceFile: path.join(root, 'src/buildWorker.ts'),
+    description:
+      'It contains the minified version of ./buildWorker.ts, used by createWorker to create workers from functions.',
+    result: (exports) => `${exports}.buildWorker`,
+    isValid: (buildWorker) => typeof buildWorker === 'function',
+  },
+} satisfies Record<string, WorkerTemplate>;
+
+const getTemplateFile = ({ name }: WorkerTemplate) =>
+  path.join(root, `src/${name}.ts`);
+
+/**
+ * Bundles the source of the template into a single JavaScript expression
+ */
+export const buildTemplate = async (template: WorkerTemplate): Promise<string> => {
   const { outputFiles } = await esbuild.build({
-    entryPoints: [sourceFile],
+    entryPoints: [template.sourceFile],
     bundle: true,
     write: false,
     format: 'iife',
@@ -28,57 +73,53 @@ export const buildWorkerTemplate = async (): Promise<string> => {
   });
 
   const bundle = outputFiles[0].text.trim().replace(/;*$/, ';');
-  const template = `(()=>{${bundle}return new ${globalName}.StaticEasyWebWorker()})()`;
+  const expression = `(()=>{${bundle}return ${template.result(globalName)}})()`;
 
-  assertTemplate(template);
-
-  return template;
-};
-
-/**
- * The template is evaluated inside the worker, so it must be a valid expression that creates the worker instance
- */
-const assertTemplate = (template: string) => {
   const self = { onmessage: null };
-  const instance = new Function('self', `return ${template}`)(self);
+  const value = new Function('self', `return ${expression}`)(self);
 
-  const isValid =
-    typeof instance?.onMessage === 'function' &&
-    typeof instance?.close === 'function' &&
-    typeof instance?.importScripts === 'function' &&
-    typeof self.onmessage === 'function';
-
-  if (!isValid) {
-    throw new Error('The worker template does not create a valid worker instance.');
+  if (!template.isValid(value, self)) {
+    throw new Error(`The template ${template.name} is not valid.`);
   }
+
+  return expression;
 };
 
-export const renderTemplateModule = (template: string): string =>
+export const renderTemplateModule = (
+  template: WorkerTemplate,
+  expression: string
+): string =>
   [
     '/**',
     ' * GENERATED FILE, do not edit it by hand.',
-    ' * It contains the minified version of ./StaticEasyWebWorker.ts, used to create workers from functions.',
+    ` * ${template.description}`,
     ' * To update it run `yarn build:template`, `yarn build` also does it.',
     ' */',
-    'export const getWorkerTemplate = () => {',
-    `  const template = ${JSON.stringify(template)};`,
+    `export const ${template.name} = () => {`,
+    `  const template = ${JSON.stringify(expression)};`,
     '',
     '  return template;',
     '};',
     '',
-    'export default getWorkerTemplate;',
+    `export default ${template.name};`,
     '',
   ].join('\n');
 
 /**
- * Returns the content the template file should have, and whether the current file matches it
+ * Returns the content each template file should have, and whether the current file matches it
  */
-export const getTemplateModuleStatus = async () => {
-  const expected = renderTemplateModule(await buildWorkerTemplate());
+export const getTemplatesStatus = () =>
+  Promise.all(
+    Object.values(templates).map(async (template: WorkerTemplate) => {
+      const file = getTemplateFile(template);
+      const expected = renderTemplateModule(template, await buildTemplate(template));
+      const current = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : null;
 
-  const current = fs.existsSync(templateFile)
-    ? fs.readFileSync(templateFile, 'utf8')
-    : null;
-
-  return { expected, isUpToDate: current === expected };
-};
+      return {
+        name: template.name,
+        file,
+        expected,
+        isUpToDate: current === expected,
+      };
+    })
+  );
