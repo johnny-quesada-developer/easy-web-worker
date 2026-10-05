@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const PORT = Number(process.env.VISUAL_PORT ?? 4330);
+// A port of its own: my other sites use the same test setup, and two of them can run at the same time.
+const PORT = Number(process.env.VISUAL_PORT ?? 4338);
 const BASE = '/easy-web-worker/';
 
 /**
@@ -41,7 +42,8 @@ export default defineConfig({
   webServer: {
     command: `node scripts/visual-server.mjs ${PORT}`,
     url: `http://127.0.0.1:${PORT}${BASE}`,
-    reuseExistingServer: true,
+    // Never reuse: a server already on the port may be serving another site, and the tests would run against it.
+    reuseExistingServer: false,
     timeout: 120_000,
   },
 });

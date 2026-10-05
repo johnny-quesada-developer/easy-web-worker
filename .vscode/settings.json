@@ -1,4 +1,7 @@
 {
   "cSpell.words": ["cancelation"],
-  "js/ts.tsdk.path": "node_modules/typescript/lib"
+  "js/ts.tsdk.path": "node_modules/typescript/lib",
+  // Attach the debugger only to a process started with --inspect or --inspect-brk (yarn test:debug).
+  // With "always", every Node process of yarn prepare-packages is debugged and the run takes 3x longer.
+  "debug.javascript.autoAttachFilter": "onlyWithFlag"
 }

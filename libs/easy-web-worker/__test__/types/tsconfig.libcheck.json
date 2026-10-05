@@ -1,0 +1,8 @@
+{
+  // Same check as tsconfig.json, but the declarations themselves are checked too (skipLibCheck: false)
+  // and only the `dom` lib is loaded: the package must not need the `webworker` lib of the consumer.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "skipLibCheck": false
+  }
+}

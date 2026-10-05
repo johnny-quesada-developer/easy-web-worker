@@ -183,6 +183,23 @@ export type TOverrideConfig = {
  * @template IResult - Indicates if your WORKERS messages has a result... NULL indicates all you messages are Promise<void>
  * @param {IEasyWorkerInstance<IPayload, IResult>} easyWorker - ,
  */
+/**
+ * Global scope of a dedicated worker, as the `webworker` lib of TypeScript declares it.
+ * It is read from the global types instead of named, so the declarations of this package also compile in
+ * a project that only loads the `dom` lib. There, the scope falls back to the members every worker has.
+ */
+type NativeWorkerScope = typeof globalThis extends {
+  DedicatedWorkerGlobalScope: { prototype: infer TScope };
+}
+  ? TScope
+  : EventTarget & {
+      readonly name: string;
+      readonly self: unknown;
+      postMessage(message: any, transfer?: Transferable[]): void;
+      importScripts(...urls: (string | URL)[]): void;
+      close(): void;
+    };
+
 export type EasyWebWorkerBody<
   IPayload = null,
   IResult = void,
@@ -196,7 +213,7 @@ export type EasyWebWorkerBody<
   /**
    * This is the context of the worker, you can use it to access to the global scope of the worker
    * */
-  context: DedicatedWorkerGlobalScope & {
+  context: NativeWorkerScope & {
     primitiveParameters: TPrimitiveParameters;
   } & Record<string, unknown>
 ) => void;
@@ -373,7 +390,7 @@ export type WorkerHelpers = {
  * Global scope of the worker
  */
 export type WorkerScope<TPrimitiveParameters extends any[] = unknown[]> =
-  DedicatedWorkerGlobalScope & {
+  NativeWorkerScope & {
     /**
      * Values of the primitiveParameters option, only for the workers created from a function
      */

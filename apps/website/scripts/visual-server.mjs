@@ -12,7 +12,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../dist');
 const base = '/easy-web-worker/';
-const port = Number(process.argv[2] ?? process.env.VISUAL_PORT ?? 4330);
+const port = Number(process.argv[2] ?? process.env.VISUAL_PORT ?? 4338);
 
 const types = {
   '.html': 'text/html; charset=utf-8',

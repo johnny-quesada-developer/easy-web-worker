@@ -1,6 +1,6 @@
 {
   "name": "easy-web-worker-monorepo",
-  "version": "8.0.0",
+  "version": "8.0.1",
   "private": true,
   "description": "Monorepo for the easy-web-worker package.",
   "workspaces": [

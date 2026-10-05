@@ -1,6 +1,6 @@
 {
   "name": "easy-web-worker",
-  "version": "8.0.0",
+  "version": "8.0.1",
   "description": "This is a library to easily handle and create web-workers, if you are a web developer and never tried this... do not wait any longer! Workers are an amazing option to improve user experience and make your webpages even greater",
   "main": "./bundle.cjs",
   "module": "./bundle.mjs",
@@ -92,7 +92,7 @@
     "test:watch": "vitest",
     "test:quick": "vitest run",
     "test:dist": "yarn build && yarn test:types && EASY_WEB_WORKER_TEST_TARGET=dist vitest run",
-    "test:types": "tsc -p __test__/types/tsconfig.json",
+    "test:types": "tsc -p __test__/types/tsconfig.json && tsc -p __test__/types/tsconfig.libcheck.json",
     "test:debug": "vitest --inspect-brk --no-file-parallelism",
     "test:debug:no-watch": "vitest run --inspect-brk --no-file-parallelism",
     "test:coverage": "vitest run --coverage",
