@@ -521,8 +521,8 @@ test.describe('structured clone and transferable objects', () => {
       ).byteLength;
 
       for (const action of ['reject', 'cancel']) {
-        await worker.sendToMethod(action).catch((buffer: ArrayBuffer) => {
-          received[action] = buffer.byteLength;
+        await worker.sendToMethod(action).catch((buffer) => {
+          received[action] = (buffer as ArrayBuffer).byteLength;
         });
       }
 

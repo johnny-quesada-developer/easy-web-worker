@@ -1,6 +1,6 @@
 import path from 'path';
 import url from 'url';
-import { createDecoupledPromise } from 'easy-cancelable-promise/createDecoupledPromise';
+import { defer } from 'easy-cancelable-promise/defer';
 import { EasyWebWorker } from 'easy-web-worker';
 import { unwrap, createWorker } from 'easy-web-worker/createWorker';
 import type { TestWorker, TransferPayload } from './defineWorker.worker';
@@ -61,16 +61,18 @@ describe('defineWorker + createWorker', () => {
     });
 
     it('should reject with the error thrown by the method', async () => {
-      const error = await worker.fail('method error').catch((error) => error);
+      const error = (await worker
+        .fail('method error')
+        .catch((reason) => reason)) as Error;
 
       expect(error).toBeInstanceOf(Error);
       expect(error.message).toEqual('method error');
     });
 
     it('should reject with the error of an async method', async () => {
-      const error = await worker
+      const error = (await worker
         .failAsync('async method error')
-        .catch((error) => error);
+        .catch((reason) => reason)) as Error;
 
       expect(error).toBeInstanceOf(TypeError);
       expect(error.message).toEqual('async method error');
@@ -216,7 +218,7 @@ describe('defineWorker + createWorker', () => {
         const progressLogger = vi.fn();
         const errorLogger = vi.fn();
 
-        const onProgressSpy = createDecoupledPromise();
+        const onProgressSpy = defer();
 
         worker
           .fastAsyncOperation()

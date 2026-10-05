@@ -189,8 +189,51 @@ runtime.unknownMethod();
 
 unwrap(runtime).dispose();
 
-// @ts-expect-error a collection of functions is not supported as source
-createWorker([() => ({ hello: () => 'hello' })]);
+// ---- collection of functions as source: the methods are merged, the last one wins
+
+const merged = createWorker([
+  () => ({
+    double: (value: number) => value * 2,
+    name: () => 'first',
+  }),
+  ({ onMessage }) => ({
+    count: onMessage(async (to: number, message) => {
+      message.reportProgress(50);
+
+      return `${to}`;
+    }),
+  }),
+  ({ easyWorker }) => {
+    // only uses the message api, it does not add methods
+    easyWorker.onMessage<null, void>('legacy', (message) => message.resolve());
+  },
+  () => ({
+    name: (id: number) => id,
+  }),
+]);
+
+expectType<Equal<typeof merged.double, Caller<number, number>>>();
+expectType<Equal<typeof merged.count, Caller<number, string>>>();
+
+// repeated method: the last function wins
+expectType<Equal<typeof merged.name, Caller<number, number>>>();
+
+// @ts-expect-error the last definition of the method requires a payload
+merged.name();
+
+// @ts-expect-error no function returns this method
+merged.legacy();
+
+unwrap(merged).dispose();
+
+// the methods of a collection can also be described
+const describedCollection = createWorker<{ ping: () => string }>([
+  ({ easyWorker }) => {
+    easyWorker.onMessage<null, string>('ping', (message) => message.resolve('pong'));
+  },
+]);
+
+expectType<Equal<typeof describedCollection.ping, () => CancelablePromise<string>>>();
 
 // ---- easyWorker and the scope of the worker inside a function used as source
 
@@ -237,3 +280,29 @@ defineWorker((helpers) => {
 
   return {};
 });
+
+// ---- functions kept in variables
+
+const doubleBuilder = () => ({ double: (value: number) => value * 2 });
+
+function helloBuilder() {
+  return { hello: () => 'hello' };
+}
+
+// the array is written inline
+const fromVariables = createWorker([doubleBuilder, helloBuilder]);
+
+expectType<Equal<typeof fromVariables.double, Caller<number, number>>>();
+expectType<Equal<typeof fromVariables.hello, () => CancelablePromise<string>>>();
+
+// the array is a variable declared as const
+const builders = [doubleBuilder, helloBuilder] as const;
+const fromConstArray = createWorker(builders);
+
+expectType<Equal<typeof fromConstArray.double, Caller<number, number>>>();
+expectType<Equal<typeof fromConstArray.hello, () => CancelablePromise<string>>>();
+
+// a single function in a variable
+const fromVariable = createWorker(doubleBuilder);
+
+expectType<Equal<typeof fromVariable.double, Caller<number, number>>>();

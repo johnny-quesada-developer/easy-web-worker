@@ -632,7 +632,7 @@ describe('EasyWebWorker', () => {
               .catch<TPayload>((reason) => {
                 errorLogger();
 
-                return reason;
+                return reason as TPayload;
               });
 
             if (action === 'resolve') {

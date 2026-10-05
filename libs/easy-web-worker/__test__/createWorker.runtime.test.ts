@@ -1,4 +1,8 @@
-import { createWorker, unwrap } from 'easy-web-worker/createWorker';
+import {
+  createWorker,
+  unwrap,
+  WorkerBuilder,
+} from 'easy-web-worker/createWorker';
 
 /**
  * Workers created from a function: createWorker(builder).
@@ -45,10 +49,13 @@ describe('createWorker (function as source)', () => {
 
     expect(await worker.sum([1, 2, 3, 4])).toEqual(10);
 
-    const error = await worker.fail('method error').catch((reason) => reason);
-    const asyncError = await worker
+    const error = (await worker
+      .fail('method error')
+      .catch((reason) => reason)) as Error;
+
+    const asyncError = (await worker
       .failAsync('async error')
-      .catch((reason) => reason);
+      .catch((reason) => reason)) as TypeError;
 
     expect(error).toBeInstanceOf(Error);
     expect(error.message).toEqual('method error');
@@ -267,6 +274,75 @@ describe('createWorker (function as source)', () => {
     expect(await worker.uppercase('text')).toEqual('TEXT');
 
     await unwrap(worker).dispose();
+  });
+
+  describe('collection of functions', () => {
+    it('should merge the methods of every function', async () => {
+      const worker = createWorker([
+        () => ({
+          double: (value: number) => value * 2,
+        }),
+        ({ onMessage }) => ({
+          triple: onMessage((value: number) => value * 3),
+        }),
+      ]);
+
+      expect(await worker.double(21)).toEqual(42);
+      expect(await worker.triple(21)).toEqual(63);
+
+      await unwrap(worker).dispose();
+    });
+
+    it('should use the last method when it is repeated', async () => {
+      const first = () => ({
+        name: () => 'first',
+        onlyFirst: () => 'only first',
+      });
+
+      const second = () => ({
+        name: () => 2,
+      });
+
+      const worker = createWorker([first, second]);
+
+      expect(await worker.name()).toEqual(2);
+      expect(await worker.onlyFirst()).toEqual('only first');
+
+      await unwrap(worker).dispose();
+    });
+
+    it('should share the scope and the helpers between the functions', async () => {
+      const first: WorkerBuilder = ({ easyWorker }, context) => {
+        context.double = (value: number) => value * 2;
+
+        easyWorker.onMessage<null, string>('legacy', (message) => {
+          message.resolve(`legacy ${context.primitiveParameters[0]}`);
+        });
+
+        return {};
+      };
+
+      const second: WorkerBuilder = (_helpers, context) => {
+        const double = context.double as (value: number) => number;
+
+        return {
+          double,
+          quadruple: (value: number) => double(double(value)),
+        };
+      };
+
+      const worker = createWorker<{
+        double: (value: number) => number;
+        quadruple: (value: number) => number;
+        legacy: () => string;
+      }>([first, second], { primitiveParameters: ['parameter'] });
+
+      expect(await worker.double(2)).toEqual(4);
+      expect(await worker.quadruple(2)).toEqual(8);
+      expect(await worker.legacy()).toEqual('legacy parameter');
+
+      await unwrap(worker).dispose();
+    });
   });
 
   it('should ignore the values that are not methods', async () => {

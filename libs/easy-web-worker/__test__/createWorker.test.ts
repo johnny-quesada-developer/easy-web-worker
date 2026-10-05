@@ -89,20 +89,20 @@ describe('createWorker (proxy)', () => {
         double: (value: number) => value * 2,
       });
 
-      let worker: ReturnType<typeof createWorker<{ double: (value: number) => number }>>;
+      let workerUrl: unknown = null;
 
       const content = getWorkerContent(() => {
-        worker = createWorker(builder);
+        workerUrl = unwrap(createWorker(builder)).workerUrl;
       });
 
       // the worker is created from the generated file
-      expect(String(unwrap(worker).workerUrl)).toContain('data:');
+      expect(String(workerUrl)).toContain('data:');
       expect(FakeWorker.instances.length).toEqual(1);
-      expect(FakeWorker.instances[0].url).toBe(unwrap(worker).workerUrl);
+      expect(FakeWorker.instances[0].url).toBe(workerUrl);
 
       // defineWorker is executed inside the worker with the function as builder
       expect(content).toContain(`let dw$=${getDefineWorkerTemplate()};`);
-      expect(content).toContain(`dw$(${builder.toString().trim()});`);
+      expect(content).toContain(`\n(${builder.toString().trim()})\n`);
       expect(content.startsWith('self.primitiveParameters=JSON.parse(`[]`);')).toEqual(true);
     });
 
@@ -146,12 +146,33 @@ describe('createWorker (proxy)', () => {
       expect(revokeObjectURL).toHaveBeenCalledWith(String(workerUrl));
     });
 
-    it('should not accept a collection of functions', () => {
-      const builder = () => ({ hello: () => 'hello' });
+    it('should create a single file from a collection of functions', () => {
+      const first = () => ({ double: (value: number) => value * 2 });
+      const second = () => ({ triple: (value: number) => value * 3 });
 
-      expect(() => createWorker([builder, builder] as never)).toThrow(
-        'createWorker does not support a collection of functions as source, use a single function'
-      );
+      let workerUrl: unknown = null;
+
+      const content = getWorkerContent(() => {
+        workerUrl = unwrap(createWorker([first, second])).workerUrl;
+      });
+
+      const firstIndex = content.indexOf(`(${first.toString().trim()})`);
+      const secondIndex = content.indexOf(`(${second.toString().trim()})`);
+
+      // one worker, with both functions in the order they were received
+      expect(FakeWorker.instances.length).toEqual(1);
+      expect(String(workerUrl)).toContain('data:');
+      expect(firstIndex).toBeGreaterThan(-1);
+      expect(secondIndex).toBeGreaterThan(firstIndex);
+    });
+
+    it('should keep a collection of native workers as the pool', () => {
+      const workers = [new FakeWorker(), new FakeWorker()] as unknown as Worker[];
+
+      const worker = createWorker<TestMethods>(workers);
+
+      expect(unwrap(worker).workers).toEqual(workers);
+      expect(unwrap(worker).workerUrl).toEqual(null);
     });
   });
 

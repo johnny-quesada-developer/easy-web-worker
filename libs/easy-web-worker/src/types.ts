@@ -407,6 +407,31 @@ export type WorkerBuilder<
 ) => TMethods;
 
 /**
+ * Methods of a worker created from several functions: the methods of each function merged, the last one wins
+ */
+export type MergeWorkerMethods<TBuilders extends readonly unknown[]> =
+  TBuilders extends readonly [infer TBuilder, ...infer TRest]
+    ? MergeWorkerMethods<TRest> extends infer TOverrides
+      ? {
+          [TName in
+            | Exclude<keyof WorkerBuilderMethods<TBuilder>, keyof TOverrides>
+            | keyof TOverrides]: TName extends keyof TOverrides
+            ? TOverrides[TName]
+            : WorkerBuilderMethods<TBuilder>[TName &
+                keyof WorkerBuilderMethods<TBuilder>];
+        }
+      : never
+    : {};
+
+type WorkerBuilderMethods<TBuilder> = TBuilder extends (
+  ...parameters: any[]
+) => infer TMethods
+  ? TMethods extends WorkerMethods
+    ? TMethods
+    : {}
+  : {};
+
+/**
  * Result of defineWorker, export its type to use the worker from the main thread:
  * export type MyWorker = typeof worker;
  */

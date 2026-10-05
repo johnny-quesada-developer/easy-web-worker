@@ -1,7 +1,7 @@
 import path from 'path';
 import url from 'url';
 import EasyWebWorker from 'easy-web-worker';
-import { createDecoupledPromise } from 'easy-cancelable-promise/createDecoupledPromise';
+import { defer } from 'easy-cancelable-promise/defer';
 
 describe('StaticEasyWebWorker', () => {
   let worker: EasyWebWorker<null, string>;
@@ -221,7 +221,7 @@ describe('StaticEasyWebWorker', () => {
           const progressLogger = vi.fn();
           const errorLogger = vi.fn();
 
-          let onProgressSpy = createDecoupledPromise();
+          let onProgressSpy = defer();
 
           worker
             .sendToMethod('fastAsyncOperation')
@@ -396,7 +396,7 @@ describe('StaticEasyWebWorker', () => {
               .catch<TPayload>((reason) => {
                 errorLogger();
 
-                return reason;
+                return reason as TPayload;
               });
 
             if (action === 'resolve') {

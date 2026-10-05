@@ -1,8 +1,5 @@
-import type {
-  CancelablePromise,
-  TDecoupledCancelablePromise,
-} from 'easy-cancelable-promise';
-import { createDecoupledPromise } from 'easy-cancelable-promise/createDecoupledPromise';
+import type { CancelablePromise, DeferredPromise } from 'easy-cancelable-promise';
+import { defer } from 'easy-cancelable-promise/defer';
 import { uniqueId } from './uniqueId';
 
 /**
@@ -33,15 +30,18 @@ export class EasyWebWorkerMessage<TPayload = null, TResult = void> {
    * Decoupled promise that will be resolved when the message is completed
    * The decoupled promise is a promise that can be resolved, rejected or canceled from outside
    */
-  public readonly decoupledPromise: TDecoupledCancelablePromise<TResult> & {
+  public readonly decoupledPromise: DeferredPromise<TResult> & {
     _cancel?: (reason?: unknown) => CancelablePromise<TResult>;
   };
 
   constructor() {
     this.messageId = uniqueId('ms:');
 
-    this.decoupledPromise = createDecoupledPromise<TResult>();
-    this.decoupledPromise._cancel = this.decoupledPromise.promise.cancel;
+    this.decoupledPromise = defer<TResult>();
+    // cancel is a method of the promise, it needs to stay bound to it once the promise cancel is replaced
+    this.decoupledPromise._cancel = this.decoupledPromise.promise.cancel.bind(
+      this.decoupledPromise.promise
+    );
   }
 }
 

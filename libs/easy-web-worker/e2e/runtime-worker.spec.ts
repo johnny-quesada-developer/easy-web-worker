@@ -335,6 +335,67 @@ test.describe('createWorker with a function as source', () => {
     });
   });
 
+  test('should merge a collection of functions into one worker', async ({
+    page,
+  }) => {
+    const result = await page.evaluate(async () => {
+      const { createWorker, unwrap } = window.easyWebWorker;
+
+      const worker = createWorker(
+        [
+          (_helpers, context) => {
+            context.calls = 0;
+
+            return {
+              double: (value: number) => value * 2,
+              name: () => 'first',
+            };
+          },
+          ({ onMessage }, context) => ({
+            triple: onMessage((value: number, message) => {
+              context.calls = (context.calls as number) + 1;
+
+              message.reportProgress(100);
+
+              return value * 3;
+            }),
+          }),
+          (_helpers, context) => ({
+            name: () => `last, in ${context.name}`,
+            getCalls: () => context.calls as number,
+          }),
+        ],
+        { workerOptions: { name: 'merged' } }
+      );
+
+      const progress: number[] = [];
+
+      const result = {
+        double: await worker.double(21),
+        triple: await worker.triple(21).onProgress((percentage) => {
+          progress.push(percentage);
+        }),
+        name: await worker.name(),
+        calls: await worker.getCalls(),
+        progress,
+        workers: unwrap(worker).workers.length,
+      };
+
+      await unwrap(worker).dispose();
+
+      return result;
+    });
+
+    expect(result).toEqual({
+      double: 42,
+      triple: 63,
+      name: 'last, in merged',
+      calls: 1,
+      progress: [100],
+      workers: 1,
+    });
+  });
+
   test('should scale to a pool, reboot and dispose', async ({ page }) => {
     const result = await page.evaluate(async () => {
       const { createWorker, unwrap } = window.easyWebWorker;

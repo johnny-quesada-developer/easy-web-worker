@@ -132,10 +132,10 @@
   },
   "homepage": "https://github.com/johnny-quesada-developer/easy-web-worker#readme",
   "dependencies": {
-    "easy-cancelable-promise": "^1.0.3"
+    "easy-cancelable-promise": "^2.0.1"
   },
   "peerDependencies": {
-    "easy-cancelable-promise": "^1.0.3"
+    "easy-cancelable-promise": "^2.0.1"
   },
   "peerDependenciesMeta": {
     "easy-cancelable-promise": {

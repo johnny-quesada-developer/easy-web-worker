@@ -1,5 +1,6 @@
 import type {
   IWorkerConfig,
+  MergeWorkerMethods,
   WorkerBuilder,
   WorkerMethods,
   WorkerDefinition,
@@ -14,19 +15,20 @@ import { workerInstance$ } from './unwrap';
 type WorkerFile = string | URL | Worker | Worker[];
 
 /**
- * Creates the file of a worker from a function: defineWorker is injected and executed with the function as builder
+ * Creates the file of a worker from functions: the worker builder is injected and executed with them.
+ * Every function receives the same helpers and the same scope, the methods they return are merged, the last one wins.
  */
 const createWorkerUrl = (
-  builder: Function,
+  builders: readonly Function[],
   { scripts, primitiveParameters }: Partial<IWorkerConfig<any[]>>
 ): string => {
   const content = `${getImportScriptsTemplate(
     scripts ?? []
   )}self.primitiveParameters=JSON.parse(\`${JSON.stringify(
     primitiveParameters ?? []
-  )}\`);let dw$=${getDefineWorkerTemplate()};\ndw$(${builder
-    .toString()
-    .trim()});`;
+  )}\`);let dw$=${getDefineWorkerTemplate()};\ndw$((hp$,cn$)=>Object.assign({},...[${builders
+    .map((builder) => `\n(${builder.toString().trim()})`)
+    .join(',')}\n].map((bd$)=>bd$(hp$,cn$))));`;
 
   return (window.URL || window.webkitURL).createObjectURL(
     new Blob([content], { type: 'application/javascript' })
@@ -34,15 +36,13 @@ const createWorkerUrl = (
 };
 
 const getWorkerSource = (
-  source: WorkerFile | Function | Function[],
+  source: WorkerFile | Function | readonly Function[],
   config: Partial<IWorkerConfig<any[]>>
 ): WorkerFile => {
-  if (typeof source === 'function') return createWorkerUrl(source, config);
+  if (typeof source === 'function') return createWorkerUrl([source], config);
 
   if (Array.isArray(source) && typeof source[0] === 'function') {
-    throw new Error(
-      'createWorker does not support a collection of functions as source, use a single function'
-    );
+    return createWorkerUrl(source as unknown as readonly Function[], config);
   }
 
   return source as WorkerFile;
@@ -72,6 +72,27 @@ type CreateWorker = {
   ): WorkerProxy<TMethods>;
 
   /**
+   * Creates a worker from several functions, with no worker file.
+   * They share the scope of the worker and the methods they return are merged, if a method is repeated the last one wins.
+   *
+   * @example
+   * const worker = createWorker([
+   *   () => ({ double: (value: number) => value * 2 }),
+   *   () => ({ triple: (value: number) => value * 3 }),
+   * ]);
+   *
+   * await worker.double(21);
+   * await worker.triple(21);
+   */
+  <
+    TBuilders extends WorkerBuilder<WorkerMethods | void, TPrimitiveParameters>[],
+    TPrimitiveParameters extends any[] = unknown[]
+  >(
+    builders: readonly [...TBuilders],
+    config?: Partial<IWorkerConfig<TPrimitiveParameters>>
+  ): WorkerProxy<MergeWorkerMethods<TBuilders>>;
+
+  /**
    * Creates a worker from a worker file, each method of the worker is a function that returns a CancelablePromise.
    * To reach the rest of the worker api (cancelAll, reboot, dispose, ...) use unwrap(worker).
    *
@@ -90,13 +111,16 @@ type CreateWorker = {
     TWorker extends WorkerDefinition<any> | WorkerMethods = WorkerMethods,
     TPrimitiveParameters extends any[] = unknown[]
   >(
-    source: WorkerFile | WorkerBuilder<any, TPrimitiveParameters>,
+    source:
+      | WorkerFile
+      | WorkerBuilder<any, TPrimitiveParameters>
+      | readonly WorkerBuilder<any, TPrimitiveParameters>[],
     config?: Partial<IWorkerConfig<TPrimitiveParameters>>
   ): WorkerProxy<TWorker>;
 };
 
 export const createWorker: CreateWorker = (
-  source: WorkerFile | Function,
+  source: WorkerFile | Function | readonly Function[],
   config: Partial<IWorkerConfig<any[]>> = {}
 ) => {
   const worker = new EasyWebWorker<unknown, unknown, any[]>(

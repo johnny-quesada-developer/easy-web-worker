@@ -512,6 +512,7 @@ Pick the source that fits how your project builds and serves its Workers. `creat
 | Existing `Worker`      | Bundlers that detect `new Worker(new URL(...))` | One Worker             | ❌                 |
 | Existing `Worker[]`    | Bringing your own pool                          | The array is the pool  | ❌                 |
 | Function               | Workers with no file at all                     | ✅                     | ✅                 |
+| Function array         | Workers composed from reusable pieces           | ✅                     | ✅                 |
 
 #### A Worker file in development
 
@@ -789,6 +790,42 @@ const changes = await text.compare({ before, after });
 ```
 
 No Worker file is required, and the script does not become part of your application bundle.
+
+#### Compose a Worker from several functions
+
+Pass an array and every function runs in the same Worker. They share its scope, and the methods they return are merged.
+
+```ts
+const worker = createWorker([
+  // reusable piece: leaves a helper in the scope of the Worker
+  (_helpers, context) => {
+    context.round = (value: number) => Math.round(value * 100) / 100;
+  },
+
+  () => ({
+    double: (value: number) => value * 2,
+    describe: () => 'first',
+  }),
+
+  (_helpers, context) => {
+    const round = context.round as (value: number) => number;
+
+    return {
+      average: (values: number[]) =>
+        round(values.reduce((total, value) => total + value, 0) / values.length),
+
+      // repeated method: the last function wins
+      describe: () => 'last',
+    };
+  },
+]);
+
+await worker.double(21); // 42
+await worker.average([1, 2, 2]); // 1.67
+await worker.describe(); // 'last'
+```
+
+Types are merged the same way: `worker.describe` takes the signature of the last function. Write the array inline so each function keeps its own type.
 
 #### Runtime Workers with the message API
 
