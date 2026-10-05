@@ -20,7 +20,7 @@ You keep the power of native Web Workers without dealing with all the complexity
 [![Downloads](https://img.shields.io/npm/dm/easy-web-worker.svg)](https://www.npmjs.com/package/easy-web-worker)
 [![License](https://img.shields.io/github/license/johnny-quesada-developer/easy-web-worker)](https://github.com/johnny-quesada-developer/easy-web-worker/blob/main/LICENSE)
 
-[**Live Demo**](https://johnny-quesada-developer.github.io/easy-web-workers-example/) · [**Video Tutorial**](https://www.youtube.com/watch?v=CK-Uri9lDOE) · [**CodePen**](https://codepen.io/johnnynabetes/full/wvOvygW) · [**Examples**](https://github.com/johnny-quesada-developer/easy-web-workers-example)
+[**Website**](https://johnny-quesada-developer.github.io/easy-web-worker/) · [**Documentation**](https://johnny-quesada-developer.github.io/easy-web-worker/docs/) · [**Examples**](https://johnny-quesada-developer.github.io/easy-web-worker/examples/) · [**API reference**](https://johnny-quesada-developer.github.io/easy-web-worker/docs/api-reference/) · [**Video Tutorial**](https://www.youtube.com/watch?v=CK-Uri9lDOE)
 
 Created by [Johnny Quesada](https://github.com/johnny-quesada-developer).
 
@@ -931,12 +931,17 @@ await worker.dispose(); // EasyWebWorker
 
 ## Documentation and examples
 
-| Explore                                                                                    | What you will find                |
-| ------------------------------------------------------------------------------------------ | --------------------------------- |
-| [Live demo](https://johnny-quesada-developer.github.io/easy-web-workers-example/)          | Text diff running inside a Worker |
-| [Example repository](https://github.com/johnny-quesada-developer/easy-web-workers-example) | Source of the live demo           |
-| [Video tutorial](https://www.youtube.com/watch?v=CK-Uri9lDOE)                              | Introduction to the library       |
-| [CodePen](https://codepen.io/johnnynabetes/full/wvOvygW)                                   | A runtime Worker you can edit     |
+The [easy-web-worker website](https://johnny-quesada-developer.github.io/easy-web-worker/) is the home for the documentation and for examples that run real
+Web Workers in your browser, against the same files that are published to npm.
+
+| Explore                                                                 | What you will find                                                        |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| [Getting started](https://johnny-quesada-developer.github.io/easy-web-worker/docs/getting-started/)                         | Define your first worker and call it from the main thread.                |
+| [Guides](https://johnny-quesada-developer.github.io/easy-web-worker/docs/)                                                   | Typed workers, cancellation, progress, transferables, pools and bundlers. |
+| [Interactive examples](https://johnny-quesada-developer.github.io/easy-web-worker/examples/)                                 | Five small applications running real Workers, with their source.          |
+| [API reference](https://johnny-quesada-developer.github.io/easy-web-worker/docs/api-reference/)                              | `defineWorker`, `createWorker`, `unwrap`, the message and the config.     |
+| [Troubleshooting](https://johnny-quesada-developer.github.io/easy-web-worker/docs/troubleshooting/)                          | Symptoms, causes and fixes.                                               |
+| [Platform and versions](https://johnny-quesada-developer.github.io/easy-web-worker/docs/platform-and-versions/)              | Browser support and what changes when upgrading.                          |
 
 ---
 
@@ -990,6 +995,8 @@ const math = createWorker<MathWorker>(source);
 console.log(await math.fibonacci(40)); // 102334155
 ```
 
+Continue with the [guides and interactive examples](https://johnny-quesada-developer.github.io/easy-web-worker/) to build your next worker.
+
 ---
 
 ## Collaborators
@@ -1025,4 +1032,13 @@ console.log(await math.fibonacci(40)); // 102334155
 
 If it makes your codebase simpler, consider starring the project. It helps other developers discover it.
 
-[**Star on GitHub**](https://github.com/johnny-quesada-developer/easy-web-worker) · [**Try the live demo**](https://johnny-quesada-developer.github.io/easy-web-workers-example/) · [**Explore the examples**](https://github.com/johnny-quesada-developer/easy-web-workers-example) · [**Report an issue**](https://github.com/johnny-quesada-developer/easy-web-worker/issues)
+[**Star on GitHub**](https://github.com/johnny-quesada-developer/easy-web-worker) · [**Read the docs**](https://johnny-quesada-developer.github.io/easy-web-worker/docs/) · [**Run the examples**](https://johnny-quesada-developer.github.io/easy-web-worker/examples/) · [**Report an issue**](https://github.com/johnny-quesada-developer/easy-web-worker/issues)
+
+## Earlier resources
+
+Demos and walkthroughs from previous versions, kept for reference. For the current API, start with the
+[documentation website](https://johnny-quesada-developer.github.io/easy-web-worker/).
+
+- [Original text diff demo](https://johnny-quesada-developer.github.io/easy-web-workers-example/) and its [source](https://github.com/johnny-quesada-developer/easy-web-workers-example)
+- [Original video walkthrough](https://www.youtube.com/watch?v=CK-Uri9lDOE)
+- [Original CodePen example](https://codepen.io/johnnynabetes/full/wvOvygW)

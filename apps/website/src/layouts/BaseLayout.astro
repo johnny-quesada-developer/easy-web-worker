@@ -1,0 +1,126 @@
+---
+import '../styles/app.css';
+import { Header } from '../ui/shell/Header';
+import { Footer } from '../ui/shell/Footer';
+import { SearchDialog } from '../ui/shell/SearchDialog';
+import { NavDrawer } from '../ui/shell/NavDrawer';
+import { CopyController } from '../ui/shell/CopyController';
+import { MotionToggle } from '../ui/shell/MotionToggle';
+import { CodeThemeSelect } from '../ui/shell/CodeThemeSelect';
+import { ThemeToggle } from '../ui/shell/ThemeToggle';
+import { SITE_NAME, withBase } from '../lib/site';
+
+interface Props {
+  title: string;
+  description: string;
+  /** Path under public/ (for example `og/home.png`), resolved to an absolute URL. */
+  image?: string;
+  imageAlt?: string;
+  ogType?: 'website' | 'article';
+  noindex?: boolean;
+  /** Search result grouping (`Documentation`, `Examples`, `Product`). */
+  family?: string;
+}
+
+const { title, description, image, imageAlt, ogType = 'website', noindex = false, family = 'Documentation' } = Astro.props;
+
+const fullTitle = title === SITE_NAME ? title : `${title} · ${SITE_NAME}`;
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
+const imageUrl = image ? new URL(withBase(image), Astro.site).href : undefined;
+const pathname = Astro.url.pathname;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#ffffff" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    {!noindex && <link rel="canonical" href={canonical} />}
+    <link rel="icon" type="image/svg+xml" href={withBase('favicon.svg')} />
+    {noindex && <meta name="robots" content="noindex" />}
+
+    <meta property="og:site_name" content={SITE_NAME} />
+    <meta property="og:type" content={ogType} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta name="twitter:card" content={imageUrl ? 'summary_large_image' : 'summary'} />
+    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={description} />
+    {
+      imageUrl && (
+        <>
+          <meta property="og:image" content={imageUrl} />
+          <meta property="og:image:width" content="1200" />
+          <meta property="og:image:height" content="630" />
+          {imageAlt && <meta property="og:image:alt" content={imageAlt} />}
+          <meta name="twitter:image" content={imageUrl} />
+        </>
+      )
+    }
+    <slot name="head" />
+    <script is:inline>
+      // Resolves the appearance before first paint: the stored choice, else the system preference.
+      // Everything downstream keys off the `dark` class; nothing in CSS reads the system directly.
+      try {
+        const root = document.documentElement;
+        const stored = localStorage.getItem('user-preferences');
+        const envelope = stored ? JSON.parse(stored) : null;
+        const saved = envelope ? envelope.s : null;
+        const picked = saved && (saved.theme === 'light' || saved.theme === 'dark') ? saved.theme : null;
+        const dark = picked ? picked === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+        root.classList.toggle('dark', dark);
+
+        // An explicit code theme only counts from the current storage version; older shapes are migrated.
+        const current = envelope && envelope.v === 2;
+        const code = current && typeof saved.codeTheme === 'string' && saved.codeTheme !== 'auto' ? saved.codeTheme : null;
+        root.dataset.codeTheme = code || (dark ? 'rgsh-dark' : 'vscode-light');
+        document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#131311' : '#ffffff');
+      } catch {
+        /* private mode or blocked storage: the light default stands */
+      }
+    </script>
+  </head>
+  <body>
+    <a
+      class="fixed top-2 left-2 z-[100] -translate-y-[200%] rounded-control bg-ink px-4 py-3 text-13 text-on-ink focus:translate-y-0"
+      href="#main">Skip to content</a
+    >
+    <Header pathname={pathname}><ThemeToggle client:idle /></Header>
+    <main id="main" tabindex="-1" class="outline-none" data-pagefind-body={noindex ? undefined : ''}>
+      {
+        !noindex && (
+          <div hidden>
+            <span data-pagefind-meta="description">{description}</span>
+            <span data-pagefind-meta="family">{family}</span>
+          </div>
+        )
+      }
+      <slot />
+    </main>
+    <Footer>
+      <span class="flex items-center gap-5 max-md:flex-col max-md:items-start max-md:gap-2">
+        <MotionToggle client:idle />
+        <CodeThemeSelect client:idle />
+      </span>
+    </Footer>
+    <SearchDialog client:idle />
+    <NavDrawer client:idle pathname={pathname} />
+    <CopyController client:idle />
+    <script>
+      // Deep links into disclosure rows: open the <details> the hash points at, then let the browser scroll.
+      const reveal = () => {
+        const id = decodeURIComponent(location.hash.slice(1));
+        if (!id) return;
+        const target = document.getElementById(id);
+        if (target instanceof HTMLDetailsElement) target.open = true;
+        target?.closest('details')?.setAttribute('open', '');
+      };
+      reveal();
+      window.addEventListener('hashchange', reveal);
+    </script>
+  </body>
+</html>

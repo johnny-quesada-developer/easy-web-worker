@@ -1,0 +1,59 @@
+---
+title: TypeScript
+description: How the types of a worker are inferred, how to name them, and how to describe a worker you did not write with defineWorker.
+section: Guides
+order: 4
+---
+
+import { CodeBlock } from '../../ui/CodeBlock';
+import { Callout } from '../../ui/Callout';
+import mathWorker from '@snippets/getting-started/math.worker.ts?raw';
+import proxyType from '@snippets/typescript/proxy-type.ts?raw';
+import annotate from '@snippets/typescript/annotate.worker.ts?raw';
+import described from '@snippets/message-api/described.ts?raw';
+
+## One type crosses the threads
+
+The worker file exports the type of what `defineWorker` returns. That type is the only thing the main thread
+imports.
+
+<CodeBlock code={mathWorker} lang="ts" title="math.worker.ts" />
+
+Use `import type`, so the bundler never pulls the code of the worker into the main bundle.
+
+## Name the worker object
+
+`WorkerProxy<TWorker>` is the type of what `createWorker` returns. Use it for fields, props and parameters.
+
+<CodeBlock code={proxyType} lang="ts" title="math.ts" />
+
+## The message in a plain function
+
+A plain function receives the message as second parameter, but TypeScript cannot infer its type there. Either
+wrap the method with `onMessage`, or annotate it with `WorkerMethodMessage<TPayload>`.
+
+<CodeBlock code={annotate} lang="ts" title="counter.worker.ts" />
+
+<Callout type="note" title="Why resolve is loose there">
+  In a method that returns its result, the result type comes from the function body, so the message cannot know
+  it yet: `message.resolve` accepts `unknown`. Use `onMessage<TPayload, TResult>().handle(...)` when you need a
+  typed `resolve`.
+</Callout>
+
+## Describe a worker you did not define
+
+The generic of `createWorker` also accepts a plain description of the methods. It fits workers written with the
+message API, or built outside your project.
+
+<CodeBlock code={described} lang="ts" title="main.ts" />
+
+## Good to know
+
+- **`strict`**: required payloads are enforced with `strict` or `strictNullChecks`. Without it, every payload is
+  optional.
+- **Rejections are `unknown`**: the reason of a rejected or canceled call is typed `unknown`. Narrow it before
+  reading it.
+- **One name is taken**: a method cannot be called `then`. The worker object is not a promise, so `await worker`
+  never sends a message.
+- **Merged workers**: with an array of functions, write the array inline or declare it `as const`, so each
+  function keeps its own type.

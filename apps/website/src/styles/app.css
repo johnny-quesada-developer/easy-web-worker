@@ -1,0 +1,13 @@
+/*
+ * No Preflight: the reference cascade depends on its own reset (base.css). Utilities come last and
+ * unlayered so they outrank it. An @import that follows any other rule is invalid CSS and gets dropped.
+ */
+@layer theme, base;
+
+@import 'tailwindcss/theme.css' layer(theme);
+@import './tokens.css';
+@import './base.css' layer(base);
+@import './utilities.css';
+@import './components.css';
+@import './docs.css';
+@import 'tailwindcss/utilities.css';

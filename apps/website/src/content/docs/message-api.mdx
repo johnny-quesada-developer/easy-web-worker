@@ -1,0 +1,70 @@
+---
+title: The message API
+short: Message API
+description: The original API of easy-web-worker - send, sendToMethod and onMessage - which typed methods are built on.
+section: Guides
+order: 3
+---
+
+import { CodeBlock } from '../../ui/CodeBlock';
+import { Callout } from '../../ui/Callout';
+import staticWorker from '@snippets/message-api/static.worker.ts?raw';
+import main from '@snippets/message-api/main.ts?raw';
+import runtime from '@snippets/message-api/runtime.ts?raw';
+import described from '@snippets/message-api/described.ts?raw';
+import override from '@snippets/message-api/override.ts?raw';
+
+## Messages instead of methods
+
+`defineWorker` and `createWorker` are built on a message API that you can use directly. It is fully supported,
+and both styles can live in the same worker.
+
+<Callout type="note" title="No migration needed">
+  Code written with `createEasyWebWorker`, `EasyWebWorker` and `StaticEasyWebWorker` keeps working. Typed methods
+  are an addition, not a replacement.
+</Callout>
+
+## A worker file
+
+<CodeBlock code={staticWorker} lang="ts" title="worker.ts" />
+
+<CodeBlock code={main} lang="ts" title="main.ts" />
+
+The first generic of `createEasyWebWorker` is the payload of `send()`. The second is the value passed to
+`message.resolve()`.
+
+## A runtime worker
+
+`createEasyWebWorker` also accepts a function, or an array of functions that share the scope of the worker.
+
+<CodeBlock code={runtime} lang="ts" title="main.ts" />
+
+## Typed methods on top of it
+
+A worker written with the message API can still be called with typed methods. Describe them in the generic:
+
+<CodeBlock code={described} lang="ts" title="main.ts" />
+
+## Latest request wins
+
+For search, previews and autocomplete, an older request is worthless once a newer one exists. `override`
+cancels what is pending and sends the new message.
+
+<CodeBlock code={override} lang="ts" title="search.ts" />
+
+`overrideAfterCurrent` lets the call in progress finish and replaces only what is waiting behind it.
+
+With typed workers, both are reached through `unwrap(worker)` and send a message without a method. Handle it in
+the worker with `unwrap(worker).onMessage(...)`.
+
+## The methods of EasyWebWorker
+
+| Method                                                         | Purpose                                                         |
+| -------------------------------------------------------------- | --------------------------------------------------------------- |
+| `send(payload?, transfer?)`                                    | Sends a message to the default handler                          |
+| `sendToMethod<TResult, TPayload>(method, payload?, transfer?)` | Sends a message to a named method                               |
+| `cancelAll(reason?, { force? })`                               | Cancels every pending call; `force` restarts instead of waiting |
+| `override(payload?, reason?, { force? })`                      | Cancels the pending calls and sends a new message               |
+| `overrideAfterCurrent(payload?, reason?)`                      | Keeps the current call, cancels the rest, sends a new message   |
+| `reboot(reason?)`                                              | Terminates the Workers, rejects pending calls, starts again     |
+| `dispose()`                                                    | Cancels pending calls and releases the Workers                  |

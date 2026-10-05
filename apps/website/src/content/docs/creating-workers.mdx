@@ -1,0 +1,79 @@
+---
+title: Creating workers
+description: Every source createWorker accepts, and the setup for Vite, webpack, Parcel and files you serve yourself.
+section: Guides
+order: 1
+---
+
+import { CodeBlock } from '../../ui/CodeBlock';
+import { Callout } from '../../ui/Callout';
+import vite from '@snippets/creating/vite.ts?raw';
+import native from '@snippets/creating/native.ts?raw';
+import ownPool from '@snippets/creating/own-pool.ts?raw';
+import served from '@snippets/creating/served.ts?raw';
+import runtime from '@snippets/runtime/basics.ts?raw';
+
+## Every source
+
+`createWorker`, `createEasyWebWorker` and `new EasyWebWorker(...)` accept the same sources. Pick the one that
+fits how your project builds and serves its workers.
+
+| Source              | Best for                                        | Pool with `maxWorkers` | `reboot` / `force` |
+| ------------------- | ----------------------------------------------- | ---------------------- | ------------------ |
+| `URL` or `string`   | Worker files built by your bundler              | Yes                    | Yes                |
+| Existing `Worker`   | Bundlers that detect `new Worker(new URL(...))` | One Worker             | No                 |
+| Existing `Worker[]` | Bringing your own pool                          | The array is the pool  | No                 |
+| Function            | Workers with no file at all                     | Yes                    | Yes                |
+| Function array      | Workers composed from reusable pieces           | Yes                    | Yes                |
+
+## Vite
+
+Import the worker with `?worker&url`. Vite builds the file and gives you its URL, in development and in
+production.
+
+<CodeBlock code={vite} lang="ts" title="main.ts" />
+
+`type: 'module'` is required when the worker file uses `import` or `export`, which every `defineWorker` file
+does.
+
+<Callout type="note" title="Worker format">
+  A worker that imports other modules is built as an ES module. In `vite.config` set
+  `worker: {'{'} format: 'es' {'}'}`. This site is built that way.
+</Callout>
+
+## A native Worker you create
+
+webpack 5, Parcel and Vite all detect the expression `new Worker(new URL(...))` and bundle the file. Create the
+Worker that way and hand it over.
+
+<CodeBlock code={native} lang="ts" title="main.ts" />
+
+The library cannot create that Worker again, so `reboot` and `force` are not available. Leave `keepAlive` at its
+default, so the Worker is not terminated when idle.
+
+## Your own pool
+
+Pass an array of native Workers and the calls are distributed across them.
+
+<CodeBlock code={ownPool} lang="ts" title="main.ts" />
+
+## A file you serve yourself
+
+<CodeBlock code={served} lang="ts" title="main.ts" />
+
+## A function, with no file at all
+
+<CodeBlock code={runtime} lang="ts" title="main.ts" />
+
+The function is the worker. [Runtime workers](../runtime-workers/) covers its rules.
+
+## Cleanup
+
+Dispose the worker when the feature that owns it goes away:
+
+```ts
+await unwrap(math).dispose();
+```
+
+`dispose` cancels the pending calls, revokes the generated worker URL when there is one, and terminates the
+Workers.

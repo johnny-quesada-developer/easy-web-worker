@@ -1,0 +1,111 @@
+/*
+ * Design tokens from the complete-site reference (rgsh-complete-site/handoff/TOKENS.json), registered
+ * as the Tailwind theme. src/lib/contrast.test.ts parses the `--color-*` hex literals out of this file.
+ * `static` because the remaining stylesheets read these through `var()`.
+ */
+@theme static {
+  /* palette */
+  --color-paper: #ffffff;
+  --color-ink: #1d2422;
+  --color-muted: #626d66;
+  --color-line: #e3e7e4;
+  --color-soft: #f7f8f6;
+  --color-surface: #fbfcfa;
+  --color-green: #326c52;
+  --color-green-soft: #edf4ee;
+  --color-blue: #53658c;
+  --color-blue-soft: #f0f2f8;
+  --color-amber: #88682e;
+  --color-amber-soft: #faf5e9;
+  --color-red: #9b443e;
+  --color-red-soft: #fcf1ef;
+  --color-terminal: #202724;
+  --color-terminal-muted: #a8b9ae;
+  --color-terminal-text: #e3eae4;
+  --color-on-ink: #ffffff;
+
+  /* type */
+  --font-sans: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+  --font-mono: SFMono-Regular, Consolas, 'Liberation Mono', monospace;
+  --text-8: calc(8px * var(--type-scale));
+  --text-9: calc(9px * var(--type-scale));
+  --text-10: calc(10px * var(--type-scale));
+  --text-11: calc(11px * var(--type-scale));
+  --text-12: calc(12px * var(--type-scale));
+  --text-13: calc(13px * var(--type-scale));
+  --text-14: calc(14px * var(--type-scale));
+  --text-15: calc(15px * var(--type-scale));
+  --text-16: calc(16px * var(--type-scale));
+  --text-17: calc(17px * var(--type-scale));
+  --text-18: calc(18px * var(--type-scale));
+  --text-19: calc(19px * var(--type-scale));
+  --text-20: calc(20px * var(--type-scale));
+  --text-22: calc(22px * var(--type-scale));
+  --text-24: calc(24px * var(--type-scale));
+  --text-26: calc(26px * var(--type-scale));
+  --text-30: calc(30px * var(--type-scale));
+  --text-32: calc(32px * var(--type-scale));
+  --text-38: calc(38px * var(--type-scale));
+  --text-45: calc(45px * var(--type-scale));
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* shape */
+  --radius-control: 7px;
+  --radius-panel: 10px;
+  --radius-code: 8px;
+  --shadow-code: 0 12px 36px -30px #1d2422;
+  --shadow-thumb: 0 12px 25px -24px #38413b;
+  --shadow-dialog: 0 24px 100px #10201520;
+
+  /* layout */
+  --container-wrap: 1160px;
+  --container-wide: 1320px;
+  --spacing-header: 78px;
+  --spacing-header-mobile: 65px;
+
+  /* desktop-first reference breakpoints; use the max-* variants (max-md = width < 761px) */
+  --breakpoint-xs: 371px;
+  --breakpoint-sm: 641px;
+  --breakpoint-md: 761px;
+  --breakpoint-lg: 861px;
+  --breakpoint-xl: 901px;
+  --breakpoint-2xl: 1101px;
+  --breakpoint-3xl: 1191px;
+  --breakpoint-4xl: 1601px;
+}
+
+:root {
+  --type-scale: 1.16;
+}
+
+@media (max-width: 760px) {
+  :root {
+    --type-scale: 1.16;
+  }
+}
+
+/* Dark palette. The `dark` class on <html> swaps every token; nothing here reads the system preference. */
+.dark {
+  --color-paper: #131311;
+  --color-ink: #f1f0e9;
+  --color-muted: #aaa89e;
+  --color-line: #34342e;
+  --color-soft: #1a1a17;
+  --color-surface: #20201c;
+  --color-green: #83ad8d;
+  --color-green-soft: #202a21;
+  --color-blue: #899fc8;
+  --color-blue-soft: #202532;
+  --color-amber: #cba66a;
+  --color-amber-soft: #2b251b;
+  --color-red: #d8877d;
+  --color-red-soft: #2d201e;
+  --color-terminal: #0c0e0d;
+  --color-terminal-muted: #98a39c;
+  --color-terminal-text: #e8ebe7;
+  --color-on-ink: #131311;
+}
+
+@custom-variant hover-none (@media (hover: none));
+@custom-variant dark (&:where(.dark, .dark *));

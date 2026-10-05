@@ -1,0 +1,52 @@
+---
+title: Progress and cancellation
+headline: Watch the work, and stop it when you change your mind
+description: A long prime search that reports how far it is, and stops inside the Worker the moment the call is canceled.
+order: 2
+category: Lifecycle
+thumb: progress
+outcome: Progress and cancellation belong to the call. There is no second channel to build.
+points:
+  - Press Start. The bar and the Primes found value are driven by `message.reportProgress` inside the worker.
+  - Press Cancel while it runs. The status turns to canceled, and the loop in the worker stops instead of finishing for nobody.
+  - Start it again. The same worker serves the new call; a canceled call leaves nothing behind.
+sources:
+  - file: progress/primes.worker.ts
+    title: primes.worker.ts
+  - file: progress/primes.ts
+    title: primes.ts
+  - file: progress/client.ts
+    title: client.ts
+  - file: progress/ProgressDemo.tsx
+    title: ProgressDemo.tsx
+guide: cancellation-and-progress
+related:
+  - label: Cancellation and progress
+    href: ../../docs/cancellation-and-progress/
+  - label: Methods and the message
+    href: ../../docs/methods-and-the-message/
+  - label: Troubleshooting
+    href: ../../docs/troubleshooting/
+---
+
+import { CodeBlock } from '../../ui/CodeBlock';
+import { Callout } from '../../ui/Callout';
+import worker from '@examples/progress/primes.worker.ts?raw';
+import demo from '@examples/progress/ProgressDemo.tsx?raw';
+
+## The code
+
+Wrapping the method with `onMessage` gives it the message of the call as second parameter. That is where
+progress is reported and where the method learns it was canceled.
+
+<CodeBlock code={worker} lang="ts" title="primes.worker.ts" />
+
+<Callout type="warning" title="A worker has to pause to hear a cancellation">
+  A cancellation is a message, and a worker in the middle of a synchronous loop cannot receive messages. That is
+  why the method awaits a timer between chunks. Work that never pauses cannot be canceled; it can only be
+  restarted with `unwrap(worker).cancelAll(reason, { force: true })`.
+</Callout>
+
+On the main thread the call returns a `CancelablePromise`. `onProgress` and `cancel` are methods of that promise.
+
+<CodeBlock code={demo} lang="tsx" title="ProgressDemo.tsx" />

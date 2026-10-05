@@ -1,0 +1,56 @@
+---
+title: Worker pools
+description: Spread calls across several native Workers with one option, and control when they are created and released.
+section: Core concepts
+order: 5
+---
+
+import { CodeBlock } from '../../ui/CodeBlock';
+import { Callout } from '../../ui/Callout';
+import pool from '@snippets/pools/pool.ts?raw';
+import tuning from '@snippets/pools/tuning.ts?raw';
+
+## One option
+
+One Worker runs one task at a time. Set `maxWorkers` and the same object spreads the calls across several native
+Workers.
+
+<CodeBlock code={pool} lang="ts" title="main.ts" />
+
+The calling code does not change. It does not know whether one Worker or four are behind it.
+
+## When Workers are created
+
+With `maxWorkers` above `1`, Workers are created as concurrent calls arrive, so an idle application pays for
+none of them. Two options change that:
+
+<CodeBlock code={tuning} lang="ts" title="pools.ts" />
+
+| Option             | Default                 | Purpose                                |
+| ------------------ | ----------------------- | -------------------------------------- |
+| `maxWorkers`       | `1`                     | Maximum number of native Workers       |
+| `warmUpWorkers`    | `true` for one Worker   | Creates the pool during initialization |
+| `keepAlive`        | Same as `warmUpWorkers` | Keeps idle Workers alive               |
+| `terminationDelay` | `1000` ms               | Wait before terminating idle Workers   |
+
+A single Worker is created up front and kept alive. A pool is created on demand and released when idle, unless
+you ask otherwise.
+
+## What a pool is good for
+
+<Callout type="note" title="Each Worker has its own memory">
+  Workers do not share variables. A pool fits work that depends only on its payload: parsing, compression, image
+  processing, calculations. A worker that keeps state between calls should stay a single Worker.
+</Callout>
+
+How many Workers to use depends on the device. `navigator.hardwareConcurrency` reports the logical cores; leaving
+one for the main thread is a reasonable start.
+
+## Bring your own pool
+
+An array of native Workers is used as the pool, as it is. See
+[Creating workers](../creating-workers/#your-own-pool).
+
+## Try it
+
+The [worker pool example](../../examples/worker-pool/) runs the same eight tasks with one, two and four Workers.

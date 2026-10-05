@@ -1,0 +1,18 @@
+{
+  "extends": "astro/tsconfigs/strict",
+  "include": [".astro/types.d.ts", "src", "astro.config.mjs", "vitest.config.ts", "playwright.config.ts", "visual"],
+  "exclude": ["dist"],
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "react",
+    "lib": ["ES2022", "DOM", "DOM.Iterable", "WebWorker"],
+    "types": ["vitest/globals"],
+    "baseUrl": ".",
+    "paths": {
+      "@snippets/*": ["src/snippets/*"],
+      "@examples/*": ["src/examples/*"],
+      "easy-web-worker": ["../../libs/easy-web-worker/dist/index.d.ts"],
+      "easy-web-worker/*": ["../../libs/easy-web-worker/dist/*"]
+    }
+  }
+}

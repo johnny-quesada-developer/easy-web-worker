@@ -4,7 +4,8 @@
   "private": true,
   "description": "Monorepo for the easy-web-worker package.",
   "workspaces": [
-    "libs/*"
+    "libs/*",
+    "apps/*"
   ],
   "scripts": {
     "test": "node scripts/run.mjs test",
@@ -17,7 +18,12 @@
     "test:e2e": "node scripts/run.mjs test:e2e",
     "test:e2e:dist": "node scripts/run.mjs test:e2e:dist",
     "test:e2e:ui": "node scripts/run.mjs test:e2e:ui",
+    "test:visual": "node scripts/run.mjs test:visual",
+    "test:visual:update": "node scripts/run.mjs test:visual:update",
+    "check:links": "node scripts/run.mjs check:links",
     "build": "node scripts/run.mjs build",
+    "dev": "node scripts/run.mjs dev",
+    "preview": "node scripts/run.mjs preview",
     "build:template": "node scripts/run.mjs build:template",
     "clean": "node scripts/run.mjs clean",
     "ts-check": "node scripts/run.mjs ts-check",

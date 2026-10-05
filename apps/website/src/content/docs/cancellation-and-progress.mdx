@@ -1,0 +1,68 @@
+---
+title: Cancellation and progress
+short: Cancel & progress
+description: Report progress from a worker, cancel a call from either thread, and stop work that never pauses.
+section: Core concepts
+order: 3
+---
+
+import { CodeBlock } from '../../ui/CodeBlock';
+import { Callout } from '../../ui/Callout';
+import primesWorker from '@snippets/cancellation/primes.worker.ts?raw';
+import primesMain from '@snippets/cancellation/primes-main.ts?raw';
+import onCancel from '@snippets/cancellation/on-cancel.worker.ts?raw';
+import selfCancel from '@snippets/cancellation/self-cancel.worker.ts?raw';
+import force from '@snippets/cancellation/force.ts?raw';
+
+## Progress on the same call
+
+Every call returns a `CancelablePromise`. Progress and cancellation belong to that promise, not to a second
+channel.
+
+<CodeBlock code={primesMain} lang="ts" title="main.ts" />
+
+Inside the worker, the message of the call reports the progress:
+
+<CodeBlock code={primesWorker} lang="ts" title="math.worker.ts" />
+
+`reportProgress(percentage, payload?)` can also carry a value. It arrives as the second argument of the
+`onProgress` callback.
+
+## Cancellation reaches the worker
+
+`task.cancel(reason)` sends the cancellation to the worker, and the promise rejects with that reason once the
+worker confirms. Inside the worker there are two ways to notice it:
+
+- `message.isPending()` becomes `false`. A loop can check it between chunks, as above.
+- `message.onCancel(callback)` runs the callback. Use it to abort requests and release resources.
+
+<CodeBlock code={onCancel} lang="ts" title="search.worker.ts" />
+
+Cancellation is idempotent: canceling twice sends one request to the worker, and canceling a call that already
+finished does nothing.
+
+## A worker can cancel its own call
+
+<CodeBlock code={selfCancel} lang="ts" title="validator.worker.ts" />
+
+The main thread sees a rejection with the reason, the same as when it cancels the call itself.
+
+## Stop work that never pauses
+
+<Callout type="warning" title="A blocked worker cannot hear a cancellation">
+  A cancellation is a message. A worker in the middle of a synchronous loop cannot receive messages, so
+  `task.cancel()` has no effect until the loop ends. Break long work into chunks and pause between them, as
+  `findPrimes` does.
+</Callout>
+
+For work that cannot pause, restart the worker instead:
+
+<CodeBlock code={force} lang="ts" title="controls.ts" />
+
+`force: true` terminates the Workers, rejects every pending call and starts fresh ones. A worker created from an
+existing native `Worker` cannot be restarted by the library; see [Creating workers](../creating-workers/).
+
+## Try it
+
+The [progress and cancellation example](../../examples/progress-and-cancellation/) runs this code with a real
+Worker.

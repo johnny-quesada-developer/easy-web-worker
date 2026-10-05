@@ -11,6 +11,11 @@ coverage/
 **/e2e/.harness/
 **/e2e/.results/
 playwright-report/
+test-results/
+
+# website
+.astro/
+apps/website/public/pagefind/
 
 # Nx cache and workspace data
 .nx/cache

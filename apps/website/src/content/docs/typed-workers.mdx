@@ -1,0 +1,85 @@
+---
+title: Typed workers
+description: How defineWorker and createWorker turn the functions of a worker into typed methods on the main thread.
+section: Core concepts
+order: 1
+---
+
+import { CodeBlock } from '../../ui/CodeBlock';
+import { Callout } from '../../ui/Callout';
+import textWorker from '@snippets/typed-workers/text.worker.ts?raw';
+import textMain from '@snippets/typed-workers/text-main.ts?raw';
+import errorsWorker from '@snippets/typed-workers/errors.worker.ts?raw';
+import errorsMain from '@snippets/typed-workers/errors-main.ts?raw';
+import stateWorker from '@snippets/typed-workers/state.worker.ts?raw';
+import byHandWorker from '@snippets/home/by-hand.worker.js?raw';
+import byHandMain from '@snippets/home/by-hand.main.js?raw';
+
+## The worker is an API
+
+Every key you return from `defineWorker` becomes a method on the main thread.
+
+<CodeBlock code={textWorker} lang="ts" title="text.worker.ts" />
+
+<CodeBlock code={textMain} lang="ts" title="main.ts" />
+
+The contract between the threads lives next to the code that implements it. There is no second file of message
+types to keep in sync: change the worker, and the main thread stops compiling until it matches.
+
+## How the types cross the threads
+
+| In the worker                     | On the main thread                                            |
+| --------------------------------- | ------------------------------------------------------------- |
+| `() => string`                    | `() => CancelablePromise<string>`                             |
+| `(value: number) => number`       | `(payload: number, transfer?) => CancelablePromise<number>`   |
+| `async (ids: string[]) => User[]` | `(payload: string[], transfer?) => CancelablePromise<User[]>` |
+| `(value?: number) => number`      | `(payload?: number, transfer?) => CancelablePromise<number>`  |
+
+A method receives **one payload**. To send several values, use an object or a tuple.
+
+<Callout type="note" title="Strict mode">
+  Required payloads are enforced when TypeScript runs with `strict` or `strictNullChecks`. Without it, TypeScript
+  treats every payload as optional.
+</Callout>
+
+## Return values and errors
+
+What a method returns resolves the call. What it throws rejects it, and the worker keeps serving the next call.
+
+<CodeBlock code={errorsWorker} lang="ts" title="parser.worker.ts" />
+
+<CodeBlock code={errorsMain} lang="ts" title="main.ts" />
+
+Values travel between threads with the
+[structured clone algorithm](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm).
+Objects, arrays, `Map`, `Set`, `Date`, typed arrays and `Error` cross; functions, DOM nodes and class instances
+with methods do not.
+
+## State inside a worker
+
+A worker stays alive between calls, so it can own state.
+
+<CodeBlock code={stateWorker} lang="ts" title="users.worker.ts" />
+
+With a [pool](../worker-pools/), each Worker has its own memory. State kept in one is not visible to the others.
+
+## Two entry points
+
+Import each side from its own entry, so the worker bundle carries no main-thread code.
+
+| Entry                          | Use it in       | Exports                         |
+| ------------------------------ | --------------- | ------------------------------- |
+| `easy-web-worker/defineWorker` | The worker file | `defineWorker`, `unwrap`, types |
+| `easy-web-worker/createWorker` | The main thread | `createWorker`, `unwrap`, types |
+
+Everything is also exported from the root `easy-web-worker` entry.
+
+## What it replaces
+
+The native API gives you messages, not functions. This is the least you write by hand to get one answer back:
+
+<CodeBlock code={byHandWorker} lang="js" title="fibonacci.worker.js" />
+
+<CodeBlock code={byHandMain} lang="js" title="main.js" />
+
+And that is before errors, cancellation, progress, types, or a second method.

@@ -1,0 +1,56 @@
+---
+title: Keep the page responsive
+headline: The same work, without the frozen page
+description: Run one slow computation on the main thread and then inside a Worker, and measure what the page could still do in each case.
+order: 1
+category: Responsiveness
+thumb: responsive
+outcome: Heavy work belongs on another thread. The call that starts it can still look like a function.
+points:
+  - Press Run on the main thread. The heartbeat stops, and the Page frozen value is how long nothing could be drawn, scrolled or typed.
+  - Press Run in a Worker. The result is the same number, and the heartbeat keeps one bar per frame while it is computed.
+  - Try a larger `n`. The main-thread freeze grows with the work; the Worker version keeps drawing frames.
+sources:
+  - file: responsive/math.worker.ts
+    title: math.worker.ts
+  - file: responsive/client.ts
+    title: client.ts
+  - file: responsive/math.ts
+    title: math.ts
+  - file: responsive/ResponsiveDemo.tsx
+    title: ResponsiveDemo.tsx
+guide: typed-workers
+related:
+  - label: Getting started
+    href: ../../docs/getting-started/
+  - label: Typed workers
+    href: ../../docs/typed-workers/
+  - label: Creating workers
+    href: ../../docs/creating-workers/
+---
+
+import { CodeBlock } from '../../ui/CodeBlock';
+import { Callout } from '../../ui/Callout';
+import worker from '@examples/responsive/math.worker.ts?raw';
+import client from '@examples/responsive/client.ts?raw';
+import math from '@examples/responsive/math.ts?raw';
+
+## The code
+
+The function is ordinary TypeScript. Nothing about it knows it will run in a Worker.
+
+<CodeBlock code={math} lang="ts" title="math.ts" />
+
+The Worker file hands that function to `defineWorker` and exports the **type** of the result.
+
+<CodeBlock code={worker} lang="ts" title="math.worker.ts" />
+
+The main thread creates the worker from the file and gets a typed method back. Only the type is imported from
+the Worker file, so none of its code ends up in the main bundle.
+
+<CodeBlock code={client} lang="ts" title="client.ts" />
+
+<Callout type="note" title="What the demo measures">
+  The heartbeat is a `requestAnimationFrame` loop. A frame can only be drawn when the main thread is free, so the
+  longest gap between two frames is the time the page was frozen.
+</Callout>

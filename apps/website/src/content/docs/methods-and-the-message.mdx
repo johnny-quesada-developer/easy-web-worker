@@ -1,0 +1,76 @@
+---
+title: Methods and the message
+short: Methods & message
+description: The three ways to write a worker method, what the message of a call offers, and the controls behind the methods.
+section: Core concepts
+order: 2
+---
+
+import { CodeBlock } from '../../ui/CodeBlock';
+import { Callout } from '../../ui/Callout';
+import threeWays from '@snippets/methods/three-ways.worker.ts?raw';
+import noPayload from '@snippets/methods/no-payload.worker.ts?raw';
+import lifecycle from '@snippets/methods/lifecycle.worker.ts?raw';
+import unwrapWorker from '@snippets/methods/unwrap.worker.ts?raw';
+
+## Three ways to write a method
+
+<CodeBlock code={threeWays} lang="ts" title="worker.ts" />
+
+| Style                                         | Completes the call      | Types                             |
+| --------------------------------------------- | ----------------------- | --------------------------------- |
+| Plain function                                | With the returned value | Inferred                          |
+| `onMessage((payload, message, event) => ...)` | With the returned value | Inferred, `message` typed         |
+| `onMessage<P, R>().handle((message) => ...)`  | You do                  | Explicit, `message.resolve` typed |
+
+All three are called the same way from the main thread.
+
+- Use a **plain function** when the method only needs its payload.
+- Use **`onMessage`** when it also reports progress or reacts to a cancellation. The wrapper exists to give the
+  second parameter its type; a plain function receives the same arguments.
+- Use **`onMessage().handle`** for timers, streams and event-based APIs, or to
+  [transfer a result](../transferable-objects/).
+
+<Callout type="note" title="The call is completed once">
+  If a method completes the message itself with `resolve`, `reject` or `cancel`, its return value is ignored.
+</Callout>
+
+## A method with no payload
+
+To reach the message without a payload, declare the first parameter as `null`.
+
+<CodeBlock code={noPayload} lang="ts" title="status.worker.ts" />
+
+## The message
+
+Available as second parameter of a method, in `.handle(...)`, and in the [message API](../message-api/).
+
+| Member                                            | Purpose                                       |
+| ------------------------------------------------- | --------------------------------------------- |
+| `payload`                                         | Value sent from the main thread               |
+| `resolve(result?, transfer?)`                     | Resolves the call                             |
+| `reject(reason?, transfer?)`                      | Rejects the call                              |
+| `cancel(reason?, transfer?)`                      | Cancels the call from inside the worker       |
+| `reportProgress(percentage, payload?, transfer?)` | Reports progress and keeps the call pending   |
+| `onCancel`, `onResolve`, `onReject`, `onProgress` | Subscribe to each outcome; return unsubscribe |
+| `onFinalize`                                      | Runs once the call ends, whatever the outcome |
+| `isPending()`, `getStatus()`                      | Current state of the call                     |
+
+`onFinalize` is the place to release what a call opened:
+
+<CodeBlock code={lifecycle} lang="ts" title="watch.worker.ts" />
+
+## The event
+
+The third parameter of a method is the original `MessageEvent` received by the worker. It is rarely needed; it
+is there for code that inspects the raw message.
+
+## The controls behind the methods
+
+The object returned by `defineWorker` describes the methods. `unwrap` reaches the worker behind it: `onMessage`
+for messages sent without a method, `importScripts` and `close`.
+
+<CodeBlock code={unwrapWorker} lang="ts" title="ping.worker.ts" />
+
+The same helper works on the main thread, where it returns the `EasyWebWorker` instance. See the
+[API reference](../api-reference/#unwrap).

@@ -1,0 +1,490 @@
+/*
+ * Code surfaces. Each theme in src/lib/code-themes.mjs sets the surface colours here and the token
+ * colours come from Shiki's per-theme CSS variables (--sh-<id>), so <html data-code-theme> switches
+ * every block at runtime. The hand-written home-page code panes use the same --code-* variables.
+ */
+:root,
+:root[data-code-theme='vscode-light'] {
+  --code-bg: #ffffff;
+  --code-head: #f3f3f3;
+  --code-border: var(--color-line);
+  --code-fg: #1f1f1f;
+  --code-gutter: #9199a1;
+  --code-emphasis: #e8f2ff;
+  --code-keyword: #0000ff;
+  --code-string: #a31515;
+  --code-function: #795e26;
+  --code-comment: #008000;
+  --code-number: #098658;
+  --code-shell: #0451a5;
+  --code-tag: #800000;
+}
+
+:root[data-code-theme='vscode-dark'] {
+  --code-bg: #1f1f1f;
+  --code-head: #252526;
+  --code-border: #33383a;
+  --code-fg: #d4d4d4;
+  --code-gutter: #858585;
+  --code-emphasis: #2b3a4a;
+  --code-keyword: #569cd6;
+  --code-string: #ce9178;
+  --code-function: #dcdcaa;
+  --code-comment: #6a9955;
+  --code-number: #b5cea8;
+  --code-shell: #9cdcfe;
+  --code-tag: #569cd6;
+}
+
+:root[data-code-theme='rgsh-dark'],
+.dark:not([data-code-theme]) {
+  --code-bg: #1a1a17;
+  --code-head: #20201c;
+  --code-border: var(--color-line);
+  --code-fg: #f1f0e9;
+  --code-gutter: #6b6a62;
+  --code-emphasis: #24241f;
+  --code-keyword: #899fc8;
+  --code-string: #83ad8d;
+  --code-function: #d8877d;
+  --code-comment: #aaa89e;
+  --code-number: #cba66a;
+  --code-shell: #83ad8d;
+  --code-tag: #d8877d;
+}
+
+:root[data-code-theme='rgsh-dark'] .shiki span,
+.dark:not([data-code-theme]) .shiki span {
+  color: var(--sh-rgsh-dark);
+  font-weight: var(--sh-rgsh-dark-font-weight, inherit);
+  font-style: var(--sh-rgsh-dark-font-style, inherit);
+}
+
+:root[data-code-theme='rgsh'] {
+  --code-bg: #f7f8f6;
+  --code-head: #f5f7f3;
+  --code-border: var(--color-line);
+  --code-fg: #1b2320;
+  --code-gutter: #8c958e;
+  --code-emphasis: #edf4ec;
+  --code-keyword: #39528c;
+  --code-string: #1f6446;
+  --code-function: #94382f;
+  --code-comment: #66716a;
+  --code-number: #7a5a1c;
+  --code-shell: #1f6446;
+  --code-tag: #94382f;
+}
+
+/* Shiki writes one variable per theme onto every token; the data attribute picks which one wins. */
+.shiki span {
+  color: var(--sh-vscode-light);
+  font-weight: var(--sh-vscode-light-font-weight, inherit);
+  font-style: var(--sh-vscode-light-font-style, inherit);
+}
+
+:root[data-code-theme='vscode-dark'] .shiki span {
+  color: var(--sh-vscode-dark);
+  font-weight: var(--sh-vscode-dark-font-weight, inherit);
+  font-style: var(--sh-vscode-dark-font-style, inherit);
+}
+
+:root[data-code-theme='rgsh'] .shiki span {
+  color: var(--sh-rgsh);
+  font-weight: var(--sh-rgsh-font-weight, inherit);
+  font-style: var(--sh-rgsh-font-style, inherit);
+}
+
+/* Code panels: filename row, copy control, internally scrolling source, line numbers as counters. */
+.code-block {
+  border: 1px solid var(--code-border);
+  border-radius: var(--radius-code);
+  margin: 22px 0;
+  background: var(--code-bg);
+  overflow: hidden;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.code-head {
+  background: var(--code-head);
+  border-bottom: 1px solid var(--code-border);
+  padding: 9px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: calc(10px * var(--type-scale));
+  color: var(--color-muted);
+}
+
+.code-head > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.code-head .icon {
+  width: 16px;
+  height: 16px;
+}
+
+.code-block pre {
+  padding: 22px 18px;
+  margin: 0;
+  overflow: auto;
+  max-width: 100%;
+  font-family: var(--font-mono);
+  font-size: calc(12px * var(--type-scale));
+  line-height: 1.85;
+  color: var(--code-fg);
+  tab-size: 2;
+  counter-reset: line;
+  background: transparent !important;
+}
+
+.code-block pre code {
+  display: block;
+  white-space: pre;
+  min-width: max-content;
+}
+
+.code-block .line {
+  counter-increment: line;
+  min-height: 1.85em;
+}
+
+.code-block .line::before {
+  content: counter(line);
+  display: inline-block;
+  width: 26px;
+  font-size: calc(10px * var(--type-scale));
+  color: var(--code-gutter);
+  user-select: none;
+}
+
+.code-block--plain .line::before {
+  display: none;
+}
+
+.code-block--plain pre {
+  padding: 18px;
+}
+
+.workbench-source .code-block {
+  border: 0;
+  border-radius: 0;
+  margin: 0;
+}
+
+.workbench-source .code-block pre {
+  font-size: calc(11px * var(--type-scale));
+  line-height: 1.85;
+  padding: 24px 18px;
+}
+
+.workbench-source .code-block .line::before {
+  width: 23px;
+}
+
+@media (max-width: 1190px) {
+  .code-block pre {
+    font-size: calc(11px * var(--type-scale));
+  }
+}
+
+@media (max-width: 760px) {
+  .code-block pre {
+    font-size: calc(12px * var(--type-scale));
+    padding: 17px 11px;
+  }
+  .code-block .line::before {
+    width: 23px;
+  }
+  .workbench-source .code-block pre {
+    max-height: 300px;
+  }
+}
+
+@media (max-width: 370px) {
+  .code-block pre {
+    font-size: calc(10.5px * var(--type-scale));
+  }
+}
+
+/* Animated code panes on the home page (real DOM text). */
+.code-list {
+  margin: 0;
+  white-space: pre;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: calc(12px * var(--type-scale));
+  line-height: calc(23px * var(--type-scale));
+  color: var(--code-fg);
+  tab-size: 2;
+  scrollbar-width: thin;
+  min-width: 0;
+}
+
+/* html-prefixed so the code surface wins over the bg-paper utility on these panes. */
+html .code-pane,
+html .workbench-source {
+  background: var(--code-bg);
+  color: var(--code-fg);
+  border-color: var(--code-border);
+}
+
+.code-list code {
+  display: block;
+}
+
+.code-list .code-line {
+  display: block;
+  min-height: 23px;
+  padding: 0 3px;
+  border-radius: 3px;
+}
+
+.code-list .code-line > .ln {
+  display: inline-block;
+  width: 27px;
+  color: var(--code-gutter);
+  user-select: none;
+  font-size: calc(10px * var(--type-scale));
+}
+
+.code-list .code-line.emphasis {
+  background: var(--code-emphasis);
+}
+
+.code-list.is-terminal {
+  font-size: calc(11.5px * var(--type-scale));
+}
+
+.code-list .t-keyword {
+  color: var(--code-keyword);
+}
+.code-list .t-string {
+  color: var(--code-string);
+}
+.code-list .t-function {
+  color: var(--code-function);
+}
+.code-list .t-comment {
+  color: var(--code-comment);
+}
+.code-list .t-number {
+  color: var(--code-number);
+}
+.code-list .t-shell {
+  color: var(--code-shell);
+}
+.code-list .t-tag {
+  color: var(--code-tag);
+}
+
+.line-enter {
+  animation: line-enter 360ms var(--ease-out) both;
+}
+
+@keyframes line-enter {
+  from {
+    opacity: 0.25;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.pulse {
+  --pulse-ring: #acc9b4;
+  animation: pulse 0.5s var(--ease-out);
+}
+
+.dark .pulse {
+  --pulse-ring: var(--color-green-soft);
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 3px var(--pulse-ring);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+.spin {
+  animation: spin 1.5s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Selector-composition tree connectors. */
+.selector-row:not(:first-child)::before {
+  content: '';
+  width: 12px;
+  height: 23px;
+  border-bottom: 1px solid #d1d7e3;
+  border-left: 1px solid #d1d7e3;
+  border-bottom-left-radius: 4px;
+  position: absolute;
+  left: calc(var(--depth) * 23px - 12px);
+  top: -4px;
+}
+
+.dark .selector-row:not(:first-child)::before {
+  border-bottom-color: var(--color-line);
+  border-left-color: var(--color-line);
+}
+
+@media (max-width: 860px) {
+  .selector-row:not(:first-child)::before {
+    left: calc(var(--depth) * 13px - 9px);
+    width: 9px;
+  }
+}
+
+@media (max-width: 640px) {
+  .selector-row:not(:first-child)::before {
+    left: calc(var(--depth) * 15px - 10px);
+    width: 10px;
+  }
+}
+
+/* Home hero: dotted application stage and signal traces. */
+.visual-pane {
+  background:
+    radial-gradient(#dfe6dc 0.7px, transparent 0.7px) 0 0 / 16px 16px,
+    #fbfcfa;
+}
+
+.dark .visual-pane {
+  background:
+    radial-gradient(var(--color-line) 0.7px, transparent 0.7px) 0 0 / 16px 16px,
+    var(--color-surface);
+}
+
+.branch .track {
+  fill: none;
+  stroke: #d4ded2;
+  stroke-width: 1.1;
+}
+
+.dark .branch .track {
+  stroke: var(--color-line);
+}
+
+.branch .signal {
+  fill: none;
+  stroke: #5a8e61;
+  stroke-width: 1.6;
+  opacity: 0;
+}
+
+.dark .branch .signal {
+  stroke: var(--color-green);
+}
+
+/* Hero graph: a node grows a little as it appears, and again whenever an update reaches it. */
+.node-enter {
+  animation: node-enter 480ms var(--ease-out);
+}
+
+@keyframes node-enter {
+  from {
+    scale: 0.94;
+  }
+  60% {
+    scale: 1.02;
+  }
+  to {
+    scale: 1;
+  }
+}
+
+.node-pulse {
+  animation: node-pulse 520ms var(--ease-out);
+}
+
+@keyframes node-pulse {
+  from {
+    scale: 1;
+  }
+  35% {
+    scale: 1.045;
+  }
+  to {
+    scale: 1;
+  }
+}
+
+/* Learning points and step markers. */
+.toast {
+  position: fixed;
+  bottom: 25px;
+  left: 50%;
+  transform: translate(-50%, 20px);
+  background: var(--color-ink);
+  color: #fff;
+  font-size: calc(12px * var(--type-scale));
+  border-radius: 7px;
+  padding: 12px 19px;
+  box-shadow: 0 10px 30px #10201515;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 80;
+  transition: 0.2s;
+  max-width: calc(100vw - 40px);
+  text-align: center;
+}
+
+.dark .toast {
+  color: var(--color-paper);
+}
+
+.toast.show {
+  transform: translate(-50%, 0);
+  opacity: 1;
+}
+
+@media (max-width: 760px) {
+  .toast {
+    font-size: calc(11px * var(--type-scale));
+  }
+}
+
+/* Drawers: right-side sheets that lock background scroll. */
+.drawer {
+  width: 380px;
+  margin: 0 0 0 auto;
+  height: 100dvh;
+  max-height: 100dvh;
+  border-radius: 0;
+  padding: 25px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+body.dialog-open {
+  overflow: hidden;
+}
+
+/* Animated status track and stage in the async workbench. */
+.motion-off .spin {
+  animation: none;
+}
+
+/* Fluid grid children must be allowed below their code's intrinsic width. */
+.min-w-children > * {
+  min-width: 0;
+}

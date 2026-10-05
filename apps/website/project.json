@@ -1,0 +1,48 @@
+{
+  "name": "website",
+  "sourceRoot": "apps/website/src",
+  "projectType": "application",
+  "tags": ["scope:website", "type:app"],
+  "//": "Deployed to GitHub Pages by .github/workflows/deploy-website.yml. Never published to npm. Every target builds the package first: the site runs against libs/easy-web-worker/dist.",
+  "targets": {
+    "dev": {
+      "executor": "nx:run-commands",
+      "dependsOn": [{ "projects": ["easy-web-worker"], "target": "build" }],
+      "options": { "command": "yarn dev", "cwd": "apps/website" }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "dependsOn": [{ "projects": ["easy-web-worker"], "target": "build" }],
+      "outputs": ["{projectRoot}/dist"],
+      "options": { "command": "yarn build", "cwd": "apps/website" }
+    },
+    "preview": {
+      "executor": "nx:run-commands",
+      "options": { "command": "yarn preview", "cwd": "apps/website" }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "dependsOn": [{ "projects": ["easy-web-worker"], "target": "build" }],
+      "options": { "command": "yarn test", "cwd": "apps/website" }
+    },
+    "test:visual": {
+      "executor": "nx:run-commands",
+      "dependsOn": [{ "projects": ["easy-web-worker"], "target": "build" }],
+      "options": { "command": "yarn test:visual", "cwd": "apps/website" }
+    },
+    "test:visual:update": {
+      "executor": "nx:run-commands",
+      "dependsOn": [{ "projects": ["easy-web-worker"], "target": "build" }],
+      "options": { "command": "yarn test:visual:update", "cwd": "apps/website" }
+    },
+    "ts-check": {
+      "executor": "nx:run-commands",
+      "dependsOn": [{ "projects": ["easy-web-worker"], "target": "build" }],
+      "options": { "command": "yarn ts-check", "cwd": "apps/website" }
+    },
+    "check:links": {
+      "executor": "nx:run-commands",
+      "options": { "command": "yarn check:links", "cwd": "apps/website" }
+    }
+  }
+}

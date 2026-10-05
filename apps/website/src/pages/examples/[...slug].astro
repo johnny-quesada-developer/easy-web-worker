@@ -1,0 +1,128 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { Workbench, type DemoKind } from '../../ui/examples/Workbench';
+import { Breadcrumb } from '../../ui/Breadcrumb';
+import { Eyebrow, SectionHead } from '../../ui/Eyebrow';
+import { RowLink, RowLinks } from '../../ui/RowLinks';
+import { TextLink } from '../../ui/Button';
+import { H2, H3 } from '../../ui/Heading';
+import { highlight, type CodeLanguage } from '../../lib/highlight';
+import { withBase } from '../../lib/site';
+
+const demoOf: Record<string, DemoKind> = {
+  'keep-the-page-responsive': 'responsive',
+  'progress-and-cancellation': 'progress',
+  'worker-pool': 'pool',
+  'transferable-buffers': 'transfer',
+  'worker-without-a-file': 'runtime',
+};
+
+const raw = import.meta.glob('../../examples/**/*.{ts,tsx}', { query: '?raw', import: 'default', eager: true }) as Record<
+  string,
+  string
+>;
+
+export async function getStaticPaths() {
+  const entries = (await getCollection('examples')).sort((a, b) => a.data.order - b.data.order);
+
+  return entries.map((entry) => ({
+    params: { slug: entry.id },
+    props: {
+      entry,
+      others: entries
+        .filter((other) => other.id !== entry.id)
+        .slice(0, 3)
+        .map((other) => ({ id: other.id, headline: other.data.headline, description: other.data.description, category: other.data.category })),
+    },
+  }));
+}
+
+const { entry, others } = Astro.props;
+const { Content } = await render(entry);
+
+const files = entry.data.sources.map((source) => {
+  const code = raw[`../../examples/${source.file}`];
+  if (!code) throw new Error(`Example source not found: ${source.file}`);
+  const lang = (source.file.endsWith('.tsx') ? 'tsx' : 'ts') as CodeLanguage;
+
+  return { title: source.title ?? source.file.split('/').pop()!, code: code.trimEnd(), html: highlight(code, lang) };
+});
+---
+
+<BaseLayout
+  title={entry.data.title}
+  description={entry.data.description}
+  ogType="article"
+  image={`og/examples/${entry.id}.png`}
+  imageAlt={`${entry.data.title}, easy-web-worker example`}
+  family="Examples"
+>
+  <div class="wrap">
+    <section class="pt-12 pb-7 max-md:pt-8">
+      <Breadcrumb items={[{ label: 'Examples', href: withBase('examples/') }, { label: entry.data.category }]} />
+      <Eyebrow className="mb-[21px]">Interactive example · {entry.data.category}</Eyebrow>
+      <h1 class="max-w-[740px] text-45 max-md:text-[calc(36px*var(--type-scale))]">{entry.data.headline}</h1>
+      <p class="mb-4 max-w-[670px] text-15 max-md:text-14">{entry.data.description}</p>
+    </section>
+
+    <Workbench
+      client:load
+      title={entry.data.headline}
+      demo={demoOf[entry.id]}
+      files={files}
+      outcome={entry.data.outcome}
+      points={entry.data.points}
+    />
+
+    <section class="grid grid-cols-[1.5fr_1fr] gap-[65px] py-10 max-md:grid-cols-1 max-md:gap-[10px] max-md:pt-8">
+      <div>
+        <Eyebrow className="mb-[21px]">Take it with you</Eyebrow>
+        <h2 class="text-[calc(25px*var(--type-scale))]">{entry.data.outcome}</h2>
+      </div>
+      <div>
+        {
+          entry.data.points.map((point, index) => (
+            <div class="mb-[22px] flex items-start gap-[18px]">
+              <span class="mt-[3px] font-mono text-10 text-green">0{index + 1}</span>
+              <p class="m-0 text-13 leading-[1.8]">{point}</p>
+            </div>
+          ))
+        }
+        <TextLink href={withBase(`docs/${entry.data.guide}/`)}>Read the full guide</TextLink>
+      </div>
+    </section>
+
+    <article class="doc-content max-w-[760px] border-t border-line pt-6" data-pagefind-body>
+      <Content components={{ h2: H2, h3: H3 }} />
+    </article>
+
+    {
+      entry.data.related.length > 0 && (
+        <section class="mt-8 border-t border-line pt-6" data-pagefind-ignore>
+          <h2 class="mb-3 text-19">Related documentation</h2>
+          <ul class="m-0 flex flex-wrap gap-x-6 gap-y-2 p-0 [list-style:none]">
+            {entry.data.related.map((link) => (
+              <li>
+                <TextLink href={link.href}>{link.label}</TextLink>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
+
+    <section class="border-t border-line py-[70px] max-md:py-[42px]" data-pagefind-ignore>
+      <SectionHead kicker="Keep exploring" title="Another piece of the model." />
+      <RowLinks className="mb-0">
+        {
+          others.map((other) => (
+            <RowLink href={withBase(`examples/${other.id}/`)} title={other.headline} text={other.description}>
+              <Eyebrow slot="kicker">{other.category}</Eyebrow>
+            </RowLink>
+          ))
+        }
+      </RowLinks>
+    </section>
+  </div>
+</BaseLayout>

@@ -1,0 +1,62 @@
+---
+title: Platform and versions
+short: Platform & versions
+description: Where easy-web-worker runs, what it ships, and what changes when you upgrade from version 7.
+section: Platform
+order: 1
+---
+
+import { PACKAGE_VERSION, links } from '../../lib/site';
+import { Callout } from '../../ui/Callout';
+
+## Where it runs
+
+The library is built on the native Worker API of the browser. It has no dependency on React, Vue, Angular,
+Svelte or any other UI library, and it runs anywhere Web Workers do.
+
+| Feature                  | Needs                                                        |
+| ------------------------ | ------------------------------------------------------------ |
+| Worker files             | Any browser with Web Workers                                 |
+| Worker files with imports | Module workers: Chrome 80, Safari 15, Firefox 114           |
+| Runtime workers          | Blob URLs for workers, available in every modern browser     |
+| Transferable objects     | Any browser with Web Workers                                 |
+
+Workers do not exist in Node, jsdom or during server rendering. Create the worker in code that runs in the
+browser: an effect, an event handler, or a module that is only loaded on the client.
+
+## What the package ships
+
+- ES modules, CommonJS and TypeScript declarations for every entry.
+- `easy-web-worker/defineWorker` for worker files and `easy-web-worker/createWorker` for the main thread, so each
+  side only loads what it uses.
+- One runtime dependency, <a href={links.cancelablePromise}>easy-cancelable-promise</a>, used on the main thread.
+
+## Upgrading from version 7
+
+<Callout type="note" title="Version documented here">
+  These pages describe <strong>{PACKAGE_VERSION}</strong>.
+</Callout>
+
+Everything from version 7 keeps working: `createEasyWebWorker`, `EasyWebWorker`, `StaticEasyWebWorker`,
+`send`, `sendToMethod` and `onMessage`. The changes to check:
+
+| Change                                              | What to do                                                        |
+| --------------------------------------------------- | ----------------------------------------------------------------- |
+| `cancelAll()` and `reboot()` resolve with nothing   | Stop reading the array they used to resolve with                  |
+| `easy-cancelable-promise` 2                         | Rejection reasons are typed `unknown`; narrow them before use     |
+| Published files are ES modules and CommonJS         | No action; the UMD bundles are gone                               |
+| Worker names in a pool                              | Names are now `name`, `name-1`, `name-2`                          |
+
+And what is new:
+
+- `defineWorker` and `createWorker`: typed methods instead of messages.
+- `createWorker` with a function, or an array of functions, as the worker.
+- `unwrap`, to reach the controls behind the methods.
+
+## Fixed along the way
+
+- Two or more `scripts` now load correctly in runtime workers.
+- Canceling a call that already finished, or canceling twice, no longer makes the worker throw.
+- A message that fails to be posted no longer stays in the queue.
+- `reboot` clears every pending call, so idle workers are terminated as configured.
+- Canceling a call that was sent with transferable objects no longer throws.

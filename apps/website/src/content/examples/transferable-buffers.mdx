@@ -1,0 +1,50 @@
+---
+title: Transferable buffers
+headline: Send 64 MB to a Worker without copying it
+description: Send the same buffer as a copy and as a transfer, and compare the time and what the sender is left holding.
+order: 4
+category: Memory
+thumb: transfer
+outcome: A transfer moves ownership. The data changes threads and nothing is duplicated.
+points:
+  - Press Send a copy. The main thread still holds the whole buffer afterwards, so the data existed twice.
+  - Press Transfer it. Still in the main thread drops to 0 MB, because the memory moved to the worker.
+  - Raise the size. The copy gets slower with every megabyte; the transfer barely changes.
+sources:
+  - file: transfer/buffer.worker.ts
+    title: buffer.worker.ts
+  - file: transfer/client.ts
+    title: client.ts
+  - file: transfer/TransferDemo.tsx
+    title: TransferDemo.tsx
+guide: transferable-objects
+related:
+  - label: Transferable objects
+    href: ../../docs/transferable-objects/
+  - label: Methods and the message
+    href: ../../docs/methods-and-the-message/
+  - label: API reference
+    href: ../../docs/api-reference/
+---
+
+import { CodeBlock } from '../../ui/CodeBlock';
+import { Callout } from '../../ui/Callout';
+import worker from '@examples/transfer/buffer.worker.ts?raw';
+import demo from '@examples/transfer/TransferDemo.tsx?raw';
+
+## The code
+
+A returned value is always copied. To transfer a result, the method completes the message itself and passes the
+transfer list to `message.resolve`. `onMessage<TPayload, TResult>().handle(...)` is the form for that.
+
+<CodeBlock code={worker} lang="ts" title="buffer.worker.ts" />
+
+On the main thread the transfer list is the second argument of the call. It is the only difference between the
+two buttons.
+
+<CodeBlock code={demo} lang="tsx" title="TransferDemo.tsx" />
+
+<Callout type="warning" title="A transferred buffer is gone for the sender">
+  After a transfer, `buffer.byteLength` is `0` on the side that sent it. Read what you need before the call, or
+  use the buffer that comes back.
+</Callout>

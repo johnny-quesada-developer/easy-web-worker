@@ -1,0 +1,48 @@
+---
+title: A worker without a file
+headline: A function becomes the worker
+description: Analyze text as you type inside a Worker created from a function, with its types inferred and no worker file to configure.
+order: 5
+category: Runtime
+thumb: runtime
+outcome: For small jobs, the worker can live next to the code that calls it.
+points:
+  - Type in the box. Every change is analyzed inside a worker; the counts update when the answer arrives.
+  - Paste a long text. Typing stays smooth, because the counting never runs on the main thread.
+  - Type quickly. A call that is still running is canceled when a newer text replaces it.
+sources:
+  - file: runtime/textWorker.ts
+    title: textWorker.ts
+  - file: runtime/RuntimeDemo.tsx
+    title: RuntimeDemo.tsx
+guide: runtime-workers
+related:
+  - label: Runtime workers
+    href: ../../docs/runtime-workers/
+  - label: Typed workers
+    href: ../../docs/typed-workers/
+  - label: Cancellation and progress
+    href: ../../docs/cancellation-and-progress/
+---
+
+import { CodeBlock } from '../../ui/CodeBlock';
+import { Callout } from '../../ui/Callout';
+import worker from '@examples/runtime/textWorker.ts?raw';
+import demo from '@examples/runtime/RuntimeDemo.tsx?raw';
+
+## The code
+
+`createWorker` receives a function instead of a file. The function returns the methods, and their types are
+inferred, so there is no type to export and import.
+
+<CodeBlock code={worker} lang="ts" title="textWorker.ts" />
+
+<Callout type="warning" title="The function cannot use anything from outside">
+  The text of the function becomes the source of a real Worker. Variables and imports from the surrounding file
+  do not exist there, which is why `words` is defined inside. Send values as payloads, or pass them with the
+  `primitiveParameters` option.
+</Callout>
+
+The component calls the method on every change and cancels the previous call from the effect cleanup.
+
+<CodeBlock code={demo} lang="tsx" title="RuntimeDemo.tsx" />

@@ -1,0 +1,50 @@
+---
+title: Worker pool
+headline: Eight tasks, as many threads as you allow
+description: Run the same batch of CPU-bound tasks with one, two and four Workers, and see which Worker handled each one.
+order: 3
+category: Concurrency
+thumb: pool
+outcome: A pool is an option, not a rewrite. The code that calls the worker does not change.
+points:
+  - Run the tasks with `maxWorkers` set to 1. They finish one after another, in about two seconds.
+  - Switch to 4 and run again. Four tasks run at the same time, and each row shows the worker that handled it.
+  - Compare Total time with One after another. The difference is the work that ran in parallel.
+sources:
+  - file: pool/crunch.worker.ts
+    title: crunch.worker.ts
+  - file: pool/client.ts
+    title: client.ts
+  - file: pool/PoolDemo.tsx
+    title: PoolDemo.tsx
+guide: worker-pools
+related:
+  - label: Worker pools
+    href: ../../docs/worker-pools/
+  - label: Creating workers
+    href: ../../docs/creating-workers/
+  - label: API reference
+    href: ../../docs/api-reference/
+---
+
+import { CodeBlock } from '../../ui/CodeBlock';
+import { Callout } from '../../ui/Callout';
+import worker from '@examples/pool/crunch.worker.ts?raw';
+import client from '@examples/pool/client.ts?raw';
+
+## The code
+
+The worker blocks its own thread for the requested time and returns its name. One worker can only do one of
+these at a time.
+
+<CodeBlock code={worker} lang="ts" title="crunch.worker.ts" />
+
+The pool is the `maxWorkers` option. `warmUpWorkers` creates every Worker up front, so the first batch does not
+pay for starting them.
+
+<CodeBlock code={client} lang="ts" title="client.ts" />
+
+<Callout type="note" title="Each worker has its own memory">
+  Workers in a pool do not share variables. State kept inside one Worker is not visible to the others, so a pool
+  fits work that depends only on its payload.
+</Callout>

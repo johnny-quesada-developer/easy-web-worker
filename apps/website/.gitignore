@@ -1,0 +1,9 @@
+# build and tool output
+.astro/
+dist/
+public/pagefind/
+test-results/
+playwright-report/
+
+# the root .gitignore ignores .env; this one holds only public site configuration and is committed
+!.env

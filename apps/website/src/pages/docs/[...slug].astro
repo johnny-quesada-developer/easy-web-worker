@@ -1,0 +1,77 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { DocsArticle } from '../../ui/docs/DocsArticle';
+import { DocsDrawer } from '../../ui/docs/DocsDrawer';
+import { H2, H3 } from '../../ui/Heading';
+import { docKind, getDocsNav } from '../../lib/docs';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('docs');
+
+  return entries.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}
+
+const { entry } = Astro.props;
+const { Content, headings } = await render(entry);
+const { sections, flat } = await getDocsNav();
+
+const index = flat.findIndex((page) => page.id === entry.id);
+const link = (page: (typeof flat)[number] | undefined) =>
+  page ? { id: page.id, title: page.data.title, short: page.data.short } : undefined;
+const navSections = sections.map((section) => ({
+  title: section.title,
+  pages: section.pages.map((page) => ({ id: page.id, title: page.data.title, short: page.data.short })),
+}));
+---
+
+<BaseLayout
+  title={entry.data.title}
+  description={entry.data.description}
+  ogType="article"
+  image={`og/docs/${entry.id}.png`}
+  imageAlt={`${entry.data.title}, easy-web-worker documentation`}
+>
+  <DocsArticle
+    id={entry.id}
+    title={entry.data.title}
+    description={entry.data.description}
+    section={entry.data.section}
+    kind={docKind(entry)}
+    status={entry.data.status}
+    sections={navSections}
+    headings={headings}
+    previous={link(flat[index - 1])}
+    next={link(flat[index + 1])}
+  >
+    {entry.data.symptoms ? <Content /> : <Content components={{ h2: H2, h3: H3 }} />}
+  </DocsArticle>
+  <DocsDrawer client:idle sections={navSections} currentId={entry.id} />
+</BaseLayout>
+
+<script>
+  // On-page navigation: the compact select scrolls to a heading; the rail marks the heading in view.
+  const select = document.querySelector<HTMLSelectElement>('[data-toc-select]');
+  select?.addEventListener('change', () => {
+    if (!select.value) return;
+    location.hash = select.value;
+    select.value = '';
+  });
+
+  const links = Array.from(document.querySelectorAll<HTMLAnchorElement>('[data-toc-link]'));
+  const targets = links.map((link) => document.getElementById(link.dataset.tocLink ?? '')).filter(Boolean) as HTMLElement[];
+
+  if (links.length && 'IntersectionObserver' in window) {
+    const mark = (id: string) =>
+      links.forEach((link) => link.setAttribute('aria-current', link.dataset.tocLink === id ? 'true' : 'false'));
+    mark(links[0].dataset.tocLink ?? '');
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) if (entry.isIntersecting) mark(entry.target.id);
+      },
+      { rootMargin: '-110px 0px -65% 0px' },
+    );
+    targets.forEach((target) => observer.observe(target));
+  }
+</script>

@@ -1,0 +1,46 @@
+---
+title: Transferable objects
+short: Transferables
+description: Move large buffers between threads without copying them, in both directions.
+section: Core concepts
+order: 4
+---
+
+import { CodeBlock } from '../../ui/CodeBlock';
+import { Callout } from '../../ui/Callout';
+import imagesWorker from '@snippets/transfer/images.worker.ts?raw';
+import imagesMain from '@snippets/transfer/images-main.ts?raw';
+
+## Copy or transfer
+
+Values sent to a worker are copied by default. For a large `ArrayBuffer` that means allocating the same memory
+twice. A **transfer** moves ownership instead: the receiving thread gets the memory, and the sender is left with
+an empty buffer.
+
+`ArrayBuffer`, `MessagePort`, `ImageBitmap`, `OffscreenCanvas` and streams are
+[transferable](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Transferable_objects).
+
+## From the main thread to the worker
+
+The second argument of every method is the transfer list.
+
+<CodeBlock code={imagesMain} lang="ts" title="main.ts" />
+
+## From the worker back to the main thread
+
+A returned value is always copied. To transfer a result, complete the call yourself and pass the transfer list
+to `message.resolve`.
+
+<CodeBlock code={imagesWorker} lang="ts" title="images.worker.ts" />
+
+`reject`, `cancel` and `reportProgress` accept a transfer list too.
+
+<Callout type="warning" title="A transferred buffer is gone for the sender">
+  After a transfer, `buffer.byteLength` is `0` on the side that sent it, and reading it throws. Read what you
+  need before the call, or use the buffer that comes back.
+</Callout>
+
+## Try it
+
+The [transferable buffers example](../../examples/transferable-buffers/) sends the same buffer as a copy and as a
+transfer, and measures both.

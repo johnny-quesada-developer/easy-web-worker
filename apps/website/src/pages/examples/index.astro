@@ -1,0 +1,43 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { ExampleGallery } from '../../ui/examples/ExampleGallery';
+import { ButtonLink } from '../../ui/Button';
+import { Eyebrow } from '../../ui/Eyebrow';
+import { StripCta } from '../../ui/StripCta';
+import { withBase } from '../../lib/site';
+
+const examples = (await getCollection('examples')).sort((a, b) => a.data.order - b.data.order);
+const cards = examples.map((example) => ({
+  id: example.id,
+  headline: example.data.headline,
+  description: example.data.description,
+  category: example.data.category,
+  thumb: example.data.thumb,
+  order: example.data.order,
+}));
+---
+
+<BaseLayout
+  image="og/examples.png"
+  imageAlt="easy-web-worker examples"
+  title="Examples"
+  description="Working easy-web-worker examples running real Web Workers: a responsive page, progress and cancellation, a worker pool, transferable buffers and a worker with no file."
+  family="Examples"
+>
+  <div class="wrap">
+    <section class="pt-[74px] pb-12 max-md:pt-[43px] max-md:pb-[30px]">
+      <Eyebrow className="mb-[21px]">Learn by doing</Eyebrow>
+      <h1 class="max-xl:text-[calc(46px*var(--type-scale))] max-md:text-[calc(43px*var(--type-scale))] max-xs:text-38">
+        Less reading.<br />More understanding.
+      </h1>
+      <p class="mb-7 max-w-[560px] text-17 leading-[1.7] max-md:text-15">
+        Five small applications running real Web Workers.<br />Run them, break them, and take the pattern back to yours.
+      </p>
+    </section>
+    <ExampleGallery client:idle examples={cards} />
+    <StripCta title="Learn the model behind the examples." text="A short path from a function to a typed worker.">
+      <ButtonLink slot="action" icon="arrow" href={withBase('docs/getting-started/')}>Read the guide</ButtonLink>
+    </StripCta>
+  </div>
+</BaseLayout>

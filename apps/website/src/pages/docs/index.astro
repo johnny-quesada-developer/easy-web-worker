@@ -1,0 +1,20 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { DocsHub } from '../../ui/docs/DocsHub';
+import { getDocsNav } from '../../lib/docs';
+
+const { sections } = await getDocsNav();
+const hubSections = sections.map((section) => ({
+  title: section.title,
+  pages: section.pages.map((page) => ({ id: page.id, title: page.data.title, description: page.data.description })),
+}));
+---
+
+<BaseLayout
+  image="og/docs.png"
+  imageAlt="easy-web-worker documentation"
+  title="Documentation"
+  description="Guides and reference for easy-web-worker: define a worker, call its methods, cancel, report progress, scale to a pool and ship it."
+>
+  <DocsHub sections={hubSections} />
+</BaseLayout>

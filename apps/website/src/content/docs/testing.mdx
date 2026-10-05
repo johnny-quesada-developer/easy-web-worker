@@ -1,0 +1,54 @@
+---
+title: Testing
+description: Test worker code as ordinary functions, replace the worker in unit tests, and cover the real thing in a browser.
+section: Quality
+order: 1
+---
+
+import { CodeBlock } from '../../ui/CodeBlock';
+import { Callout } from '../../ui/Callout';
+import pricing from '@snippets/testing/pricing.ts?raw';
+import pricingWorker from '@snippets/testing/pricing.worker.ts?raw';
+import pricingTest from '@snippets/testing/pricing.test.ts?raw';
+import fakeClient from '@snippets/testing/fake-client.test.ts?raw';
+
+## Keep the logic out of the worker file
+
+The methods of a worker are ordinary functions. Put them in their own module, and let the worker file only wire
+them.
+
+<CodeBlock code={pricing} lang="ts" title="pricing.ts" />
+
+<CodeBlock code={pricingWorker} lang="ts" title="pricing.worker.ts" />
+
+The logic is then tested like any other code, with no worker involved:
+
+<CodeBlock code={pricingTest} lang="ts" title="pricing.test.ts" />
+
+## Replace the worker in unit tests
+
+Test runners such as Vitest and Jest run in Node or jsdom, where `Worker` does not exist. Code that uses a worker
+should receive it, so a test can hand it a fake one. The type of the worker keeps the fake honest.
+
+<CodeBlock code={fakeClient} lang="ts" title="format.test.ts" />
+
+## Cover the real thing in a browser
+
+What the unit tests cannot see is the thread boundary itself: structured clone, transferable objects, real
+cancellation timing, the worker file your bundler produces. Cover those with a browser test.
+
+```ts
+import { test, expect } from '@playwright/test';
+
+test('computes in a worker', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Run in a Worker' }).click();
+
+  await expect(page.getByTestId('worker-result')).toHaveText('39,088,169');
+});
+```
+
+<Callout type="note" title="How this library is tested">
+  The package runs its unit suite against the source and against the built files, plus a Playwright suite with
+  real Workers in Chrome. The examples on this site are part of that: they run against the built package.
+</Callout>

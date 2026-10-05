@@ -1,0 +1,84 @@
+/* Compound classes the reference reuses everywhere. `@utility` keeps them visible to Tailwind and the linter. */
+
+@utility icon {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.65;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@utility wrap {
+  width: calc(100% - 96px);
+  max-width: var(--container-wrap);
+  margin-inline: auto;
+  @media (max-width: 900px) {
+    width: calc(100% - 56px);
+  }
+  @media (max-width: 760px) {
+    width: calc(100% - 40px);
+  }
+  @media (max-width: 370px) {
+    width: calc(100% - 32px);
+  }
+}
+
+@utility wide {
+  width: calc(100% - 72px);
+  max-width: var(--container-wide);
+  margin-inline: auto;
+  @media (min-width: 1600px) {
+    max-width: 1360px;
+  }
+  @media (max-width: 900px) {
+    width: calc(100% - 44px);
+  }
+  @media (max-width: 760px) {
+    width: calc(100% - 36px);
+  }
+}
+
+@utility eyebrow {
+  font-size: calc(11px * var(--type-scale));
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--color-green);
+  font-weight: 650;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  &::before {
+    content: '';
+    height: 1px;
+    width: 24px;
+    background: var(--color-green);
+    flex: none;
+  }
+}
+
+@utility eyebrow-mono {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  color: var(--color-green);
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: calc(10px * var(--type-scale));
+  line-height: 1.5;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+@utility sr-only {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

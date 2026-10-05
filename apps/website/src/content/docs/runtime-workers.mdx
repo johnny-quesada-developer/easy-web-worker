@@ -1,0 +1,83 @@
+---
+title: Runtime workers
+description: Create a worker from a function, with no worker file, and learn the one rule that comes with it.
+section: Guides
+order: 2
+---
+
+import { CodeBlock } from '../../ui/CodeBlock';
+import { Callout } from '../../ui/Callout';
+import basics from '@snippets/runtime/basics.ts?raw';
+import scope from '@snippets/runtime/scope.ts?raw';
+import parameters from '@snippets/runtime/parameters.ts?raw';
+import scripts from '@snippets/runtime/scripts.ts?raw';
+import compose from '@snippets/runtime/compose.ts?raw';
+import easyWorker from '@snippets/runtime/easy-worker.ts?raw';
+
+## A function as the worker
+
+Give `createWorker` a function instead of a file. No extra file, no bundler configuration.
+
+<CodeBlock code={basics} lang="ts" title="main.ts" />
+
+The function receives `onMessage`, returns the methods, and their types are inferred. Everything else works the
+same as with a worker file: cancellation, progress, transferable objects, `unwrap`, and pools with `maxWorkers`.
+
+## The one rule: nothing from outside
+
+<Callout type="warning" title="The function cannot use variables from outside">
+  The text of the function becomes the source of a real Worker. Variables, functions and imports of the
+  surrounding file do not exist there.
+</Callout>
+
+<CodeBlock code={scope} lang="ts" title="scope.ts" />
+
+Everything the worker needs must be defined inside the function, imported as a script, sent as a payload, or
+passed through `primitiveParameters`.
+
+Because the text is what travels, write the function as an arrow function or a `function` declaration. A method
+written with object shorthand, or a bound function, does not produce source that can be reused.
+
+## Parameters and the scope of the worker
+
+The second parameter is the global scope of the worker. Static values arrive in `context.primitiveParameters`.
+
+<CodeBlock code={parameters} lang="ts" title="labels.ts" />
+
+## Import scripts
+
+External libraries load with the `scripts` option and appear in the scope of the worker.
+
+<CodeBlock code={scripts} lang="ts" title="text.ts" />
+
+The script does not become part of your application bundle.
+
+## Compose a worker from several functions
+
+Pass an array and every function runs in the same Worker. They share its scope, and the methods they return are
+merged. When a method is repeated, the last function wins, in behavior and in types.
+
+<CodeBlock code={compose} lang="ts" title="numbers.ts" />
+
+Write the array inline, or declare it `as const`, so each function keeps its own type.
+
+## The message API inside the function
+
+The function also receives `easyWorker`, the worker instance behind the methods. Everything the
+[message API](../message-api/) offers stays available, so existing runtime workers can move over at their own
+pace.
+
+<CodeBlock code={easyWorker} lang="ts" title="worker.ts" />
+
+Only the returned methods are inferred. Handlers registered through `easyWorker` are described in the generic,
+as above, or called with `unwrap(worker).sendToMethod(...)`.
+
+## When to prefer a file
+
+A worker file can import modules, be split by your bundler and be tested on its own. Runtime workers fit small,
+self-contained jobs. Both share the same features, so moving from one to the other does not change the code that
+calls them.
+
+## Try it
+
+The [worker without a file example](../../examples/worker-without-a-file/) analyzes text as you type.

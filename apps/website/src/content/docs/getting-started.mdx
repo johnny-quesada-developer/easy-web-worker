@@ -1,0 +1,74 @@
+---
+title: Getting started
+description: Install easy-web-worker, define the methods of a worker, call them from the main thread, and add progress and cancellation.
+section: Start here
+order: 1
+---
+
+import { PACKAGE_VERSION } from '../../lib/site';
+import { CodeBlock } from '../../ui/CodeBlock';
+import { Callout } from '../../ui/Callout';
+import { InstallCommand } from '../../ui/InstallCommand';
+import mathWorker from '@snippets/getting-started/math.worker.ts?raw';
+import main from '@snippets/getting-started/main.ts?raw';
+import moreMethods from '@snippets/getting-started/more-methods.worker.ts?raw';
+import lifecycle from '@snippets/getting-started/lifecycle.ts?raw';
+
+## Install
+
+<InstallCommand client:idle />
+
+The package works with any framework, or none, and ships its own TypeScript types. Calls return a
+`CancelablePromise` from `easy-cancelable-promise`, which is installed with it.
+
+<Callout type="note" title="Version documented here">
+  These pages are written against <strong>{PACKAGE_VERSION}</strong>. Every example and code sample on this site
+  runs against the built package, the same files that are published to npm.
+</Callout>
+
+## Define a worker
+
+A worker is a file that calls `defineWorker`. The function you pass returns an object, and every key of that
+object becomes a method that the main thread can call.
+
+<CodeBlock code={mathWorker} lang="ts" title="math.worker.ts" />
+
+The functions are ordinary functions. Nothing about `fibonacci` knows that it will run on another thread.
+
+## Call it from the main thread
+
+`createWorker` starts the worker and returns an object with the same methods. The main thread imports only the
+**type** of the worker, so the code of the worker never ends up in the main bundle.
+
+<CodeBlock code={main} lang="ts" title="main.ts" />
+
+`math.fibonacci(40)` runs inside a real Web Worker. The page keeps scrolling, typing and animating while it runs,
+and TypeScript knows the call takes a `number` and resolves to a `number`.
+
+<Callout type="tip" title="The import with ?worker&url">
+  That line is how Vite builds a worker file and gives you its URL. Other bundlers have their own form;
+  [Creating workers](../creating-workers/) lists each one.
+</Callout>
+
+## Add more methods
+
+A method resolves with the value it returns and rejects with the error it throws. `async` methods work the same
+way.
+
+<CodeBlock code={moreMethods} lang="ts" title="text.worker.ts" />
+
+## Progress, cancellation and cleanup
+
+Every call returns a `CancelablePromise`. Progress arrives through `onProgress`, `cancel` tells the worker to
+stop, and `unwrap` reaches the controls of the worker itself.
+
+<CodeBlock code={lifecycle} lang="ts" title="lifecycle.ts" />
+
+Reporting progress and reacting to a cancellation happens inside the worker, through the message of the call.
+[Cancellation and progress](../cancellation-and-progress/) shows both sides.
+
+## Where to go next
+
+- [Typed workers](../typed-workers/): how methods and types cross the threads.
+- [Creating workers](../creating-workers/): every source `createWorker` accepts, and the setup for each bundler.
+- [Examples](../../examples/): five applications running real Workers, with their source.

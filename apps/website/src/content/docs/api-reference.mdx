@@ -1,0 +1,146 @@
+---
+title: API reference
+description: defineWorker, createWorker, unwrap, the configuration, the message and the EasyWebWorker class, in one place.
+section: API reference
+order: 1
+---
+
+import { Callout } from '../../ui/Callout';
+
+## defineWorker
+
+```ts
+import { defineWorker } from 'easy-web-worker/defineWorker';
+
+const worker = defineWorker(({ onMessage }) => ({
+  method: (payload, message, event) => result,
+  inferred: onMessage((payload, message, event) => result),
+  later: onMessage<Payload, Result>().handle((message, event) => {}),
+}));
+
+export type MyWorker = typeof worker;
+```
+
+Defines the methods of a worker file. Call it once, inside the worker. The builder receives `{ onMessage }` and
+returns an object: each key is a method.
+
+Returns a definition whose type describes the worker. Pass that type to `createWorker`.
+
+## createWorker
+
+```ts
+import { createWorker } from 'easy-web-worker/createWorker';
+
+const worker = createWorker<MyWorker>(source, config);
+```
+
+Creates a worker on the main thread and returns an object with its methods. Each method returns a
+`CancelablePromise`.
+
+| Call                                  | The methods come from                              |
+| ------------------------------------- | -------------------------------------------------- |
+| `createWorker<MyWorker>(source)`      | The type of a definition, `typeof worker`          |
+| `createWorker<{ ... }>(source)`       | A plain description of the methods                 |
+| `createWorker((helpers, context) => …)` | The function itself, inferred                    |
+| `createWorker([fn, fn])`              | Every function, merged; the last one wins          |
+
+`source` is a `string`, a `URL`, a `Worker`, a `Worker[]`, a function, or an array of functions. A function
+receives `{ onMessage, easyWorker }` and the scope of the worker.
+
+## unwrap
+
+```ts
+import { unwrap } from 'easy-web-worker/createWorker';
+```
+
+| Called with                  | Returns                                                         |
+| ---------------------------- | --------------------------------------------------------------- |
+| The result of `createWorker` | The `EasyWebWorker` instance                                    |
+| The result of `defineWorker` | The worker-side controls: `onMessage`, `close`, `importScripts` |
+
+The methods of a worker never collide with the library, because the controls live behind `unwrap`.
+
+## Configuration
+
+Second argument of `createWorker`, `createEasyWebWorker` and `new EasyWebWorker(...)`.
+
+| Option                | Default                 | Purpose                                              |
+| --------------------- | ----------------------- | ---------------------------------------------------- |
+| `maxWorkers`          | `1`                     | Maximum number of native Workers                     |
+| `warmUpWorkers`       | `true` for one Worker   | Creates the pool during initialization               |
+| `keepAlive`           | Same as `warmUpWorkers` | Keeps idle Workers alive                             |
+| `terminationDelay`    | `1000` ms               | Wait before terminating idle Workers                 |
+| `workerOptions`       | `{}`                    | Native `WorkerOptions`, such as `{ type: 'module' }` |
+| `onWorkerError`       | Rethrows                | Receives the uncaught errors of the worker           |
+| `scripts`             | `[]`                    | Scripts imported into a runtime worker               |
+| `primitiveParameters` | `[]`                    | Static values for a runtime worker, in `context`     |
+
+## The call
+
+Every method returns a `CancelablePromise<TResult>`.
+
+| Member                             | Purpose                                                     |
+| ---------------------------------- | ----------------------------------------------------------- |
+| `then`, `catch`, `finally`         | The same as a native promise                                |
+| `cancel(reason?)`                  | Cancels the call and tells the worker                       |
+| `onProgress((percentage, payload) => …)` | Receives what the worker reports                      |
+| `onCancel(callback)`               | Runs when the call is canceled                              |
+
+## The message
+
+Received inside the worker by `onMessage` callbacks, by `.handle(...)` and as second parameter of a method.
+
+| Member                                            | Purpose                                       |
+| ------------------------------------------------- | --------------------------------------------- |
+| `payload`                                         | Value sent from the main thread               |
+| `messageId`, `method`                             | Identifier and method name of the call        |
+| `resolve(result?, transfer?)`                     | Resolves the call                             |
+| `reject(reason?, transfer?)`                      | Rejects the call                              |
+| `cancel(reason?, transfer?)`                      | Cancels the call from inside the worker       |
+| `reportProgress(percentage, payload?, transfer?)` | Reports progress and keeps the call pending   |
+| `onCancel`, `onResolve`, `onReject`, `onProgress` | Subscribe to each outcome; return unsubscribe |
+| `onFinalize`                                      | Runs once the call ends, whatever the outcome |
+| `isPending()`, `getStatus()`                      | Current state of the call                     |
+
+## EasyWebWorker
+
+The class behind every worker. `createEasyWebWorker(source, config)` is a factory for it, and
+`unwrap(worker)` returns it for typed workers.
+
+| Method                                                         | Purpose                                                         |
+| -------------------------------------------------------------- | --------------------------------------------------------------- |
+| `send(payload?, transfer?)`                                    | Sends a message to the default handler                          |
+| `sendToMethod<TResult, TPayload>(method, payload?, transfer?)` | Sends a message to a named method                               |
+| `cancelAll(reason?, { force? })`                               | Cancels every pending call; `force` restarts instead of waiting |
+| `override(payload?, reason?, { force? })`                      | Cancels the pending calls and sends a new message               |
+| `overrideAfterCurrent(payload?, reason?)`                      | Keeps the current call, cancels the rest, sends a new message   |
+| `reboot(reason?)`                                              | Terminates the Workers, rejects pending calls, starts again     |
+| `dispose()`                                                    | Cancels pending calls and releases the Workers                  |
+
+`cancelAll` and `reboot` return a `CancelablePromise<void>` that settles when every call is canceled.
+
+<Callout type="note" title="Workers you created yourself">
+  `reboot` and `force` need a source the library can start again. They throw for a worker created from an
+  existing native `Worker`.
+</Callout>
+
+## StaticEasyWebWorker
+
+```ts
+import { createStaticEasyWebWorker } from 'easy-web-worker/createStaticEasyWebWorker';
+
+const { onMessage, importScripts, close } = createStaticEasyWebWorker(defaultHandler);
+```
+
+The worker side of the [message API](../message-api/). `defineWorker` is built on it.
+
+## Types
+
+| Type                             | Describes                                                    |
+| -------------------------------- | ------------------------------------------------------------ |
+| `WorkerProxy<TWorker>`           | What `createWorker` returns                                  |
+| `WorkerDefinition<TMethods>`     | What `defineWorker` returns                                  |
+| `WorkerMethodMessage<TPayload>`  | The message received by a method that returns its result     |
+| `IEasyWebWorkerMessage<P, R>`    | The message received by `.handle(...)` and the message API   |
+| `IWorkerConfig`                  | The configuration object                                     |
+| `EasyWebWorkerBody<P, R>`        | A function used as source by `createEasyWebWorker`           |

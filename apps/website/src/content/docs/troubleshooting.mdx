@@ -1,0 +1,73 @@
+---
+title: Troubleshooting
+description: Symptoms you may run into with Web Workers and easy-web-worker, what causes each one, and how to fix it.
+section: Quality
+order: 2
+symptoms: true
+---
+
+## The call never resolves
+
+The worker did not answer. The usual causes:
+
+- The method name does not exist in the worker. The worker throws, and the error goes to `onWorkerError`.
+- The method uses `onMessage().handle(...)` and never calls `resolve`, `reject` or `cancel`.
+- The worker failed to start. Check the browser console for an error loading the worker file.
+
+Add `onWorkerError` to the configuration while you debug:
+
+```ts
+createWorker<MyWorker>(source, {
+  onWorkerError: (error) => console.error(error.message),
+});
+```
+
+## Canceling does nothing
+
+A cancellation is a message, and a worker in the middle of a synchronous loop cannot receive messages. Break the
+work into chunks and pause between them, or restart the worker with
+`unwrap(worker).cancelAll(reason, { force: true })`. See
+[Cancellation and progress](../cancellation-and-progress/#stop-work-that-never-pauses).
+
+## A variable is not defined inside the worker
+
+A worker created from a function cannot use anything from the surrounding file: only the text of the function
+travels. Define what it needs inside the function, pass it as a payload, or use `primitiveParameters`. See
+[Runtime workers](../runtime-workers/#the-one-rule-nothing-from-outside).
+
+## DataCloneError when calling a method
+
+The payload, or the result, contains something that cannot cross threads: a function, a DOM node, a class
+instance with methods, or a buffer that was already transferred. Send plain data, and convert on the other side.
+
+## It works in development but not in production
+
+The worker file is not being built. A plain `new URL('./x.worker.ts', import.meta.url)` passed to `createWorker`
+is copied as an asset, without being compiled. Use the form your bundler detects:
+
+- Vite: `import workerUrl from './x.worker?worker&url'`.
+- webpack 5, Parcel, Vite: `new Worker(new URL('./x.worker.ts', import.meta.url), { type: 'module' })`.
+
+See [Creating workers](../creating-workers/).
+
+## Cannot use import statement outside a module
+
+The worker file uses `import` or `export`, so it must be started as a module. Pass
+`workerOptions: { type: 'module' }`.
+
+## The buffer is empty after the call
+
+It was transferred. A transfer moves the memory to the other thread and leaves the sender with a buffer of
+length `0`. Read what you need before the call, or use the buffer that comes back. See
+[Transferable objects](../transferable-objects/).
+
+## State is lost between calls
+
+With `maxWorkers` above `1`, each Worker has its own memory, and consecutive calls can land on different
+Workers. Keep stateful workers as a single Worker. State is also lost after `reboot`, after `force`, and when
+idle Workers are terminated with `keepAlive: false`.
+
+## You can not reboot a worker that was created from a Worker Instance
+
+`reboot` and `force` need a source the library can start again: a URL, a string or a function. A native `Worker`
+you created yourself cannot be restarted by the library. Create a new one and pass it to a new `createWorker`.

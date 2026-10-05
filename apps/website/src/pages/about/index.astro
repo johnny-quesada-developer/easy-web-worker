@@ -1,0 +1,176 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { ButtonLink } from '../../ui/Button';
+import { Eyebrow, SectionHead } from '../../ui/Eyebrow';
+import { Icon } from '../../ui/Icon';
+import { StripCta } from '../../ui/StripCta';
+import { caseStudies, history, principles } from '../../ui/about/aboutData';
+import { links, withBase } from '../../lib/site';
+
+const projects = [
+  { icon: 'bolt', title: 'easy-web-worker', text: 'Typed methods instead of messages, cancelable calls, progress and worker pools. It grew out of moving heavy chart data work off the main thread at Fragomen. The subject of this site.', href: withBase(), link: 'Explore the project' },
+  { icon: 'layers', title: 'react-global-state-hooks', text: 'Shared React state with a useState-style API, precise subscriptions, composable selectors and development tooling.', href: links.globalStateHooks, link: 'Visit the website', external: true },
+  { icon: 'clock', title: 'easy-cancelable-promise', text: 'Promises that can be canceled and report progress. Every call made through easy-web-worker returns one.', href: links.cancelablePromise, link: 'View on GitHub', external: true },
+  { icon: 'folder', title: 'json-storage-formatter', text: 'Serializes values that plain JSON.stringify loses — Map, Set, Date, custom classes — for storage and back.', href: links.jsonStorageFormatter, link: 'View on GitHub', external: true },
+] as const;
+
+const label = 'mb-[9px] text-10 tracking-[0.08em] text-muted uppercase';
+---
+
+<BaseLayout
+  image="og/about.png"
+  imageAlt="About Johnny Quesada"
+  title="About Johnny Quesada"
+  description="Johnny Quesada, senior product engineer and author of easy-web-worker and react-global-state-hooks: selected case studies, engineering approach and career history."
+  family="Product"
+>
+  <div class="wrap">
+    <section class="grid grid-cols-[1.4fr_.8fr] items-center gap-[90px] pt-[75px] pb-[60px] max-3xl:gap-[45px] max-xl:grid-cols-[1.2fr_.8fr] max-xl:gap-[30px] max-md:grid-cols-1 max-md:gap-[30px] max-md:pt-[43px] max-md:pb-[38px]">
+      <div class="min-w-0">
+        <Eyebrow className="mb-[21px]">The engineer behind the library</Eyebrow>
+        <h1 class="text-[calc(64px*var(--type-scale))] max-xl:text-[calc(52px*var(--type-scale))] max-md:text-[calc(47px*var(--type-scale))]">I build products.<br />And the foundations<br />they grow on.</h1>
+        <p class="text-16 leading-[1.8] max-md:text-15">
+          Johnny Esteban Quesada. Senior product engineer, open-source author, and a bridge from an idea to a working system: full-stack architecture, React and TypeScript, performance, and developer tooling. Based in Spain, with more than twelve years of engineering experience.
+        </p>
+        <div class="mt-7 flex flex-wrap items-center gap-3">
+          <ButtonLink variant="primary" icon="external" href={links.githubProfile} target="_blank" rel="noopener noreferrer">GitHub profile</ButtonLink>
+          <ButtonLink icon="arrow" href="#selected-work">Selected work</ButtonLink>
+          <ButtonLink href={links.linkedin} target="_blank" rel="noopener noreferrer" icon="external">LinkedIn</ButtonLink>
+        </div>
+        <p class="mt-[26px] mb-0 text-13 leading-[1.8] text-muted">Currently on Vonage’s Video Developer Platform · Based in Spain</p>
+      </div>
+      <div class="flex min-h-[340px] flex-col justify-between rounded-[8px] border border-line bg-soft px-[30px] py-[35px] max-xl:min-h-[300px] max-xl:p-[25px] max-md:min-h-[300px]">
+        <div class="flex items-center justify-between gap-3">
+          <Eyebrow>Engineering profile</Eyebrow>
+          <Icon name="code" />
+        </div>
+        <img
+          class="my-4 block w-[140px] rounded-[8px] border border-[#dde5d4] dark:border-line"
+          src={withBase('img/johnny-512.png')}
+          srcset={`${withBase('img/johnny-256.png')} 256w, ${withBase('img/johnny-512.png')} 512w`}
+          sizes="140px"
+          width="140"
+          height="166"
+          alt="Portrait of Johnny Quesada"
+          decoding="async"
+        />
+        <div>
+          <strong class="block text-20">Johnny Quesada</strong>
+          <p class="mt-2 mb-0 text-12">Product thinking.<br />Systems that hold up.</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="grid grid-cols-2 gap-x-[60px] gap-y-[30px] max-md:grid-cols-1 max-md:gap-5">
+      {
+        [
+          ['Perspective', 'Product → architecture → delivery'],
+          ['Experience', 'From enterprise systems to startups'],
+          ['Approach', 'Own the outcome, not only the code'],
+        ].map(([kicker, title]) => (
+          <div class="border-t border-line pt-[22px]">
+            <Eyebrow className="mb-4">{kicker}</Eyebrow>
+            <h3 class="m-0 text-20 max-md:text-[calc(21px*var(--type-scale))]">{title}</h3>
+          </div>
+        ))
+      }
+    </div>
+
+    <section class="mt-[70px] border-t border-line pt-[70px] max-md:mt-[42px] max-md:pt-[42px]" id="selected-work">
+      <SectionHead kicker="Selected work" title="The work behind the decisions." lead="Three examples of engineering as a product responsibility. Outcomes below are the author’s published account." />
+      {
+        caseStudies.map((study, index) => (
+          <article class="grid grid-cols-[210px_1fr] gap-[50px] border-t border-line py-10 max-3xl:grid-cols-[175px_1fr] max-3xl:gap-[35px] max-md:grid-cols-1 max-md:gap-[17px] max-md:py-[30px]" id={study.id}>
+            <div class="flex flex-col items-start gap-[13px] max-md:flex-row max-md:items-center max-md:gap-4">
+              <span class="font-mono text-11 text-green">0{index + 1}</span>
+              <strong class="text-[calc(23px*var(--type-scale))] font-[550] tracking-[-0.04em] max-md:text-[calc(21px*var(--type-scale))]">{study.company}</strong>
+              <span class="shrink-0 font-mono text-11 text-muted">{study.years}</span>
+            </div>
+            <div class="min-w-0">
+              <h3 class="mb-[22px] max-w-[620px] text-30 max-md:mb-5 max-md:text-[calc(28px*var(--type-scale))]">{study.headline}</h3>
+              <p class="mb-3 max-w-[680px] text-13 leading-[1.8]">{study.context}</p>
+              <p class="mb-3 max-w-[680px] text-13 leading-[1.8]">{study.problem}</p>
+              <p class="mb-[26px] max-w-[680px] text-13 leading-[1.8]"><strong class="text-ink">My responsibility.</strong> {study.responsibility}</p>
+              <div class="my-[30px] grid grid-cols-2 gap-[30px] max-xl:gap-5 max-md:grid-cols-1 max-md:gap-[10px]">
+                <div>
+                  <h4 class={label}>The decision</h4>
+                  <ul class="m-0 pl-[18px] text-13 leading-[1.8] text-muted">
+                    {study.decisions.map((decision) => (
+                      <li>{decision}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <h4 class={label}>The outcome</h4>
+                  <p class="m-0 text-13 leading-[1.8]">{study.outcome}</p>
+                </div>
+              </div>
+              <div class="mt-[10px] flex items-center gap-[22px] border-t border-line pt-5 pb-2 max-md:items-start max-md:gap-[17px] max-xs:block">
+                <strong class="text-26 font-[550] tracking-[-0.05em] whitespace-nowrap text-green max-md:text-22">{study.metric}</strong>
+                <span class="max-w-[230px] text-11 leading-[1.7] text-muted max-md:text-10 max-xs:mt-[10px] max-xs:block">{study.metricLabel}</span>
+              </div>
+              <p class="mt-[22px] mb-0 text-11 text-muted">{study.detail}</p>
+            </div>
+          </article>
+        ))
+      }
+    </section>
+
+    <section class="mt-[70px] border-t border-line pt-[70px] max-md:mt-[42px] max-md:pt-[42px]">
+      <SectionHead kicker="How I work" title="Principles with practical consequences." />
+      <div class="border-t border-line">
+        {
+          principles.map((item, index) => (
+            <div class="flex items-start gap-[40px] border-b border-line py-[25px] max-md:gap-5">
+              <span class="pt-[3px] font-mono text-12 text-green">0{index + 1}</span>
+              <div class="min-w-0 flex-1">
+                <h3 class="mb-[7px] text-19 max-md:text-17">{item.title}</h3>
+                <p class="m-0 max-w-[800px] text-13 leading-[1.8]">{item.text}</p>
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+
+    <section class="mt-[70px] border-t border-line pt-[70px] max-md:mt-[42px] max-md:pt-[42px]">
+      <SectionHead kicker="Built in the open" title="Tools born from real work." />
+      <div class="grid grid-cols-2 gap-8 max-md:grid-cols-1">
+        {
+          projects.map((project) => (
+            <a class="group block min-w-0 rounded-panel border border-line bg-paper p-[30px] hover:border-[#9eb2a4] dark:hover:border-line" href={project.href} target={'external' in project ? '_blank' : undefined} rel={'external' in project ? 'noopener noreferrer' : undefined}>
+              <Icon name={project.icon} />
+              <h3 class="mt-[25px] text-22">{project.title}</h3>
+              <p class="mt-3 mb-6 text-13">{project.text}</p>
+              <span class="inline-flex items-center gap-2 text-13 font-[550] text-green group-hover:underline group-hover:underline-offset-[5px]">
+                {project.link} <Icon name={'external' in project ? 'external' : 'arrow'} />
+              </span>
+            </a>
+          ))
+        }
+      </div>
+    </section>
+
+    <section class="mt-[70px] border-t border-line pt-[70px] max-md:mt-[42px] max-md:pt-[42px]" id="history">
+      <SectionHead kicker="Career" title="A foundation built across products." lead="Product engineering and technical leadership across analytics, mobile applications, identity platforms and developer tools. Consulting engagements are identified below." />
+      <div class="border-t border-line">
+        {
+          history.map((role) => (
+            <div class="grid grid-cols-[210px_180px_1fr] gap-[25px] border-b border-line py-[22px] max-3xl:grid-cols-[160px_150px_1fr] max-md:grid-cols-[110px_1fr] max-md:gap-x-[13px] max-md:gap-y-2 max-md:py-[17px]">
+              <span class="font-mono text-11 text-muted max-md:text-10">{role.years}</span>
+              <div>
+                <h3 class="mb-[5px] text-15 max-md:text-14">{role.company}</h3>
+                {role.title && <span class="text-13 text-muted">{role.title}</span>}
+              </div>
+              <p class="m-0 text-13 leading-[1.8] max-md:col-start-2">{role.note}</p>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+
+    <StripCta className="mt-[70px] max-md:mt-[42px]" title="Start with the work." text="Explore the code, the decisions and the tools.">
+      <ButtonLink slot="action" variant="primary" icon="external" href={links.githubProfile} target="_blank" rel="noopener noreferrer">View GitHub profile</ButtonLink>
+    </StripCta>
+  </div>
+</BaseLayout>
