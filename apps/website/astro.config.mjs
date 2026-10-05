@@ -26,6 +26,28 @@ if (!existsSync(`${packageDist}/bundle.mjs`)) {
   throw new Error('libs/easy-web-worker/dist is missing. Run `yarn build easy-web-worker` first.');
 }
 
+const debugLibrary = here('./src/lib/debugLibrary.ts');
+
+// This public site ships the debug integration of react-global-state-hooks on purpose, so visitors can
+// inspect its stores with the DevTools extension. Stores created before the debug entry loads are not
+// tracked, so every browser import of the library goes through src/lib/debugLibrary.ts, which loads it first.
+// The debug entry of each package only imports the next one, down to the integration itself.
+const debugEntries = new Set(['react-global-state-hooks/debug', 'react-hooks-global-states/debug', 'react-hooks-global-states-debug']);
+
+const debugEverywhere = {
+  name: 'debug-everywhere',
+  enforce: 'pre',
+  async resolveId(id, importer, options) {
+    if (options?.ssr) return null;
+    if (id === 'react-global-state-hooks' && importer !== debugLibrary) return debugLibrary;
+    if (!debugEntries.has(id)) return null;
+
+    // these modules are imported only for what they do: keep them out of tree shaking
+    const resolved = await this.resolve(id, importer, { ...options, skipSelf: true });
+    return resolved && { ...resolved, moduleSideEffects: true };
+  },
+};
+
 export default defineConfig({
   site: SITE,
   base: BASE,
@@ -41,6 +63,7 @@ export default defineConfig({
     processor: unified({ rehypePlugins: [rehypeSymptoms, rehypeCodeBlocks, rehypeTableWrap] }),
   },
   vite: {
+    plugins: [debugEverywhere],
     // worker files import the package, so they are emitted as ES modules
     worker: { format: 'es' },
     resolve: {
