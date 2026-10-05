@@ -66,6 +66,8 @@ No hand-written promise bridge.
 
 Just functions.
 
+> **[See it live →](https://johnny-quesada-developer.github.io/easy-web-worker/#live)** Same task, two ways to run it. On the main thread the page freezes. In a Worker it never stops. It runs in your browser, with real Workers.
+
 ---
 
 ## Built for work that should not block the page
@@ -86,6 +88,8 @@ const worker = defineWorker(() => ({
 await text.countWords(article); // CancelablePromise<number>
 ```
 
+[**How typed workers work →**](https://johnny-quesada-developer.github.io/easy-web-worker/docs/typed-workers/)
+
 ### **Return a value, get a promise**
 
 A method resolves with what it returns and rejects with what it throws. `async` works the same way.
@@ -102,6 +106,8 @@ const worker = defineWorker(() => ({
 }));
 ```
 
+[**Return values and errors →**](https://johnny-quesada-developer.github.io/easy-web-worker/docs/typed-workers/#return-values-and-errors)
+
 ### **Cancellation that reaches the Worker**
 
 Every call returns a `CancelablePromise`. Canceling it tells the Worker to stop.
@@ -112,6 +118,8 @@ const task = math.findPrimes(50_000_000);
 task.cancel('Canceled by user');
 ```
 
+[**Run it live →**](https://johnny-quesada-developer.github.io/easy-web-worker/examples/progress-and-cancellation/) · [Read the guide](https://johnny-quesada-developer.github.io/easy-web-worker/docs/cancellation-and-progress/#cancellation-reaches-the-worker)
+
 ### **Progress on the same call**
 
 Long-running methods report progress through the promise they already returned.
@@ -121,6 +129,8 @@ await math.findPrimes(50_000_000).onProgress((percentage) => {
   progressBar.value = percentage;
 });
 ```
+
+[**Run it live →**](https://johnny-quesada-developer.github.io/easy-web-worker/examples/progress-and-cancellation/) · [Read the guide](https://johnny-quesada-developer.github.io/easy-web-worker/docs/cancellation-and-progress/#progress-on-the-same-call)
 
 ### **Every core, one option**
 
@@ -133,6 +143,8 @@ const math = createWorker<MathWorker>(source, { maxWorkers: 4 });
 await Promise.all([math.fibonacci(40), math.fibonacci(41), math.fibonacci(42)]);
 ```
 
+[**Run it live →**](https://johnny-quesada-developer.github.io/easy-web-worker/examples/worker-pool/) · [Read the guide](https://johnny-quesada-developer.github.io/easy-web-worker/docs/worker-pools/)
+
 ### **Move large buffers instead of copying them**
 
 Pass transferable objects as the second argument. Ownership moves and nothing is cloned.
@@ -140,6 +152,8 @@ Pass transferable objects as the second argument. Ownership moves and nothing is
 ```ts
 const blurred = await images.blur(buffer, [buffer]);
 ```
+
+[**Run it live →**](https://johnny-quesada-developer.github.io/easy-web-worker/examples/transferable-buffers/) · [Read the guide](https://johnny-quesada-developer.github.io/easy-web-worker/docs/transferable-objects/)
 
 ### **Any way you create a Worker**
 
@@ -152,6 +166,8 @@ createWorker<MathWorker>(new Worker(...)); // existing Worker
 createWorker<MathWorker>([worker1, worker2]); // existing pool
 createWorker(() => ({ fibonacci })); // a function, no file at all
 ```
+
+[**Every source, with the setup for each bundler →**](https://johnny-quesada-developer.github.io/easy-web-worker/docs/creating-workers/)
 
 ### **No Worker file required**
 
@@ -167,6 +183,8 @@ const math = createWorker(() => {
 
 await math.fibonacci(40); // 102334155, typed as number
 ```
+
+[**Run it live →**](https://johnny-quesada-developer.github.io/easy-web-worker/examples/worker-without-a-file/) · [Read the guide](https://johnny-quesada-developer.github.io/easy-web-worker/docs/runtime-workers/)
 
 ---
 
@@ -218,6 +236,8 @@ const result = await math.fibonacci(40); // 102334155
 The main thread imports only the **type** of the Worker. TypeScript infers both sides: `math.fibonacci` takes a `number` and returns a `CancelablePromise<number>`. Change the Worker, and the main thread stops compiling until it matches.
 
 > Shipping with a bundler? See [Every way to create a worker](#every-way-to-create-a-worker) for the production setup.
+>
+> Prefer a step-by-step page? [Getting started](https://johnny-quesada-developer.github.io/easy-web-worker/docs/getting-started/) covers the same code, and [Keep the page responsive](https://johnny-quesada-developer.github.io/easy-web-worker/examples/keep-the-page-responsive/) runs it in your browser.
 
 ### Progress and cancellation
 
@@ -259,6 +279,8 @@ const primes = await task;
 ```
 
 Progress and cancellation belong to the call itself, not to a second channel.
+
+> This exact pattern runs live in [Progress and cancellation](https://johnny-quesada-developer.github.io/easy-web-worker/examples/progress-and-cancellation/): start a long search, watch it advance, and cancel it.
 
 ---
 
@@ -499,6 +521,8 @@ Import each side from its own entry, so the Worker bundle carries no main-thread
 
 Everything is also exported from the root `easy-web-worker` entry.
 
+> **On the website:** [Typed workers](https://johnny-quesada-developer.github.io/easy-web-worker/docs/typed-workers/) · [Methods and the message](https://johnny-quesada-developer.github.io/easy-web-worker/docs/methods-and-the-message/) · [TypeScript](https://johnny-quesada-developer.github.io/easy-web-worker/docs/typescript/) · [API reference](https://johnny-quesada-developer.github.io/easy-web-worker/docs/api-reference/)
+
 ---
 
 ### Every way to create a worker
@@ -607,6 +631,8 @@ await math.double(21); // 42
 
 The function returns the methods, exactly like the builder of `defineWorker`. See [Runtime Workers](#runtime-workers-a-function-as-the-worker) for scope rules, parameters and external scripts.
 
+> **On the website:** [Creating workers](https://johnny-quesada-developer.github.io/easy-web-worker/docs/creating-workers/) · [Troubleshooting](https://johnny-quesada-developer.github.io/easy-web-worker/docs/troubleshooting/)
+
 ---
 
 ### Worker pools
@@ -661,6 +687,8 @@ createWorker<MathWorker>(source, {
 | `primitiveParameters` | `[]`                    | Static values for a runtime Worker, in `context`     |
 
 The same options apply to `createWorker`, `createEasyWebWorker` and `new EasyWebWorker(...)`.
+
+> **On the website:** [Worker pools](https://johnny-quesada-developer.github.io/easy-web-worker/docs/worker-pools/) · [Live example: one worker or three](https://johnny-quesada-developer.github.io/easy-web-worker/examples/worker-pool/)
 
 ---
 
@@ -845,6 +873,8 @@ await worker.send(21); // 42
 
 The first generic is the payload of `send()`. The second is the value passed to `message.resolve()`. It also accepts an array of functions that share the scope of the Worker, to compose a Worker from reusable pieces.
 
+> **On the website:** [Runtime workers](https://johnny-quesada-developer.github.io/easy-web-worker/docs/runtime-workers/) · [Live example: a worker without a file](https://johnny-quesada-developer.github.io/easy-web-worker/examples/worker-without-a-file/)
+
 ---
 
 ### The message API with `StaticEasyWebWorker`
@@ -885,6 +915,8 @@ const worker = createWorker<{ uppercase: (text: string) => string }>(source);
 
 await worker.uppercase('hello');
 ```
+
+> **On the website:** [Message API](https://johnny-quesada-developer.github.io/easy-web-worker/docs/message-api/) · [API reference](https://johnny-quesada-developer.github.io/easy-web-worker/docs/api-reference/)
 
 ---
 
@@ -927,21 +959,36 @@ await worker.dispose(); // EasyWebWorker
 
 `dispose` cancels the pending calls, revokes the generated Worker URL when there is one, and terminates the Workers.
 
+> **On the website:** [Cancellation and progress](https://johnny-quesada-developer.github.io/easy-web-worker/docs/cancellation-and-progress/) · [Testing](https://johnny-quesada-developer.github.io/easy-web-worker/docs/testing/) · [Troubleshooting](https://johnny-quesada-developer.github.io/easy-web-worker/docs/troubleshooting/)
+
 ---
 
 ## Documentation and examples
 
-The [easy-web-worker website](https://johnny-quesada-developer.github.io/easy-web-worker/) is the home for the documentation and for examples that run real
-Web Workers in your browser, against the same files that are published to npm.
+Everything in this README runs for real on the [easy-web-worker website](https://johnny-quesada-developer.github.io/easy-web-worker/): real Web Workers, in your browser, against the same files that are published to npm.
 
-| Explore                                                                 | What you will find                                                        |
-| ----------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| [Getting started](https://johnny-quesada-developer.github.io/easy-web-worker/docs/getting-started/)                         | Define your first worker and call it from the main thread.                |
-| [Guides](https://johnny-quesada-developer.github.io/easy-web-worker/docs/)                                                   | Typed workers, cancellation, progress, transferables, pools and bundlers. |
-| [Interactive examples](https://johnny-quesada-developer.github.io/easy-web-worker/examples/)                                 | Five small applications running real Workers, with their source.          |
-| [API reference](https://johnny-quesada-developer.github.io/easy-web-worker/docs/api-reference/)                              | `defineWorker`, `createWorker`, `unwrap`, the message and the config.     |
-| [Troubleshooting](https://johnny-quesada-developer.github.io/easy-web-worker/docs/troubleshooting/)                          | Symptoms, causes and fixes.                                               |
-| [Platform and versions](https://johnny-quesada-developer.github.io/easy-web-worker/docs/platform-and-versions/)              | Browser support and what changes when upgrading.                          |
+### See it before you install it
+
+| Live example | What you will see |
+| --- | --- |
+| [Keep the page responsive](https://johnny-quesada-developer.github.io/easy-web-worker/examples/keep-the-page-responsive/) | The same computation on the main thread and in a Worker. One freezes the page, the other does not. |
+| [Progress and cancellation](https://johnny-quesada-developer.github.io/easy-web-worker/examples/progress-and-cancellation/) | A long search that reports how far it is, and stops inside the Worker when you cancel it. |
+| [Worker pool](https://johnny-quesada-developer.github.io/easy-web-worker/examples/worker-pool/) | Three searches with one Worker and then with three. Same answers, sooner. |
+| [Transferable buffers](https://johnny-quesada-developer.github.io/easy-web-worker/examples/transferable-buffers/) | A large buffer moved to the Worker instead of copied. |
+| [Worker without a file](https://johnny-quesada-developer.github.io/easy-web-worker/examples/worker-without-a-file/) | A Worker created from a function, with no extra file and no bundler setup. |
+
+Every example shows its full source next to the running result.
+
+### Then go deeper
+
+| Guide | What you will find |
+| --- | --- |
+| [Getting started](https://johnny-quesada-developer.github.io/easy-web-worker/docs/getting-started/) | Define your first worker and call it from the main thread. |
+| [Guides](https://johnny-quesada-developer.github.io/easy-web-worker/docs/) | Typed workers, cancellation, progress, transferables, pools and bundler setup. |
+| [API reference](https://johnny-quesada-developer.github.io/easy-web-worker/docs/api-reference/) | `defineWorker`, `createWorker`, `unwrap`, the message and the configuration. |
+| [Testing](https://johnny-quesada-developer.github.io/easy-web-worker/docs/testing/) | Test worker logic as plain functions, and the calling code without a Worker. |
+| [Troubleshooting](https://johnny-quesada-developer.github.io/easy-web-worker/docs/troubleshooting/) | Symptoms, causes and fixes. |
+| [Platform and versions](https://johnny-quesada-developer.github.io/easy-web-worker/docs/platform-and-versions/) | Browser support and what changes when upgrading. |
 
 ---
 
