@@ -84,13 +84,13 @@ describe('StaticEasyWebWorker', () => {
       it('worker should be able to updated a variable inside the worker', async () => {
         expect.assertions(2);
 
-        let count = await worker.sendToMethod<Number>('getCount');
+        let count = await worker.sendToMethod<number>('getCount');
 
         expect(count).toBe(0);
 
-        await worker.sendToMethod<null, Number>('setCount', 2);
+        await worker.sendToMethod<null, number>('setCount', 2);
 
-        count = await worker.sendToMethod<Number>('getCount');
+        count = await worker.sendToMethod<number>('getCount');
 
         expect(count).toBe(2);
       });
@@ -221,7 +221,7 @@ describe('StaticEasyWebWorker', () => {
           const progressLogger = vi.fn();
           const errorLogger = vi.fn();
 
-          let onProgressSpy = defer();
+          const onProgressSpy = defer();
 
           worker
             .sendToMethod('fastAsyncOperation')

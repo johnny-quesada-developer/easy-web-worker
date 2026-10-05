@@ -1,6 +1,6 @@
 {
   "name": "easy-web-worker",
-  "version": "7.0.6",
+  "version": "8.0.0",
   "description": "This is a library to easily handle and create web-workers, if you are a web developer and never tried this... do not wait any longer! Workers are an amazing option to improve user experience and make your webpages even greater",
   "main": "./bundle.cjs",
   "module": "./bundle.mjs",
@@ -102,7 +102,9 @@
     "test:e2e:ui": "playwright test --ui",
     "build:template": "tsx scripts/build-worker-template.ts",
     "build": "yarn build:template && yarn ts-check && yarn clean && tsc -p tsconfig.build.json && tsx esbuild.config.ts && tsx ../../scripts/prepare-dist.ts",
-    "validate": "yarn test && yarn test:dist && tsx scripts/test-interop.ts && yarn test:e2e && EASY_WEB_WORKER_TEST_TARGET=dist playwright test",
+    "lint": "eslint . --max-warnings=0",
+    "lint:fix": "eslint . --fix --max-warnings=0",
+    "validate": "yarn lint && yarn test && yarn test:dist && tsx scripts/test-interop.ts && yarn test:e2e && EASY_WEB_WORKER_TEST_TARGET=dist playwright test",
     "npm-publish": "node ../../scripts/assert-publish-version.mjs latest && cd dist && npm publish --tag latest --registry https://registry.npmjs.org/ ${NPM_OTP:+--otp=$NPM_OTP} ${NPM_DRY_RUN:+--dry-run}",
     "npm-publish:beta": "node ../../scripts/assert-publish-version.mjs beta && cd dist && npm publish --tag beta --registry https://registry.npmjs.org/ ${NPM_OTP:+--otp=$NPM_OTP} ${NPM_DRY_RUN:+--dry-run}",
     "publish:pkg": "yarn npm-publish",

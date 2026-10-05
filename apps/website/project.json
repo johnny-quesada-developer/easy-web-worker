@@ -5,6 +5,20 @@
   "tags": ["scope:website", "type:app"],
   "//": "Deployed to GitHub Pages by .github/workflows/deploy-website.yml. Never published to npm. Every target builds the package first: the site runs against libs/easy-web-worker/dist.",
   "targets": {
+    "validate": {
+      "executor": "nx:run-commands",
+      "//": "Runs after the validation of the package, so the site is checked against the dist that was just built and tested.",
+      "dependsOn": [{ "projects": ["easy-web-worker"], "target": "validate" }],
+      "options": { "command": "yarn validate", "cwd": "apps/website" }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": { "command": "yarn lint", "cwd": "apps/website" }
+    },
+    "lint:fix": {
+      "executor": "nx:run-commands",
+      "options": { "command": "yarn lint:fix", "cwd": "apps/website" }
+    },
     "dev": {
       "executor": "nx:run-commands",
       "dependsOn": [{ "projects": ["easy-web-worker"], "target": "build" }],

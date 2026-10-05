@@ -150,6 +150,20 @@
         "command": "yarn publish:beta",
         "cwd": "libs/easy-web-worker"
       }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "yarn lint",
+        "cwd": "libs/easy-web-worker"
+      }
+    },
+    "lint:fix": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "yarn lint:fix",
+        "cwd": "libs/easy-web-worker"
+      }
     }
   }
 }

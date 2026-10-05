@@ -5,7 +5,7 @@ const { window } = new JSDOM("<!DOCTYPE html>");
 export const WINDOW_MOCK = window;
 
 export class BLOB_MOCK {
-  public constructor(public content: string[], config: { type: string }) {}
+  public constructor(public content: string[], _config: { type: string }) {}
 }
 
 export const URL_MOCK = {

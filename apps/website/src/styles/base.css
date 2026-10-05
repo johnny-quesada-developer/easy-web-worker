@@ -178,6 +178,11 @@ kbd {
   font-family: var(--font-mono);
 }
 
+/* Inline code: keeps the box of the monospace font inside the line, so a line with code is as tall as one without, whatever font the system picks. */
+:not(pre) > code {
+  line-height: 1;
+}
+
 kbd {
   font-size: calc(10px * var(--type-scale));
   border: 1px solid var(--color-line);
