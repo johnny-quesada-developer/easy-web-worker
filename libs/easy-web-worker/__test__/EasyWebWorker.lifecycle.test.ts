@@ -771,28 +771,40 @@ describe('EasyWebWorker (pool and life cycle)', () => {
       expect(fakeWorker.terminate).not.toHaveBeenCalled();
     });
 
-    it('should still wait for the confirmation of the worker when is canceled', async () => {
+    it('should reject with the reason when cancelAll itself is canceled, the messages stay canceled', async () => {
       const worker = new EasyWebWorker(workerBody);
       const [fakeWorker] = FakeWorker.instances;
       const callback = vi.fn();
       const errorLogger = vi.fn();
+      const messageLogger = vi.fn();
 
-      worker.send().catch(() => {});
+      const message = worker.send().catch(messageLogger);
 
       const cancelAllPromise = worker.cancelAll('reason');
       const promise = cancelAllPromise.then(callback).catch(errorLogger);
 
+      // the execution and its cancelation were already sent to the worker
+      expect(fakeWorker.received.length).toEqual(2);
+
       cancelAllPromise.cancel('canceled');
 
+      await promise;
+
+      expect(callback).not.toHaveBeenCalled();
+      expect(errorLogger).toHaveBeenCalledWith('canceled');
+
+      // the worker still confirms the cancelation of the message
       fakeWorker.reply({
         messageId: fakeWorker.received[0].messageId,
         worker_cancelation: { reason: 'reason' },
       });
 
-      await promise;
+      await message;
 
-      expect(callback).toHaveBeenCalledWith(undefined);
-      expect(errorLogger).not.toHaveBeenCalled();
+      expect(messageLogger).toHaveBeenCalledWith('reason');
+
+      // canceling cancelAll sends nothing else to the worker
+      expect(fakeWorker.received.length).toEqual(2);
     });
 
     it('should resolve when there are no messages', async () => {

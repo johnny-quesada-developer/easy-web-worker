@@ -1,6 +1,6 @@
 {
   "name": "easy-web-worker-monorepo",
-  "version": "8.0.1",
+  "version": "8.0.2",
   "private": true,
   "description": "Monorepo for the easy-web-worker package.",
   "workspaces": [
@@ -70,6 +70,6 @@
     "vitest": "^2.1.9"
   },
   "dependencies": {
-    "easy-cancelable-promise": "^2.0.1"
+    "easy-cancelable-promise": "^3.0.0"
   }
 }

@@ -237,7 +237,7 @@ describe('StaticEasyWebWorker', () => {
 
           progressLogger.mockClear();
 
-          await worker.cancelAll('cancel').cancel('cancel_cancelation');
+          await worker.cancelAll('cancel');
 
           await new Promise((resolve) => setTimeout(resolve, 1000));
 

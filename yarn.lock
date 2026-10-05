@@ -3407,10 +3407,10 @@ eastasianwidth@^0.2.0:
   resolved "https://registry.yarnpkg.com/eastasianwidth/-/eastasianwidth-0.2.0.tgz#696ce2ec0aa0e6ea93a397ffcf24aa7840c827cb"
   integrity sha512-I88TYZWc9XiYHRQ4/3c5rjjfgkjhLyW2luGIheGERbNQ6OY7yTybanSpDXZa8y7VUP9YmDcYa+eyq4ca7iLqWA==
 
-easy-cancelable-promise@^2.0.1:
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/easy-cancelable-promise/-/easy-cancelable-promise-2.0.1.tgz#38aa20d82613387bb04eafe2850f219c24488793"
-  integrity sha512-z9nWwEMh3oGkCO2KNlTRxJFyQRJDLvu7sdDr0dka8lR69a43z3l1zJMS8nGEgWThIethC9EScF0XIzYkDDWDEw==
+easy-cancelable-promise@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/easy-cancelable-promise/-/easy-cancelable-promise-3.0.0.tgz#a9a31b2fc5cdf927efa8bb254c3c5fd5ae1dcea2"
+  integrity sha512-SNLgPEvNttL3Ja3KkXKIE2wt9q5m74ERlN8arEE4KUUhGxV8ubjn+F2bCbNSX1dYP8dAshYUHhlqFSl8Whh+zQ==
 
 ejs@5.0.1:
   version "5.0.1"

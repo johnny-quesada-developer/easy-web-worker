@@ -1,7 +1,7 @@
 {
   "name": "easy-web-worker-website",
   "private": true,
-  "version": "8.0.1",
+  "version": "8.0.2",
   "type": "module",
   "description": "Documentation, examples and learning site for easy-web-worker. Deployed to GitHub Pages; never published to npm.",
   "scripts": {

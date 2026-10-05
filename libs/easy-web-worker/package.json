@@ -1,6 +1,6 @@
 {
   "name": "easy-web-worker",
-  "version": "8.0.1",
+  "version": "8.0.2",
   "description": "This is a library to easily handle and create web-workers, if you are a web developer and never tried this... do not wait any longer! Workers are an amazing option to improve user experience and make your webpages even greater",
   "main": "./bundle.cjs",
   "module": "./bundle.mjs",
@@ -134,10 +134,10 @@
   },
   "homepage": "https://github.com/johnny-quesada-developer/easy-web-worker#readme",
   "dependencies": {
-    "easy-cancelable-promise": "^2.0.1"
+    "easy-cancelable-promise": "^3.0.0"
   },
   "peerDependencies": {
-    "easy-cancelable-promise": "^2.0.1"
+    "easy-cancelable-promise": "^3.0.0"
   },
   "peerDependenciesMeta": {
     "easy-cancelable-promise": {
