@@ -7,9 +7,9 @@ category: Responsiveness
 thumb: responsive
 outcome: Heavy work belongs on another thread. The call that starts it can still look like a function.
 points:
-  - Press Run on the main thread. The heartbeat stops, and the Page frozen value is how long nothing could be drawn, scrolled or typed.
-  - Press Run in a Worker. The result is the same number, and the heartbeat keeps one bar per frame while it is computed.
-  - Try a larger `n`. The main-thread freeze grows with the work; the Worker version keeps drawing frames.
+  - Press Run on the main thread and type in the field. Nothing appears until the work ends. Longest freeze is how long nothing could be drawn, scrolled or typed.
+  - Press Run in a Worker and type again. The result is the same number, your text appears as you type, and the heartbeat keeps one bar per frame.
+  - Try a larger `n`. The main-thread freeze grows with the work; the Worker version never freezes.
 sources:
   - file: responsive/math.worker.ts
     title: math.worker.ts

@@ -17,7 +17,7 @@ export function NavDrawer({ pathname }: NavDrawerProps) {
       <div className="mb-5 flex items-center justify-between border-b border-line pb-5">
         <a className="flex items-center gap-[10px] text-14 font-[650] tracking-[-0.035em]" href={withBase()}>
           <Logo className="size-[29px]" />
-          <span>RGSH</span>
+          <span>easy-web-worker</span>
         </a>
         <button
           type="button"

@@ -102,7 +102,7 @@ export function Workbench({ title, demo, files, outcome, points }: WorkbenchProp
         </div>
       </div>
 
-      <div className="grid min-h-[410px] grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] max-xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] max-md:grid-cols-[minmax(0,1fr)]">
+      <div className="grid min-h-[410px] grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)] max-xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] max-md:grid-cols-[minmax(0,1fr)]">
         <div className="min-w-0 bg-soft px-[30px] py-[29px] max-xl:px-[18px] max-xl:py-[22px] max-md:px-[18px] max-md:py-[21px]">
           <div className="mb-4 flex items-center justify-between text-10 text-muted">
             <span>Application preview</span>

@@ -232,7 +232,7 @@ export function SearchDialog() {
       </div>
       <div className="flex justify-between border-t border-line px-[22px] py-3 text-10 text-muted max-md:px-[17px] max-md:text-9">
         <span>↑↓ Navigate ↵ Open Esc Close</span>
-        <span>RGSH docs</span>
+        <span>easy-web-worker docs</span>
       </div>
     </dialog>
   );

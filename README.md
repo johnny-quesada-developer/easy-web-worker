@@ -46,7 +46,7 @@ function fibonacci(n: number): number {
 
 ```ts
 import type { worker as MathWorker } from './math.worker';
-import mathWorkerUrl from './TextDiff.worker?worker&url';
+import mathWorkerUrl from './math.worker?worker&url';
 
 /**
  * The type of the worker is inferred from it's declaration,

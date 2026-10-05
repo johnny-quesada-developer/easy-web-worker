@@ -1,10 +1,10 @@
 import { createWorker } from 'easy-web-worker/createWorker';
-import workerUrl from './crunch.worker?worker&url';
-import type { CrunchWorker } from './crunch.worker';
+import workerUrl from './collatz.worker?worker&url';
+import type { CollatzWorker } from './collatz.worker';
 
 /** The same worker file; `maxWorkers` decides how many native Workers share the calls. */
-export const createCrunchWorker = (maxWorkers: number) =>
-  createWorker<CrunchWorker>(workerUrl, {
+export const createCollatzWorker = (maxWorkers: number) =>
+  createWorker<CollatzWorker>(workerUrl, {
     maxWorkers,
     warmUpWorkers: true,
     workerOptions: { type: 'module', name: 'worker' },

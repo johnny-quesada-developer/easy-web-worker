@@ -30,6 +30,7 @@
     "ts-check:tests": "node scripts/run.mjs ts-check:tests",
     "prepare-packages": "node scripts/run.mjs validate",
     "tarball": "node scripts/tarball.mjs",
+    "version-bump": "node scripts/version-bump.mjs",
     "publish:pkg": "node scripts/run.mjs publish:pkg",
     "publish:beta": "node scripts/run.mjs publish:beta",
     "publish:dry-run": "NPM_DRY_RUN=1 node scripts/run.mjs publish:pkg",

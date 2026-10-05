@@ -60,10 +60,10 @@ function Thumb({ kind }: { kind: GalleryExample['thumb'] }) {
     return (
       <div className={thumbUi}>
         <div className={thumbRow}>
-          <strong>8 tasks</strong>
-          <Badge tone="blue">maxWorkers: 4</Badge>
+          <strong>3 segments</strong>
+          <Badge tone="blue">maxWorkers: 3</Badge>
         </div>
-        {['worker', 'worker-1', 'worker-2', 'worker-3'].map((name) => (
+        {['worker', 'worker-1', 'worker-2'].map((name) => (
           <div className={thumbLine} key={name}>
             <Icon name="check" className="size-[13px]" /> <span className="font-mono">{name}</span>
           </div>

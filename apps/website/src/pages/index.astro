@@ -12,6 +12,15 @@ import heroMain from '@snippets/home/main.ts?raw';
 import byHandWorker from '@snippets/home/by-hand.worker.js?raw';
 import byHandMain from '@snippets/home/by-hand.main.js?raw';
 
+/** The hero shows the two files as the README does: without the line that imports the library, and without `export` on the result. */
+const asInReadme = (code: string) =>
+  code
+    .split('\n')
+    .filter((line) => !line.includes("from 'easy-web-worker/"))
+    .join('\n')
+    .replace('export const result', 'const result')
+    .trim();
+
 const gettingStarted = withBase('docs/getting-started/');
 const install = 'npm install easy-web-worker';
 
@@ -76,7 +85,7 @@ const codeFrame = 'min-w-0 [&_.code-block]:m-0';
   image="og/home.png"
   imageAlt="easy-web-worker: Web Workers are powerful. Now they are also easy."
   title="easy-web-worker"
-  description="Real Web Workers with a typed API: define the methods once, call them like async functions, with cancelable promises, progress and worker pools."
+  description="Web Workers are powerful. Now they are also easy. easy-web-worker handles everything between the threads: message routing, promises, errors, cancellation, progress, transferable objects and worker pools."
   family="Product"
 >
   <section class="wrap pt-[65px] text-center max-2xl:pt-[53px] max-sm:pt-[42px]" aria-labelledby="hero-title">
@@ -85,7 +94,7 @@ const codeFrame = 'min-w-0 [&_.code-block]:m-0';
       href="#live"
     >
       <span class="rounded-[20px] bg-[#e9f0e9] dark:bg-green-soft px-[6px] py-1 font-mono text-9 leading-[1.2] text-green max-sm:text-8">LIVE</span>
-      Freeze this page. Then don't.
+      Same task. Two ways to run it.
       <Icon name="chevron" className="size-[13px] text-[#7b867e] dark:text-muted" />
     </a>
     <h1
@@ -94,8 +103,11 @@ const codeFrame = 'min-w-0 [&_.code-block]:m-0';
     >
       Web Workers are powerful.<br /><span class="text-[#464e48] dark:text-muted">Now they're also easy.</span>
     </h1>
-    <p class="mx-auto mb-0 max-w-[630px] text-17 leading-[1.75] tracking-[-0.2px] text-muted max-lg:max-w-[570px] max-lg:text-15 max-sm:max-w-[370px] max-sm:text-14 max-sm:leading-[1.8]">
-      Write the worker as plain functions and call them like <code class="rounded-[4px] bg-[#f1f4ef] dark:bg-green-soft px-[5px] py-[2px] text-[0.86em] text-[#46544a] dark:text-muted">async</code> ones.<br class="max-sm:hidden" /> Typed end to end, cancelable, with progress and worker pools.
+    <p class="mx-auto mb-0 max-w-[660px] text-17 leading-[1.75] tracking-[-0.2px] text-muted max-lg:max-w-[570px] max-lg:text-15 max-sm:max-w-[370px] max-sm:text-14 max-sm:leading-[1.8]">
+      Let <code class="rounded-[4px] bg-[#f1f4ef] dark:bg-green-soft px-[5px] py-[2px] text-[0.86em] text-[#46544a] dark:text-muted">easy-web-worker</code> handle everything between the threads. You keep the power of native Web Workers without dealing with all the complexity that usually comes with them.
+    </p>
+    <p class="mx-auto mt-[14px] mb-0 max-w-[620px] text-13 leading-[1.8] text-[#6f796f] dark:text-muted max-lg:max-w-[540px] max-sm:max-w-[360px] max-sm:text-12">
+      It handles the plumbing between both sides: message routing, request matching, promises, errors, cancellation, progress, transferable objects, lifecycle management, and worker pools.
     </p>
     <div class="mt-[26px] flex flex-wrap items-center justify-center gap-3 max-sm:mt-[22px] max-sm:gap-[9px]">
       <ButtonLink variant="primary" icon="arrow" className="min-h-12 px-[22px] text-14 max-sm:min-h-[45px] max-sm:px-[14px] max-sm:text-12" href={gettingStarted}>Start building</ButtonLink>
@@ -107,12 +119,12 @@ const codeFrame = 'min-w-0 [&_.code-block]:m-0';
       <span class="text-[#646c64] dark:text-muted">$</span><span>{install}</span><Icon name="copy" className="size-[13px] max-sm:size-3" />
     </button>
 
-    <div class="mx-auto mt-[46px] grid max-w-[1040px] grid-cols-2 gap-5 text-left max-lg:gap-[14px] max-sm:mt-[32px] max-sm:grid-cols-1">
+    <div class="mx-auto mt-[46px] grid grid-cols-2 gap-5 text-left max-lg:gap-[14px] max-sm:mt-[32px] max-sm:grid-cols-1">
       <div class={codeFrame}>
-        <CodeBlock code={heroWorker.trimEnd()} lang="ts" title="math.worker.ts · you write this" />
+        <CodeBlock code={asInReadme(heroWorker)} lang="ts" title="math.worker.ts · you write this" />
       </div>
       <div class={codeFrame}>
-        <CodeBlock code={heroMain.trimEnd()} lang="ts" title="main.ts · and call it like this" />
+        <CodeBlock code={asInReadme(heroMain)} lang="ts" title="main.ts · and call it like this" />
       </div>
     </div>
 
@@ -131,7 +143,7 @@ const codeFrame = 'min-w-0 [&_.code-block]:m-0';
     <div class="min-w-0">
       <div class="eyebrow-mono"><span class={eyebrowLine}></span> A RESPONSIVE PAGE</div>
       <h2 id="live-title" class={sectionTitle}>The work is heavy.<br />The page<br />doesn't have to be.</h2>
-      <p class={sectionText}>The same computation, run twice. On the main thread the page stops: no scrolling, no typing, no animation. In a Worker it keeps drawing every frame.</p>
+      <p class={sectionText}>Same task, two ways to run it. On the main thread the page freezes until the answer arrives: no scrolling, no typing, no animation. In a Worker you get the same answer and the page never stops.</p>
       <a class={`${textLink} mt-[25px] text-12 max-sm:mt-[18px]`} href={withBase('examples/keep-the-page-responsive/')}>Open the full example <Icon name="arrow" className="arrow" /></a>
       <p class={sectionNote}>This runs in your browser, against the same package files that are published to npm.</p>
     </div>
@@ -182,7 +194,7 @@ const codeFrame = 'min-w-0 [&_.code-block]:m-0';
     <div class="min-w-0">
       <div class="eyebrow-mono text-[#586b89] dark:text-blue"><span class={eyebrowLine}></span> WORKER POOLS</div>
       <h2 id="pool-title" class={sectionTitle}>Every core.<br />One option.</h2>
-      <p class={sectionText}>One worker runs one task at a time. Set <code>maxWorkers</code> and the same object spreads the calls across several native Workers. The calling code does not change.</p>
+      <p class={sectionText}>One worker runs one task at a time, so three searches wait in line. Set <code>maxWorkers</code> and the same object runs them on three native Workers at once. Same answers, sooner, and the calling code does not change.</p>
       <a class={`${textLink} mt-[25px] text-12 max-sm:mt-[18px]`} href={withBase('docs/worker-pools/')}>Scale with a pool <Icon name="arrow" className="arrow" /></a>
       <p class={sectionNote}>Workers are created as calls arrive, so an idle application pays for none of them.</p>
     </div>

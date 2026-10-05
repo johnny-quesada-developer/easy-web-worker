@@ -2,29 +2,34 @@ import { useEffect, useRef, useState } from 'react';
 import { unwrap } from 'easy-web-worker/createWorker';
 import '../shared/demo.css';
 import { createLog } from '../shared/log';
-import { milliseconds } from '../shared/format';
-import { createCrunchWorker } from './client';
+import { count, milliseconds } from '../shared/format';
+import { createCollatzWorker } from './client';
+import { segments, type Chain } from './collatz';
 
-const log = createLog();
-const sizes = [1, 2, 4] as const;
+type Size = 1 | 3;
 
-const TASKS = 8;
-const TASK_TIME = 250;
-
-interface Task {
-  id: number;
+interface Segment {
+  from: number;
+  to: number;
   worker: string | null;
-  finishedAt: number | null;
+  /** Percentage of the segment searched so far, reported by the worker. */
+  progress: number;
+  chain: Chain | null;
 }
 
-const idleTasks = (): Task[] => new Array(TASKS).fill(null).map((_, id) => ({ id, worker: null, finishedAt: null }));
+const log = createLog();
+const limits = [1_500_000, 4_500_000, 9_000_000] as const;
+
+const SEGMENTS = 3;
+
+const idleSegments = (limit: number): Segment[] => segments(limit, SEGMENTS).map(([from, to]) => ({ from, to, worker: null, progress: 0, chain: null }));
 
 export function PoolDemo() {
-  const [size, setSize] = useState<(typeof sizes)[number]>(4);
-  const [running, setRunning] = useState(false);
-  const [tasks, setTasks] = useState<Task[]>(idleTasks);
-  const [elapsed, setElapsed] = useState<number | null>(null);
-  const pools = useRef(new Map<number, ReturnType<typeof createCrunchWorker>>());
+  const [limit, setLimit] = useState<(typeof limits)[number]>(4_500_000);
+  const [running, setRunning] = useState<Size | null>(null);
+  const [parts, setParts] = useState<Segment[]>(() => idleSegments(4_500_000));
+  const [elapsed, setElapsed] = useState<Partial<Record<Size, number>>>({});
+  const pools = useRef(new Map<Size, ReturnType<typeof createCollatzWorker>>());
 
   useEffect(
     () => () => {
@@ -33,80 +38,96 @@ export function PoolDemo() {
     [],
   );
 
-  const run = async () => {
-    const pool = pools.current.get(size) ?? createCrunchWorker(size);
+  const run = async (size: Size) => {
+    const pool = pools.current.get(size) ?? createCollatzWorker(size);
 
     pools.current.set(size, pool);
-    setRunning(true);
-    setElapsed(null);
-    setTasks(idleTasks());
+    setRunning(size);
+    setParts(idleSegments(limit));
 
     const startedAt = performance.now();
+    const update = (index: number, changes: Partial<Segment>) =>
+      setParts((current) => current.map((part, position) => (position === index ? { ...part, ...changes } : part)));
 
-    // the calling code is the same for one worker or four
-    const workers = await Promise.all(
-      idleTasks().map(({ id }) =>
-        pool.crunch(TASK_TIME).then((worker) => {
-          const finishedAt = performance.now() - startedAt;
+    // the calling code is the same for one worker or three
+    const results = await Promise.all(
+      segments(limit, SEGMENTS).map(([from, to], index) =>
+        pool
+          .longestChain([from, to])
+          .onProgress((progress, details) => update(index, { progress, worker: (details as { worker: string }).worker }))
+          .then(({ worker, ...chain }) => {
+            update(index, { worker, progress: 100, chain });
 
-          setTasks((current) => current.map((task) => (task.id === id ? { id, worker, finishedAt } : task)));
-
-          return worker;
-        }),
+            return worker;
+          }),
       ),
     );
 
     const total = performance.now() - startedAt;
 
-    setElapsed(total);
-    setRunning(false);
-    log.write(`${TASKS} tasks · ${new Set(workers).size} worker${size === 1 ? '' : 's'} used · ${milliseconds(total)}`);
+    setElapsed((current) => ({ ...current, [size]: total }));
+    setRunning(null);
+    log.write(`${SEGMENTS} segments · ${new Set(results).size} worker${size === 1 ? '' : 's'} used · ${milliseconds(total)}`);
   };
 
-  const sequential = TASKS * TASK_TIME;
+  const one = elapsed[1];
+  const three = elapsed[3];
 
   return (
     <div className="demo">
-      <section className="demo-card" aria-label="Pool size">
+      <section className="demo-card" aria-label="Search">
         <fieldset className="segmented">
-          <legend>maxWorkers</legend>
-          {sizes.map((value) => (
+          <legend>Longest Collatz chain below</legend>
+          {limits.map((value) => (
             <label key={value}>
-              <input type="radio" name="pool-size" checked={size === value} disabled={running} onChange={() => { setSize(value); setTasks(idleTasks()); setElapsed(null); }} />
-              <span>{value}</span>
+              <input type="radio" name="collatz-limit" checked={limit === value} disabled={running !== null} onChange={() => { setLimit(value); setParts(idleSegments(value)); setElapsed({}); }} />
+              <span>{count(value)}</span>
             </label>
           ))}
         </fieldset>
         <div className="demo-actions">
-          <button type="button" className="demo-button demo-button--primary" onClick={run} disabled={running}>
-            {running ? 'Running…' : `Run ${TASKS} tasks of ${TASK_TIME} ms`}
+          <button type="button" className="demo-button" onClick={() => run(1)} disabled={running !== null}>
+            {running === 1 ? 'Running…' : 'Run with 1 worker'}
+          </button>
+          <button type="button" className="demo-button demo-button--primary" onClick={() => run(3)} disabled={running !== null}>
+            {running === 3 ? 'Running…' : 'Run with 3 workers'}
           </button>
         </div>
       </section>
 
-      <section className="demo-card" aria-label="Tasks">
-        <span>Who did each task</span>
+      <section className="demo-card" aria-label="Segments">
+        <span>Three segments, three different answers</span>
         <ul className="demo-lanes">
-          {tasks.map((task) => (
-            <li className={`demo-lane ${task.worker ? 'demo-lane--done' : ''}`} key={task.id}>
-              <span>task {task.id + 1}</span>
+          {parts.map((part, index) => (
+            <li className={`demo-lane demo-lane--result ${part.chain ? 'demo-lane--done' : ''}`} key={part.from}>
+              <span>
+                {count(part.from)} to {count(part.to)}
+              </span>
               <div className="demo-progress">
-                <span style={{ width: task.worker ? '100%' : '0%' }} />
+                <span style={{ width: `${part.progress}%` }} />
               </div>
-              <span data-testid={`task-${task.id + 1}`}>{task.worker ?? 'waiting'}</span>
+              <span data-testid={`segment-${index + 1}`}>
+                {part.chain ? `${count(part.chain.start)} · ${part.chain.steps} steps` : running === null ? 'not run' : part.progress > 0 ? `${Math.round(part.progress)}%` : 'waiting'}
+              </span>
+              <span data-testid={`segment-worker-${index + 1}`}>{part.worker ?? ''}</span>
             </li>
           ))}
         </ul>
         <dl className="demo-stats">
-          <div className={`demo-stat ${elapsed !== null ? 'demo-stat--good' : ''}`}>
-            <dt>Total time</dt>
-            <dd data-testid="pool-elapsed">{elapsed === null ? 'not run' : milliseconds(elapsed)}</dd>
+          <div className={`demo-stat ${one !== undefined ? 'demo-stat--bad' : ''}`}>
+            <dt>1 worker · one after another</dt>
+            <dd data-testid="pool-elapsed-1">{one === undefined ? 'not run' : milliseconds(one)}</dd>
           </div>
-          <div className="demo-stat">
-            <dt>One after another</dt>
-            <dd>{milliseconds(sequential)}</dd>
+          <div className={`demo-stat ${three !== undefined ? 'demo-stat--good' : ''}`}>
+            <dt>3 workers · at the same time</dt>
+            <dd data-testid="pool-elapsed-3">{three === undefined ? 'not run' : milliseconds(three)}</dd>
           </div>
         </dl>
+        <p className="demo-caption" data-testid="pool-speedup">
+          {one !== undefined && three !== undefined
+            ? `Same answers, ${(one / three).toFixed(1)}× faster. The only change is maxWorkers.`
+            : 'Run it both ways. The answers are the same; the only change in the code is maxWorkers.'}
+        </p>
       </section>
     </div>
   );

@@ -7,7 +7,7 @@
   "scripts": {
     "search:index": "node scripts/dev-search-index.mjs",
     "dev": "yarn search:index && astro dev",
-    "build": "rm -rf public/pagefind && astro build && pagefind --site dist --output-subdir pagefind",
+    "build": "astro build && rm -rf dist/pagefind && pagefind --site dist --output-subdir pagefind",
     "preview": "astro preview",
     "test": "vitest run",
     "test:watch": "vitest",

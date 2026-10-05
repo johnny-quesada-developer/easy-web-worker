@@ -55,7 +55,7 @@ export function DocsArticle({ id, title, description, section, kind, status, sec
         </select>
       </div>
 
-      <div className="wide grid grid-cols-[220px_minmax(0,720px)_178px] items-start gap-[44px] max-3xl:grid-cols-[195px_minmax(0,1fr)] max-3xl:gap-[35px] max-md:block 4xl:grid-cols-[230px_minmax(0,760px)_185px] 4xl:gap-[50px]">
+      <div className="wide grid grid-cols-[220px_minmax(0,1fr)_178px] items-start gap-[44px] max-3xl:grid-cols-[195px_minmax(0,1fr)] max-3xl:gap-[35px] max-md:block 4xl:grid-cols-[230px_minmax(0,1fr)_185px] 4xl:gap-[50px]">
         <aside
           className="sticky top-[105px] max-h-[calc(100vh-132px)] [scrollbar-width:thin] overflow-auto pt-[27px] pr-[14px] pb-[25px] text-12 max-md:hidden"
           aria-label="Documentation navigation"

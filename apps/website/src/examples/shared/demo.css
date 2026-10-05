@@ -269,6 +269,39 @@
   min-width: 0;
 }
 
+/* Result cards sit side by side only when each one has room for its numbers; the width that counts is the demo, not the window. */
+.demo-results {
+  container-type: inline-size;
+  min-width: 0;
+}
+
+.demo-results-grid {
+  display: grid;
+  gap: 13px;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@container (min-width: 600px) {
+  .demo-results-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Two measurements side by side and the result on its own row: every value fits on one line, so nothing moves when the numbers arrive. */
+.demo-stats--fixed {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.demo-stats--fixed .demo-stat--wide {
+  grid-column: 1 / -1;
+}
+
+.demo-stats--fixed :is(dt, dd) {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
 .demo-stat dt {
   font-size: calc(9px * var(--type-scale));
   letter-spacing: 0.04em;
@@ -347,6 +380,16 @@
   background: var(--color-red);
 }
 
+.demo-pulse > span.empty {
+  height: 12%;
+  background: var(--color-line);
+}
+
+.demo-pulse > span.newest {
+  height: 100% !important;
+  background: var(--color-ink);
+}
+
 .demo-lanes {
   display: grid;
   gap: 6px;
@@ -386,5 +429,31 @@
   }
   .demo-status {
     font-size: calc(13px * var(--type-scale));
+  }
+}
+
+.demo-lane--result {
+  grid-template-columns: 150px minmax(0, 1fr) 146px 58px;
+  white-space: nowrap;
+}
+
+.demo-lane--result > span:nth-of-type(n + 2) {
+  text-align: right;
+}
+
+@media (max-width: 760px) {
+  .demo-lane--result {
+    grid-template-columns: minmax(0, 1fr) auto;
+    white-space: normal;
+  }
+
+  .demo-lane--result .demo-progress {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .demo-lane--result > span:last-child {
+    grid-column: 1 / -1;
+    text-align: left;
   }
 }

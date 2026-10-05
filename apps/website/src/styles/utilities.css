@@ -29,9 +29,6 @@
   width: calc(100% - 72px);
   max-width: var(--container-wide);
   margin-inline: auto;
-  @media (min-width: 1600px) {
-    max-width: 1360px;
-  }
   @media (max-width: 900px) {
     width: calc(100% - 44px);
   }

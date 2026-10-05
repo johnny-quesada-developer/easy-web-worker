@@ -22,12 +22,12 @@ test.describe('live examples', () => {
     await page.goto('examples/keep-the-page-responsive/');
     await page.getByRole('button', { name: 'Run in a Worker' }).click();
 
-    await expect(page.getByTestId('worker-result')).toHaveText('39,088,169');
+    await expect(page.getByTestId('worker-result')).toHaveText('102,334,155', { timeout: 30_000 });
     await expect(page.getByTestId('worker-frames')).not.toHaveText('not run');
 
     await page.getByRole('button', { name: 'Run on the main thread' }).click();
 
-    await expect(page.getByTestId('main-result')).toHaveText('39,088,169');
+    await expect(page.getByTestId('main-result')).toHaveText('102,334,155', { timeout: 30_000 });
     await expect(page.getByTestId('main-frozen')).toHaveText(/\d ms$/);
     expect(errors).toEqual([]);
   });
@@ -53,19 +53,29 @@ test.describe('live examples', () => {
     expect(errors).toEqual([]);
   });
 
-  test('worker pool: four workers share the tasks', async ({ page }) => {
+  test('worker pool: three workers share the segments and agree with one worker', async ({ page }) => {
     const errors = collectErrors(page);
+    const answers = ['410,011 · 448 steps', '837,799 · 524 steps', '1,117,065 · 527 steps'];
 
     await page.goto('examples/worker-pool/');
-    await page.getByRole('button', { name: /Run 8 tasks/ }).click();
+    await page.getByRole('radio', { name: '1,500,000', exact: true }).check();
+    await page.getByRole('button', { name: 'Run with 3 workers' }).click();
 
-    await expect(page.getByTestId('pool-elapsed')).toHaveText(/\d ms$/, { timeout: 30_000 });
+    await expect(page.getByTestId('pool-elapsed-3')).toHaveText(/\d ms$/, { timeout: 30_000 });
 
-    const names = await Promise.all(
-      [1, 2, 3, 4, 5, 6, 7, 8].map((task) => page.getByTestId(`task-${task}`).textContent()),
-    );
+    const segments = [1, 2, 3];
 
-    expect([...new Set(names)].sort()).toEqual(['worker', 'worker-1', 'worker-2', 'worker-3']);
+    expect(await Promise.all(segments.map((segment) => page.getByTestId(`segment-${segment}`).textContent()))).toEqual(answers);
+
+    const names = await Promise.all(segments.map((segment) => page.getByTestId(`segment-worker-${segment}`).textContent()));
+
+    expect([...names].sort()).toEqual(['worker', 'worker-1', 'worker-2']);
+
+    await page.getByRole('button', { name: 'Run with 1 worker' }).click();
+    await expect(page.getByTestId('pool-elapsed-1')).toHaveText(/\d ms$/, { timeout: 30_000 });
+
+    expect(await Promise.all(segments.map((segment) => page.getByTestId(`segment-${segment}`).textContent()))).toEqual(answers);
+    await expect(page.getByTestId('pool-speedup')).toContainText('faster');
     expect(errors).toEqual([]);
   });
 
@@ -104,10 +114,11 @@ test.describe('live examples', () => {
 
     await page.goto('');
     await page.getByRole('button', { name: 'Run in a Worker' }).click();
-    await expect(page.getByTestId('worker-result')).toHaveText('39,088,169');
+    await expect(page.getByTestId('worker-result')).toHaveText('102,334,155', { timeout: 30_000 });
 
-    await page.getByRole('button', { name: /Run 8 tasks/ }).click();
-    await expect(page.getByTestId('pool-elapsed')).toHaveText(/\d ms$/, { timeout: 30_000 });
+    await page.getByRole('radio', { name: '1,500,000', exact: true }).check();
+    await page.getByRole('button', { name: 'Run with 3 workers' }).click();
+    await expect(page.getByTestId('pool-elapsed-3')).toHaveText(/\d ms$/, { timeout: 30_000 });
     expect(errors).toEqual([]);
   });
 });

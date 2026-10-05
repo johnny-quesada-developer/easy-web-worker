@@ -1,18 +1,20 @@
 ---
 title: Worker pool
-headline: Eight tasks, as many threads as you allow
-description: Run the same batch of CPU-bound tasks with one, two and four Workers, and see which Worker handled each one.
+headline: Three searches, one worker or three
+description: Search three segments of numbers for the longest Collatz chain, with one Worker and then with three, and compare the time.
 order: 3
 category: Concurrency
 thumb: pool
 outcome: A pool is an option, not a rewrite. The code that calls the worker does not change.
 points:
-  - Run the tasks with `maxWorkers` set to 1. They finish one after another, in about two seconds.
-  - Switch to 4 and run again. Four tasks run at the same time, and each row shows the worker that handled it.
-  - Compare Total time with One after another. The difference is the work that ran in parallel.
+  - Press Run with 1 worker. The three segments finish one after another, because one Worker does one thing at a time.
+  - Press Run with 3 workers. The three segments finish together, and each row shows the worker that searched it.
+  - Compare both times. The answers are identical; the difference is the work that ran in parallel.
 sources:
-  - file: pool/crunch.worker.ts
-    title: crunch.worker.ts
+  - file: pool/collatz.worker.ts
+    title: collatz.worker.ts
+  - file: pool/collatz.ts
+    title: collatz.ts
   - file: pool/client.ts
     title: client.ts
   - file: pool/PoolDemo.tsx
@@ -29,15 +31,21 @@ related:
 
 import { CodeBlock } from '../../ui/CodeBlock';
 import { Callout } from '../../ui/Callout';
-import worker from '@examples/pool/crunch.worker.ts?raw';
+import worker from '@examples/pool/collatz.worker.ts?raw';
 import client from '@examples/pool/client.ts?raw';
+import collatz from '@examples/pool/collatz.ts?raw';
 
 ## The code
 
-The worker blocks its own thread for the requested time and returns its name. One worker can only do one of
-these at a time.
+The task is a real computation: find the number in a range whose Collatz chain is the longest. Every number
+in the range has to be tried, so the work grows with the range.
 
-<CodeBlock code={worker} lang="ts" title="crunch.worker.ts" />
+<CodeBlock code={collatz} lang="ts" title="collatz.ts" />
+
+The worker searches one segment and returns the answer with its own name. One worker can only search one
+segment at a time.
+
+<CodeBlock code={worker} lang="ts" title="collatz.worker.ts" />
 
 The pool is the `maxWorkers` option. `warmUpWorkers` creates every Worker up front, so the first batch does not
 pay for starting them.

@@ -1,10 +1,8 @@
 import { createWorker } from 'easy-web-worker/createWorker';
-import workerUrl from './math.worker?worker&url';
-import type { MathWorker } from './math.worker';
+import type { worker as MathWorker } from './math.worker';
+import mathWorkerUrl from './math.worker?worker&url';
 
-const math = createWorker<MathWorker>(workerUrl, {
-  workerOptions: { type: 'module' },
-});
+const mathWorker = createWorker<typeof MathWorker>(mathWorkerUrl);
 
 // typed as number, computed on another thread
-export const result = await math.fibonacci(40);
+export const result = await mathWorker.fibonacci(40); // 102334155

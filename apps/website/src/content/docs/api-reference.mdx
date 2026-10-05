@@ -37,12 +37,12 @@ const worker = createWorker<MyWorker>(source, config);
 Creates a worker on the main thread and returns an object with its methods. Each method returns a
 `CancelablePromise`.
 
-| Call                                  | The methods come from                              |
-| ------------------------------------- | -------------------------------------------------- |
-| `createWorker<MyWorker>(source)`      | The type of a definition, `typeof worker`          |
-| `createWorker<{ ... }>(source)`       | A plain description of the methods                 |
-| `createWorker((helpers, context) => …)` | The function itself, inferred                    |
-| `createWorker([fn, fn])`              | Every function, merged; the last one wins          |
+| Call                                    | The methods come from                     |
+| --------------------------------------- | ----------------------------------------- |
+| `createWorker<MyWorker>(source)`        | The type of a definition, `typeof worker` |
+| `createWorker<{ ... }>(source)`         | A plain description of the methods        |
+| `createWorker((helpers, context) => …)` | The function itself, inferred             |
+| `createWorker([fn, fn])`                | Every function, merged; the last one wins |
 
 `source` is a `string`, a `URL`, a `Worker`, a `Worker[]`, a function, or an array of functions. A function
 receives `{ onMessage, easyWorker }` and the scope of the worker.
@@ -79,12 +79,12 @@ Second argument of `createWorker`, `createEasyWebWorker` and `new EasyWebWorker(
 
 Every method returns a `CancelablePromise<TResult>`.
 
-| Member                             | Purpose                                                     |
-| ---------------------------------- | ----------------------------------------------------------- |
-| `then`, `catch`, `finally`         | The same as a native promise                                |
-| `cancel(reason?)`                  | Cancels the call and tells the worker                       |
-| `onProgress((percentage, payload) => …)` | Receives what the worker reports                      |
-| `onCancel(callback)`               | Runs when the call is canceled                              |
+| Member                                   | Purpose                               |
+| ---------------------------------------- | ------------------------------------- |
+| `then`, `catch`, `finally`               | The same as a native promise          |
+| `cancel(reason?)`                        | Cancels the call and tells the worker |
+| `onProgress((percentage, payload) => …)` | Receives what the worker reports      |
+| `onCancel(callback)`                     | Runs when the call is canceled        |
 
 ## The message
 
@@ -120,8 +120,8 @@ The class behind every worker. `createEasyWebWorker(source, config)` is a factor
 `cancelAll` and `reboot` return a `CancelablePromise<void>` that settles when every call is canceled.
 
 <Callout type="note" title="Workers you created yourself">
-  `reboot` and `force` need a source the library can start again. They throw for a worker created from an
-  existing native `Worker`.
+  `reboot` and `force` need a source the library can start again. They throw for
+  a worker created from an existing native `Worker`.
 </Callout>
 
 ## StaticEasyWebWorker
@@ -129,18 +129,19 @@ The class behind every worker. `createEasyWebWorker(source, config)` is a factor
 ```ts
 import { createStaticEasyWebWorker } from 'easy-web-worker/createStaticEasyWebWorker';
 
-const { onMessage, importScripts, close } = createStaticEasyWebWorker(defaultHandler);
+const { onMessage, importScripts, close } =
+  createStaticEasyWebWorker(defaultHandler);
 ```
 
 The worker side of the [message API](../message-api/). `defineWorker` is built on it.
 
 ## Types
 
-| Type                             | Describes                                                    |
-| -------------------------------- | ------------------------------------------------------------ |
-| `WorkerProxy<TWorker>`           | What `createWorker` returns                                  |
-| `WorkerDefinition<TMethods>`     | What `defineWorker` returns                                  |
-| `WorkerMethodMessage<TPayload>`  | The message received by a method that returns its result     |
-| `IEasyWebWorkerMessage<P, R>`    | The message received by `.handle(...)` and the message API   |
-| `IWorkerConfig`                  | The configuration object                                     |
-| `EasyWebWorkerBody<P, R>`        | A function used as source by `createEasyWebWorker`           |
+| Type                            | Describes                                                  |
+| ------------------------------- | ---------------------------------------------------------- |
+| `WorkerProxy<TWorker>`          | What `createWorker` returns                                |
+| `WorkerDefinition<TMethods>`    | What `defineWorker` returns                                |
+| `WorkerMethodMessage<TPayload>` | The message received by a method that returns its result   |
+| `IEasyWebWorkerMessage<P, R>`   | The message received by `.handle(...)` and the message API |
+| `IWorkerConfig`                 | The configuration object                                   |
+| `EasyWebWorkerBody<P, R>`       | A function used as source by `createEasyWebWorker`         |

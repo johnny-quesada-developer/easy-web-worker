@@ -95,6 +95,32 @@
   font-style: var(--sh-rgsh-font-style, inherit);
 }
 
+/* Fenced code in MDX is highlighted by Astro, which names the class and the variables itself (`.astro-code`, `--shiki-*`). Same themes, same switch. */
+.astro-code span {
+  color: var(--shiki-vscode-light);
+  font-weight: var(--shiki-vscode-light-font-weight, inherit);
+  font-style: var(--shiki-vscode-light-font-style, inherit);
+}
+
+:root[data-code-theme='vscode-dark'] .astro-code span {
+  color: var(--shiki-vscode-dark);
+  font-weight: var(--shiki-vscode-dark-font-weight, inherit);
+  font-style: var(--shiki-vscode-dark-font-style, inherit);
+}
+
+:root[data-code-theme='rgsh'] .astro-code span {
+  color: var(--shiki-rgsh);
+  font-weight: var(--shiki-rgsh-font-weight, inherit);
+  font-style: var(--shiki-rgsh-font-style, inherit);
+}
+
+:root[data-code-theme='rgsh-dark'] .astro-code span,
+.dark:not([data-code-theme]) .astro-code span {
+  color: var(--shiki-rgsh-dark);
+  font-weight: var(--shiki-rgsh-dark-font-weight, inherit);
+  font-style: var(--shiki-rgsh-dark-font-style, inherit);
+}
+
 /* Code panels: filename row, copy control, internally scrolling source, line numbers as counters. */
 .code-block {
   border: 1px solid var(--code-border);

@@ -7,6 +7,11 @@
   margin-top: 0;
 }
 
+/* The column is fluid so code and tables get the room; running text keeps a readable measure. */
+.doc-content > :is(p, ul, ol, blockquote) {
+  max-width: 880px;
+}
+
 .doc-content h2 {
   font-size: calc(24px * var(--type-scale));
   letter-spacing: -0.03em;
