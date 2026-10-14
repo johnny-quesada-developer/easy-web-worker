@@ -28,6 +28,14 @@ Created by [Johnny Quesada](https://github.com/johnny-quesada-developer).
 
 ---
 
+## Find a guide by task
+
+- [Get started with typed Web Workers](https://johnny-quesada-developer.github.io/easy-web-worker/docs/getting-started/)
+- [Run work across a worker pool](https://johnny-quesada-developer.github.io/easy-web-worker/docs/worker-pools/)
+- [Transfer buffers without copying](https://johnny-quesada-developer.github.io/easy-web-worker/docs/transferable-objects/)
+- [Create a worker without a separate file](https://johnny-quesada-developer.github.io/easy-web-worker/docs/runtime-workers/)
+- [Compare main-thread work with a responsive worker demo](https://johnny-quesada-developer.github.io/easy-web-worker/examples/keep-the-page-responsive/)
+
 ## Start with a single worker
 
 **Imagine defining your worker like this:**
