@@ -25,8 +25,9 @@ let count = 0;
 let previousMessage: IEasyWebWorkerMessage<SubscriptionKey, void> = null;
 let didCallbackWasCalled = false;
 let callbackKey: SubscriptionKey = null;
+let lastTransferredBuffer: ArrayBuffer = null;
 
-const worker = defineWorker(({ onMessage }) => ({
+const worker = defineWorker(({ onMessage, transfer }) => ({
   hello: () => 'Hello from defineWorker!',
 
   actionWithPayload: (name: string) => `Hello ${name}!`,
@@ -136,6 +137,30 @@ const worker = defineWorker(({ onMessage }) => ({
 
     message[action]({ arrayBuffer, action }, [arrayBuffer]);
   }),
+
+  // the returned value is moved to the main thread with transfer(result, transferList) instead of copied
+  invertBuffer: (buffer: ArrayBuffer) => {
+    const bytes = new Uint8Array(buffer);
+
+    bytes.forEach((value, index) => {
+      bytes[index] = 255 - value;
+    });
+
+    lastTransferredBuffer = buffer;
+
+    return transfer(buffer, [buffer]);
+  },
+
+  invertBufferAsync: async (buffer: ArrayBuffer) => {
+    await new Promise((resolve) => setTimeout(resolve, 1));
+
+    lastTransferredBuffer = new Uint8Array(buffer).map((value) => 255 - value).buffer;
+
+    return transfer(lastTransferredBuffer, [lastTransferredBuffer]);
+  },
+
+  // a transferred buffer is detached in the worker: its byteLength is 0
+  lastTransferredByteLength: () => lastTransferredBuffer?.byteLength ?? -1,
 
   sum: async (values: number[]) => {
     await new Promise((resolve) => setTimeout(resolve, 1));

@@ -30,6 +30,24 @@ describe('createWorker (function as source)', () => {
     await unwrap(math).dispose();
   });
 
+  it('should transfer a result with the transfer helper', async () => {
+    const images = createWorker(({ transfer }) => ({
+      invert: (buffer: ArrayBuffer) => {
+        const bytes = new Uint8Array(buffer).map((value) => 255 - value);
+
+        return transfer(bytes.buffer, [bytes.buffer]);
+      },
+    }));
+
+    const buffer = new Uint8Array([0, 100]).buffer;
+    const inverted = await images.invert(buffer, [buffer]);
+
+    expect([...new Uint8Array(inverted)]).toEqual([255, 155]);
+    expect(buffer.byteLength).toEqual(0);
+
+    await unwrap(images).dispose();
+  });
+
   it('should resolve async methods and reject with what they throw', async () => {
     const worker = createWorker(() => ({
       sum: async (values: number[]) => {

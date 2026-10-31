@@ -12,16 +12,17 @@ import { Callout } from '../../ui/Callout';
 ```ts
 import { defineWorker } from 'easy-web-worker/defineWorker';
 
-const worker = defineWorker(({ onMessage }) => ({
+const worker = defineWorker(({ onMessage, transfer }) => ({
   method: (payload, message, event) => result,
   inferred: onMessage((payload, message, event) => result),
   later: onMessage<Payload, Result>().handle((message, event) => {}),
+  moved: (payload) => transfer(result, [result.buffer]),
 }));
 
 export type MyWorker = typeof worker;
 ```
 
-Defines the methods of a worker file. Call it once, inside the worker. The builder receives `{ onMessage }` and
+Defines the methods of a worker file. Call it once, inside the worker. The builder receives `{ onMessage, transfer }` and
 returns an object: each key is a method.
 
 Returns a definition whose type describes the worker. Pass that type to `createWorker`.
@@ -45,7 +46,25 @@ Creates a worker on the main thread and returns an object with its methods. Each
 | `createWorker([fn, fn])`                | Every function, merged; the last one wins |
 
 `source` is a `string`, a `URL`, a `Worker`, a `Worker[]`, a function, or an array of functions. A function
-receives `{ onMessage, easyWorker }` and the scope of the worker.
+receives `{ onMessage, transfer, easyWorker }` and the scope of the worker.
+
+## transfer
+
+```ts
+import { transfer } from 'easy-web-worker/defineWorker';
+
+const worker = defineWorker(() => ({
+  invert: (pixels: ArrayBuffer) => {
+    const result = invertPixels(pixels);
+
+    return transfer(result, [result]);
+  },
+}));
+```
+
+Wraps the value a method returns with a transfer list, so the objects in the list move to the main thread
+instead of being copied. The call resolves with the value itself, and its type is the type of the value. The same
+function is a helper of `defineWorker` and of `createWorker` from a function, where imports are not available.
 
 ## unwrap
 

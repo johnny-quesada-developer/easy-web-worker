@@ -28,12 +28,14 @@ The second argument of every method is the transfer list.
 
 ## From the worker back to the main thread
 
-A returned value is always copied. To transfer a result, complete the call yourself and pass the transfer list
-to `message.resolve`.
+A returned value is copied. To transfer it, return `transfer(result, transferList)`. The call on the main thread
+still resolves with the result itself, and its type is the type of the result.
 
 <CodeBlock code={imagesWorker} lang="ts" title="images.worker.ts" />
 
-`reject`, `cancel` and `reportProgress` accept a transfer list too.
+`transfer` comes with the helpers of `defineWorker` and of `createWorker` from a function, and it is exported
+from `easy-web-worker/defineWorker`. A method that completes the message itself passes the list to
+`message.resolve(result, transferList)`; `reject`, `cancel` and `reportProgress` accept a transfer list too.
 
 <Callout type="warning" title="A transferred buffer is gone for the sender">
   After a transfer, `buffer.byteLength` is `0` on the side that sent it, and reading it throws. Read what you

@@ -1,5 +1,6 @@
 import type { CancelablePromise } from 'easy-cancelable-promise/CancelablePromise';
 import type { EasyWebWorker } from './EasyWebWorker';
+import type { transferResult$ } from './transfer';
 import type { workerInstance$ } from './unwrap';
 
 export type Subscription = () => void;
@@ -382,8 +383,37 @@ export type WorkerOnMessage = {
   };
 };
 
+/**
+ * Result of a method that transfers objects instead of copying them, created with transfer(result, transferList)
+ */
+export type TransferResult<TResult> = {
+  readonly [transferResult$]: true;
+  readonly result: TResult;
+  readonly transferList: Transferable[];
+};
+
+/**
+ * The result a method resolves with: the value inside a TransferResult, or the returned value itself
+ */
+export type UnwrapTransferResult<TResult> =
+  TResult extends TransferResult<infer TValue> ? TValue : TResult;
+
+/**
+ * Returns a result from a worker method and transfers the given objects instead of copying them
+ */
+export type WorkerTransfer = <TResult>(
+  result: TResult,
+  transferList: Transferable[]
+) => TransferResult<TResult>;
+
 export type WorkerHelpers = {
   onMessage: WorkerOnMessage;
+
+  /**
+   * Returns a result and transfers the given objects instead of copying them:
+   * (pixels: ArrayBuffer) => transfer(pixels, [pixels])
+   */
+  transfer: WorkerTransfer;
 };
 
 /**
@@ -492,7 +522,7 @@ export type WorkerApi<TMethods> = {
     : TMethods[TName] extends (...parameters: infer TParameters) => infer TReturn
       ? WorkerMethodCaller<
           TParameters extends [] ? null : TParameters[0],
-          Awaited<TReturn>
+          UnwrapTransferResult<Awaited<TReturn>>
         >
       : never;
 };

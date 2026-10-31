@@ -426,7 +426,7 @@ const worker = defineWorker(({ onMessage }) => ({
 | `onMessage((payload, message, event) => ...)` | With the returned value | Inferred, `message` typed         |
 | `onMessage<P, R>().handle((message) => ...)`  | You do                  | Explicit, `message.resolve` typed |
 
-All three are called the same way from the main thread. Use the third for timers, streams, event-based APIs, or to transfer a result.
+All three are called the same way from the main thread. Use the third for timers, streams and event-based APIs. Any of them can return `transfer(result, transferList)` to transfer the result instead of copying it.
 
 If a method completes the message itself with `resolve`, `reject` or `cancel`, its return value is ignored.
 
@@ -462,18 +462,20 @@ const buffer = await file.arrayBuffer();
 const blurred = await images.blur(buffer, [buffer]);
 ```
 
-Returned values are cloned. To transfer a result back, complete the call yourself:
+Returned values are copied. To transfer a result back, return it with `transfer(result, transferList)`:
 
 ```ts
 // images.worker.ts
-const worker = defineWorker(({ onMessage }) => ({
-  blur: onMessage<ArrayBuffer, ArrayBuffer>().handle((message) => {
-    const result = applyBlur(message.payload);
+const worker = defineWorker(({ transfer }) => ({
+  blur: (pixels: ArrayBuffer) => {
+    const result = applyBlur(pixels);
 
-    message.resolve(result, [result]);
-  }),
+    return transfer(result, [result]);
+  },
 }));
 ```
+
+The call on the main thread still resolves with the result, typed `CancelablePromise<ArrayBuffer>`. `transfer` is also exported from `easy-web-worker/defineWorker`, and a method that completes the message itself can pass the list to `message.resolve(result, [result])`.
 
 #### `unwrap`: the controls behind the methods
 

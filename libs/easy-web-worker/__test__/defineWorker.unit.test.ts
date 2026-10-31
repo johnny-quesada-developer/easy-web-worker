@@ -1,4 +1,8 @@
-import { unwrap, defineWorker } from 'easy-web-worker/defineWorker';
+import {
+  unwrap,
+  defineWorker,
+  transfer,
+} from 'easy-web-worker/defineWorker';
 
 /**
  * defineWorker.test.ts runs the worker inside a real worker thread.
@@ -215,6 +219,58 @@ describe('defineWorker (worker scope)', () => {
       });
 
       expect(handler).toHaveBeenCalledTimes(2);
+    });
+
+    it('should resolve with the result of transfer and send its transfer list', () => {
+      const buffer = new ArrayBuffer(8);
+
+      defineWorker(({ transfer: transferFromHelpers }) => ({
+        move: () => transferFromHelpers(buffer, [buffer]),
+      }));
+
+      send('m1', 'move');
+
+      expect(selfMock.postMessage).toHaveBeenCalledTimes(1);
+      expect(selfMock.postMessage).toHaveBeenCalledWith(
+        { messageId: 'm1', resolved: { payload: [buffer] } },
+        [buffer]
+      );
+    });
+
+    it('should transfer the result of an async method and of onMessage', async () => {
+      const first = new ArrayBuffer(4);
+      const second = new ArrayBuffer(4);
+
+      defineWorker(({ onMessage }) => ({
+        later: async () => transfer({ first }, [first]),
+        wrapped: onMessage(async (_payload: null) => transfer(second, [second])),
+      }));
+
+      send('m1', 'later');
+      send('m2', 'wrapped');
+
+      await flushPromises();
+
+      expect(selfMock.postMessage).toHaveBeenCalledWith(
+        { messageId: 'm1', resolved: { payload: [{ first }] } },
+        [first]
+      );
+      expect(selfMock.postMessage).toHaveBeenCalledWith(
+        { messageId: 'm2', resolved: { payload: [second] } },
+        [second]
+      );
+    });
+
+    it('should offer the same transfer as a helper and as an export', () => {
+      let fromHelpers: unknown = null;
+
+      defineWorker((helpers) => {
+        fromHelpers = helpers.transfer;
+
+        return {};
+      });
+
+      expect(fromHelpers).toBe(transfer);
     });
 
     it.each(['resolve', 'reject', 'cancel'] as const)(

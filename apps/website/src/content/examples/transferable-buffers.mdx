@@ -34,8 +34,8 @@ import demo from '@examples/transfer/TransferDemo.tsx?raw';
 
 ## The code
 
-A returned value is always copied. To transfer a result, the method completes the message itself and passes the
-transfer list to `message.resolve`. `onMessage<TPayload, TResult>().handle(...)` is the form for that.
+A returned value is copied. To transfer it, the method returns `transfer(result, transferList)`, and the call on
+the main thread resolves with the result itself.
 
 <CodeBlock code={worker} lang="ts" title="buffer.worker.ts" />
 

@@ -81,6 +81,7 @@ try {
     'createStaticEasyWebWorker',
     'createWorker',
     'defineWorker',
+    'transfer',
     'unwrap',
   ];
 

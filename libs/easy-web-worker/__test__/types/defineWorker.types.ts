@@ -6,7 +6,9 @@ import type {
 } from 'easy-web-worker';
 import {
   defineWorker,
+  transfer as transferExport,
   unwrap as unwrapInWorker,
+  type TransferResult,
 } from 'easy-web-worker/defineWorker';
 import { createWorker, unwrap } from 'easy-web-worker/createWorker';
 
@@ -22,7 +24,7 @@ const expectType = <_T extends true>() => {};
 
 // ---- worker file
 
-const definition = defineWorker(({ onMessage }) => ({
+const definition = defineWorker(({ onMessage, transfer }) => ({
   // plain functions
   hello: () => 'hello',
   double: (value: number) => value * 2,
@@ -68,6 +70,22 @@ const definition = defineWorker(({ onMessage }) => ({
   laterWithoutPayload: onMessage<null, void>().handle((message) => {
     message.resolve();
   }),
+
+  // transfer(result, transferList): the caller receives the result itself
+  moved: (buffer: ArrayBuffer) => {
+    const result = transfer(buffer, [buffer]);
+
+    expectType<Equal<typeof result, TransferResult<ArrayBuffer>>>();
+
+    return result;
+  },
+  movedLater: async (size: number) => transferExport({ size, buffer: new ArrayBuffer(size) }, []),
+  movedWithMessage: onMessage((buffer: ArrayBuffer, message) => {
+    message.reportProgress(50);
+
+    return transfer(buffer, [buffer]);
+  }),
+  movedOrCopied: (move: boolean) => (move ? transfer('moved', []) : 'copied'),
 }));
 
 export type MyWorker = typeof definition;
@@ -99,6 +117,17 @@ expectType<Equal<typeof worker.later, Caller<number, string>>>();
 expectType<
   Equal<typeof worker.laterWithoutPayload, () => CancelablePromise<void>>
 >();
+expectType<Equal<typeof worker.moved, Caller<ArrayBuffer, ArrayBuffer>>>();
+expectType<
+  Equal<
+    typeof worker.movedLater,
+    Caller<number, { size: number; buffer: ArrayBuffer }>
+  >
+>();
+expectType<
+  Equal<typeof worker.movedWithMessage, Caller<ArrayBuffer, ArrayBuffer>>
+>();
+expectType<Equal<typeof worker.movedOrCopied, Caller<boolean, string>>>();
 
 expectType<
   Equal<
@@ -274,9 +303,9 @@ const describedRuntime = createWorker<{ uppercase: (text: string) => string }>(
 
 expectType<Equal<typeof describedRuntime.uppercase, Caller<string, string>>>();
 
-// defineWorker only receives onMessage, the worker is reached with unwrap
+// defineWorker receives onMessage and transfer, the worker is reached with unwrap
 defineWorker((helpers) => {
-  expectType<Equal<keyof typeof helpers, 'onMessage'>>();
+  expectType<Equal<keyof typeof helpers, 'onMessage' | 'transfer'>>();
 
   return {};
 });

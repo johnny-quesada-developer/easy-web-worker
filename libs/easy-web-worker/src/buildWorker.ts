@@ -12,6 +12,7 @@ import type {
 } from './types';
 
 import { StaticEasyWebWorker } from './StaticEasyWebWorker';
+import { isTransferResult, transfer } from './transfer';
 
 const onMessage = ((handler?: WorkerMethodHandler<unknown, unknown>) => {
   // onMessage((payload, message) => result), the wrapper only exists to infer the types
@@ -30,6 +31,7 @@ const isPromiseLike = (value: unknown): value is PromiseLike<unknown> =>
 
 /**
  * Executes a method and completes the message with its outcome.
+ * A result created with transfer(result, transferList) resolves with the result and transfers the objects in the list.
  * If the method already completed the message by itself (resolve with transferable objects, cancel, ...) nothing else is sent.
  */
 const executeMethod = (
@@ -38,7 +40,15 @@ const executeMethod = (
   event: MessageEvent<IMessageData<unknown>>
 ) => {
   const resolve = (result: unknown) => {
-    if (message.isPending()) message.resolve(result);
+    if (!message.isPending()) return;
+
+    if (isTransferResult(result)) {
+      message.resolve(result.result, result.transferList);
+
+      return;
+    }
+
+    message.resolve(result);
   };
 
   const reject = (reason: unknown) => {
@@ -75,7 +85,7 @@ export const buildWorker = (
 
   // a function that only uses the message api of easyWorker returns nothing
   const methods = (builder(
-    { onMessage, easyWorker: worker },
+    { onMessage, transfer, easyWorker: worker },
     self as unknown as WorkerScope
   ) ?? {}) as WorkerMethods;
 

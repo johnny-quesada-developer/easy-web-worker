@@ -28,8 +28,9 @@ All three are called the same way from the main thread.
 - Use a **plain function** when the method only needs its payload.
 - Use **`onMessage`** when it also reports progress or reacts to a cancellation. The wrapper exists to give the
   second parameter its type; a plain function receives the same arguments.
-- Use **`onMessage().handle`** for timers, streams and event-based APIs, or to
-  [transfer a result](../transferable-objects/).
+- Use **`onMessage().handle`** for timers, streams and event-based APIs.
+- Any of them can return `transfer(result, transferList)` to
+  [transfer the result](../transferable-objects/) instead of copying it.
 
 <Callout type="note" title="The call is completed once">
   If a method completes the message itself with `resolve`, `reject` or `cancel`, its return value is ignored.

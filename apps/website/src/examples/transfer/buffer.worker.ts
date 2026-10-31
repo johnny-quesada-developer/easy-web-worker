@@ -1,17 +1,17 @@
 import { defineWorker } from 'easy-web-worker/defineWorker';
 
-const worker = defineWorker(({ onMessage }) => ({
+const worker = defineWorker(({ transfer }) => ({
   /** Receives the buffer, changes every byte and gives the same memory back. */
-  invert: onMessage<ArrayBuffer, ArrayBuffer>().handle((message) => {
-    const bytes = new Uint8Array(message.payload);
+  invert: (pixels: ArrayBuffer) => {
+    const bytes = new Uint8Array(pixels);
 
     for (let index = 0; index < bytes.length; index++) {
       bytes[index] = 255 - bytes[index];
     }
 
-    // the second argument transfers the result instead of copying it
-    message.resolve(bytes.buffer, [bytes.buffer]);
-  }),
+    // transfer(result, transferList) moves the result instead of copying it
+    return transfer(bytes.buffer, [bytes.buffer]);
+  },
 }));
 
 export type BufferWorker = typeof worker;

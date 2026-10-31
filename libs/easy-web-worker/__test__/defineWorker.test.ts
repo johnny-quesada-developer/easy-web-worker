@@ -324,6 +324,28 @@ describe('defineWorker + createWorker', () => {
     );
   });
 
+  describe('transfer', () => {
+    it('should resolve with the result and move it to the main thread', async () => {
+      const buffer = new Uint8Array([0, 10, 255]).buffer;
+
+      const inverted = await worker.invertBuffer(buffer, [buffer]);
+
+      expect([...new Uint8Array(inverted)]).toEqual([255, 245, 0]);
+      // moved to the worker, then moved back: the worker no longer owns it
+      expect(buffer.byteLength).toEqual(0);
+      expect(await worker.lastTransferredByteLength()).toEqual(0);
+    });
+
+    it('should transfer the result of an async method', async () => {
+      const inverted = await worker.invertBufferAsync(
+        new Uint8Array([1, 2, 3]).buffer
+      );
+
+      expect([...new Uint8Array(inverted)]).toEqual([254, 253, 252]);
+      expect(await worker.lastTransferredByteLength()).toEqual(0);
+    });
+  });
+
   describe('transferable objects', () => {
     (['reportProgress', 'resolve', 'reject', 'cancel'] as const).forEach(
       (action) => {

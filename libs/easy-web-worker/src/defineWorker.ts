@@ -7,7 +7,7 @@ import { workerInstance$ } from './unwrap';
  * Defines the methods of a worker file, each key of the returned object is a method that can be called from the main thread.
  *
  * @example
- * const worker = defineWorker(({ onMessage }) => ({
+ * const worker = defineWorker(({ onMessage, transfer }) => ({
  *   // the returned value resolves the message
  *   double: (value: number) => value * 2,
  *
@@ -22,6 +22,13 @@ import { workerInstance$ } from './unwrap';
  *   later: onMessage<number, string>().handle((message) => {
  *     setTimeout(() => message.resolve('done'), message.payload);
  *   }),
+ *
+ *   // transfer(result, transferList) moves the objects to the main thread instead of copying them
+ *   invert: (pixels: ArrayBuffer) => {
+ *     const bytes = new Uint8Array(pixels).map((value) => 255 - value);
+ *
+ *     return transfer(bytes.buffer, [bytes.buffer]);
+ *   },
  * }));
  *
  * export type MyWorker = typeof worker;
@@ -32,11 +39,14 @@ import { workerInstance$ } from './unwrap';
 export const defineWorker = <TMethods extends WorkerMethods>(
   builder: (helpers: WorkerHelpers) => TMethods
 ): WorkerDefinition<TMethods> => {
-  const worker = buildWorker(({ onMessage }) => builder({ onMessage }));
+  const worker = buildWorker(({ onMessage, transfer }) =>
+    builder({ onMessage, transfer })
+  );
 
   return { [workerInstance$]: worker };
 };
 
+export { transfer } from './transfer';
 export { unwrap } from './unwrap';
 export type * from './types';
 

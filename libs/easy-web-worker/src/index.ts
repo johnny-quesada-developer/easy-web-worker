@@ -5,5 +5,6 @@ export { createEasyWebWorker } from './createEasyWebWorker';
 export { createStaticEasyWebWorker } from './createStaticEasyWebWorker';
 export { createWorker } from './createWorker';
 export { defineWorker } from './defineWorker';
+export { transfer } from './transfer';
 export { unwrap } from './unwrap';
 export type * from './types';

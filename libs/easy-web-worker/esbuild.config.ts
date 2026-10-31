@@ -23,6 +23,7 @@ const entryPoints: Record<string, string> = {
   defineWorker: 'src/defineWorker.ts',
   // internal modules (kept as sibling files, not public subpaths)
   unwrap: 'src/unwrap.ts',
+  transfer: 'src/transfer.ts',
   buildWorker: 'src/buildWorker.ts',
   getDefineWorkerTemplate: 'src/getDefineWorkerTemplate.ts',
 };
